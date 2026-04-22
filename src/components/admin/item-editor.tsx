@@ -355,7 +355,8 @@ export function ItemEditor({
                 <p className="mb-2 text-[11px] text-pork-ink/50">
                   Seleziona tutti gli allegati presenti nel piatto. In menu compaiono
                   come icone (su desktop passando il mouse il bubble si allarga e
-                  mostra il nome accanto; in scheda prodotto icona e nome insieme).
+                  mostra il nome accanto; in modale ordine sezione collassabile: icone
+                  se chiusa, nomi se aperta).
                 </p>
                 <div className="grid gap-2 sm:grid-cols-2">
                   {ALLERGEN_OPTIONS.map((o) => {

@@ -9,7 +9,7 @@ import { useCartStore } from "@/store/cart-store";
 import { spawnCartFly } from "@/lib/cart-fly";
 import { cn } from "@/lib/utils";
 import { bodyScrollLock, bodyScrollUnlock } from "@/lib/body-scroll-lock";
-import { AllergenBadges } from "./allergen-badges";
+import { AllergenModalCollapsible } from "./allergen-modal-collapsible";
 import { SpicyLevelBadge } from "./spicy-level-badge";
 import { getResolvedPiccanteLevel } from "@/lib/piccante";
 import {
@@ -183,14 +183,6 @@ export function ItemCustomizer({
                 <SpicyLevelBadge level={spicyLevel} compact />
               </div>
             ) : null}
-            {item.allergens && item.allergens.length > 0 && (
-              <div className="mt-2">
-                <p className="impact-title mb-1 text-[10px] text-pork-red">
-                  Allergeni
-                </p>
-                <AllergenBadges allergens={item.allergens} showLabels compact />
-              </div>
-            )}
           </div>
           <button
             type="button"
@@ -201,6 +193,8 @@ export function ItemCustomizer({
             <X size={20} />
           </button>
         </header>
+
+        <AllergenModalCollapsible allergens={item.allergens} />
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-5 py-4">
           {variants.length > 1 && (

@@ -10,11 +10,17 @@ export function AllergenBadges({
   showLabels,
   /** Icone più piccole (liste compatte, solo icone). */
   compact,
+  /**
+   * Se false, solo pill con icona (niente espansione al hover).
+   * Utile dentro altri controlli (es. collapsable in modale).
+   */
+  interactive = true,
 }: {
   allergens: MenuAllergen[] | undefined;
   className?: string;
   showLabels?: boolean;
   compact?: boolean;
+  interactive?: boolean;
 }) {
   if (!allergens?.length) return null;
   const sorted = sortAllergens(allergens);
@@ -54,6 +60,36 @@ export function AllergenBadges({
                 {meta.label}
               </span>
             </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  if (!interactive) {
+    const iconBox = compact ? "h-6 w-6" : "h-7 w-7";
+    return (
+      <div
+        className={cn("flex flex-wrap items-center justify-end gap-1", className)}
+        role="list"
+        aria-label="Allergeni"
+      >
+        {sorted.map((key) => {
+          const meta = allergenMeta(key);
+          if (!meta) return null;
+          return (
+            <span
+              key={key}
+              role="listitem"
+              title={meta.label}
+              aria-label={meta.label}
+              className={cn(
+                "inline-flex items-center justify-center rounded-full bg-pork-ink/8 text-pork-ink ring-1 ring-pork-ink/15",
+                iconBox,
+              )}
+            >
+              <AllergenGlyph allergen={key} size={iconSize} />
+            </span>
           );
         })}
       </div>
