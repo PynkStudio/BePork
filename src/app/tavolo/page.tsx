@@ -55,7 +55,8 @@ function SessionRunningTotal({ sessionId }: { sessionId: string }) {
     <div className="border-b border-pork-ink/10 bg-pork-mustard/15 py-3 text-pork-ink">
       <div className="container-wide flex flex-wrap items-baseline justify-between gap-2">
         <p className="text-sm font-semibold">
-          Totale al tavolo ({list.length} invi{list.length === 1 ? "o" : "i"})
+          Totale al tavolo · {list.length}{" "}
+          {list.length === 1 ? "ordine inviato" : "ordini inviati"}
         </p>
         <p className="font-impact text-2xl text-pork-red">{formatEuro(total)}</p>
       </div>
@@ -166,10 +167,9 @@ function TavoloBody() {
   if (!allowTableOrders) {
     return (
       <EmptyCentered>
-        <p className="impact-title text-pork-red">Ordini al tavolo disattivati</p>
+        <p className="impact-title text-pork-red">Percorso non attivo</p>
         <p className="mt-2 text-pork-ink/60">
-          Il servizio QR tavolo &egrave; spento. Puoi comunque sfogliare il menu e
-          usare i preferiti.
+          Il menu digitale resta disponibile dalla home.
         </p>
         <Link href="/menu" className="btn-primary mt-6 inline-flex">
           Vai al menu
@@ -183,8 +183,7 @@ function TavoloBody() {
       <EmptyCentered>
         <p className="impact-title text-pork-red">Codice non valido.</p>
         <p className="mt-2 text-pork-ink/60">
-          La sessione con codice <strong>{codeParam}</strong> non &egrave; pi&ugrave;
-          attiva o non esiste.
+          Il codice <strong>{codeParam}</strong> non &egrave; pi&ugrave; valido.
         </p>
         <Link href="/tavolo" className="btn-primary mt-6 inline-flex">
           Inserisci un altro codice
@@ -199,10 +198,9 @@ function TavoloBody() {
         <p className="impact-title text-pork-red">Benvenuto.</p>
         <h1 className="headline mt-2 text-4xl">Unisciti al tuo tavolo.</h1>
         <p className="mt-2 text-pork-ink/60">
-          Scansiona il QR sul tavolo (arrivi gi&agrave; col tavolo impostato), oppure
-          inserisci il <strong>numero tavolo</strong> qui sotto. Se la sessione &egrave;
-          gi&agrave; aperta, ti chiederemo il <strong>codice a 4 cifre</strong>. In
-          alternativa puoi entrare solo con il codice.
+          QR sul tavolo oppure <strong>numero tavolo</strong> qui sotto. Se il tavolo
+          &egrave; gi&agrave; attivo, servir&agrave; il <strong>codice a 4 cifre</strong>{" "}
+          che vedi in sala. Oppure entra solo con il codice.
         </p>
 
         <div className="mx-auto mt-8 max-w-sm rounded-2xl bg-white p-5 text-left ring-1 ring-pork-ink/10">
@@ -211,7 +209,7 @@ function TavoloBody() {
         </div>
 
         <p className="mt-8 text-sm font-semibold text-pork-ink/50">
-          Solo codice (senza numero tavolo)
+          Hai solo il codice?
         </p>
         <form
           onSubmit={(e) => {
@@ -339,7 +337,7 @@ function SessionBadge({
         <div className="flex flex-wrap items-center gap-3">
           <span className="chip-mustard">{table.label}</span>
           <span className="chip bg-pork-cream/10 text-pork-cream/70">
-            Ordine al tavolo · nessun cameriere
+            Ordina dal telefono
           </span>
           {nickname && (
             <span className="chip bg-pork-red text-white">
@@ -363,8 +361,8 @@ function SessionBadge({
           </div>
           <p className="text-sm text-pork-cream/80">
             {dinerSeparation
-              ? "Condividi il codice con gli altri commensali: ognuno ordina dal proprio telefono e tutto finisce in un unico conto."
-              : "Condividi il codice per far entrare gli altri dispositivi: tutto si somma in un unico conto al tavolo, senza divisione per nome."}
+              ? "Condividi il codice: ognuno ordina dal suo telefono, un solo conto."
+              : "Condividi il codice con chi &egrave; al tavolo: gli ordini si sommano sullo stesso conto."}
           </p>
           <div className="flex flex-wrap gap-2">
             <button

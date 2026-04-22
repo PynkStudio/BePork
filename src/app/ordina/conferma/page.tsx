@@ -62,18 +62,17 @@ function ConfermaContent() {
                   />
                 </>
               ) : (
-                <Info label="Tavolo" value={`N. ${order.table ?? "—"}`} />
+                <Info
+                  label="Tavolo"
+                  value={order.tableLabel ?? (order.table != null ? `N. ${order.table}` : "—")}
+                />
               )}
               <Info
-                label="Tipologia"
-                value={order.type === "asporto" ? "Asporto" : "Al tavolo"}
+                label="Servizio"
+                value={order.type === "asporto" ? "Asporto" : "In sala"}
                 icon={<Package size={14} />}
               />
-              <Info
-                label="Stato"
-                value="In cucina"
-                tone="red"
-              />
+              <Info label="Stato ordine" value="In preparazione" tone="red" />
             </div>
 
             {order.notes && (

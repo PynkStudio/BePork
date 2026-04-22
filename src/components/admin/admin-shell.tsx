@@ -35,7 +35,12 @@ type NavItem = {
 };
 
 const NAV_ITEMS: NavItem[] = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+  {
+    href: "/admin",
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    visible: (s) => s.allowTakeaway || s.allowTableOrders,
+  },
   { href: "/admin/menu", label: "Menu", icon: UtensilsCrossed },
   {
     href: "/admin/ordini",
@@ -79,6 +84,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     return NAV_ITEMS.filter((it) => (it.visible ? it.visible(flags) : true));
   }, [allowTakeaway, allowTableOrders, kitchenDisplayEnabled]);
 
+  const adminEntryHref =
+    allowTakeaway || allowTableOrders ? "/admin" : "/admin/menu";
+
   function logout() {
     clearAdminSession();
     router.replace("/admin/login");
@@ -93,7 +101,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         )}
       >
         <div className="flex items-center justify-between border-b border-pork-cream/10 p-5">
-          <Link href="/admin" className="headline text-2xl text-pork-mustard">
+          <Link
+            href={adminEntryHref}
+            className="headline text-2xl text-pork-mustard"
+          >
             Be Pork · gestione
           </Link>
           <button

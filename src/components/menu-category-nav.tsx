@@ -34,18 +34,18 @@ export function MenuCategoryNav({ categories }: { categories: MenuCategory[] }) 
   }, [categoryIds]);
 
   return (
-    <div className="sticky top-[76px] z-30 -mx-5 overflow-x-hidden border-y border-pork-ink/10 bg-pork-cream/95 backdrop-blur-lg sm:-mx-8 md:top-[88px] lg:-mx-12">
+    <div className="sticky z-30 -mx-5 overflow-x-hidden border-y border-pork-ink/10 bg-pork-cream/95 backdrop-blur-lg sm:-mx-8 lg:-mx-12 top-[calc(4.75rem+env(safe-area-inset-top))] md:top-[calc(5.5rem+env(safe-area-inset-top))]">
       <div className="container-wide">
         <nav
           aria-label="Categorie del menu"
-          className="flex gap-2 overflow-x-auto py-4 md:py-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="touch-pan-x flex gap-2 overflow-x-auto overscroll-x-contain py-4 pl-0.5 pr-1 [-webkit-overflow-scrolling:touch] md:py-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {categories.map((c) => (
             <a
               key={c.id}
               href={`#${c.id}`}
               className={cn(
-                "shrink-0 rounded-full px-4 py-2 text-sm font-bold transition-all",
+                "shrink-0 snap-start rounded-full px-4 py-2.5 text-sm font-bold transition-all sm:py-2",
                 active === c.id
                   ? "bg-pork-ink text-pork-cream shadow-md"
                   : "bg-transparent text-pork-ink/70 hover:bg-pork-ink/5 hover:text-pork-ink"

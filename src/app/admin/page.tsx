@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import {
   ChefHat,
   ClipboardList,
@@ -15,7 +16,11 @@ import { formatEuro } from "@/lib/price-utils";
 import { useHydrated } from "@/components/providers";
 
 export default function AdminHome() {
+  const router = useRouter();
   const hydrated = useHydrated();
+  const [settingsReady, setSettingsReady] = useState(() =>
+    useSettingsStore.persist.hasHydrated(),
+  );
   const items = useMenuStore((s) => s.items);
   const orders = useMenuStore((s) => s.orders);
   const sessions = useMenuStore((s) => s.sessions);
@@ -24,6 +29,22 @@ export default function AdminHome() {
   const kitchenOn = useSettingsStore((s) => s.kitchenDisplayEnabled);
   const showOrdini = allowTakeaway || allowTableOrders;
   const showTavoli = allowTableOrders;
+  const ordersModuleOn = showOrdini;
+
+  useEffect(() => {
+    if (useSettingsStore.persist.hasHydrated()) {
+      setSettingsReady(true);
+      return;
+    }
+    return useSettingsStore.persist.onFinishHydration(() => {
+      setSettingsReady(true);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!settingsReady) return;
+    if (!ordersModuleOn) router.replace("/admin/menu");
+  }, [settingsReady, ordersModuleOn, router]);
 
   const stats = useMemo(() => {
     const total = items.length;
@@ -46,6 +67,10 @@ export default function AdminHome() {
     const tablesOpen = sessions.filter((s) => s.status === "aperta").length;
     return { total, unavailable, openOrders, todayRevenue, tablesOpen };
   }, [items, orders, sessions]);
+
+  if (!settingsReady || !ordersModuleOn) {
+    return <p className="text-pork-ink/50">Caricamento…</p>;
+  }
 
   return (
     <div className="space-y-8">

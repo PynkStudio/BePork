@@ -26,7 +26,7 @@ export function ShopFabs() {
 
   return (
     <div
-      className="pointer-events-none fixed right-4 top-20 z-40 flex flex-col items-end gap-2 sm:right-6 sm:top-24"
+      className="pointer-events-none fixed right-4 z-40 flex flex-col items-end gap-2 sm:right-6 top-[calc(5rem+env(safe-area-inset-top))] sm:top-[calc(6rem+env(safe-area-inset-top))]"
       aria-label="Azioni rapide"
     >
       <div className="pointer-events-auto flex flex-col items-stretch gap-2">
@@ -46,6 +46,7 @@ export function ShopFabs() {
         {showCart && (
           <button
             type="button"
+            data-cart-fab-target
             onClick={() => setOpen(true)}
             className={fabClass}
             aria-label={`Carrello: ${cartQty} elementi`}

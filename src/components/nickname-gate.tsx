@@ -19,8 +19,7 @@ export function NicknameGate({
       <p className="impact-title text-xs text-pork-red">Chi sei?</p>
       <h2 className="headline text-3xl">Come ti chiamiamo?</h2>
       <p className="mt-1 text-sm text-pork-ink/60">
-        Serve solo a distinguere i tuoi ordini da quelli degli altri commensali
-        al tuo tavolo. Niente di pi&ugrave;.
+        Cos&igrave; il tuo ordine resta separato da quello degli altri al tavolo.
       </p>
       <form
         onSubmit={(e) => {

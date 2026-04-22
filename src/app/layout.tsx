@@ -74,6 +74,7 @@ export const viewport: Viewport = {
   themeColor: "#141010",
   width: "device-width",
   initialScale: 1,
+  viewportFit: "cover",
 };
 
 const restaurantSchema = {

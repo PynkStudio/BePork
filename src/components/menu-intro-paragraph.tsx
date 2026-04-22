@@ -27,27 +27,25 @@ function introParts(allowTakeaway: boolean, allowTableOrders: boolean): {
   if (allowTakeaway && allowTableOrders) {
     return {
       body:
-        "Da qui puoi ordinare per asporto: tocca il + sulle pietanze e completa l'ordine. Se sei al tavolo, inquadra il QR appoggiato sul tavolo oppure usa il link qui sotto.",
+        "Aggiungi dal menu con il +. Asporto: chiudi l’ordine da qui. Al tavolo: QR sul tavolo oppure",
       showTableCta: true,
     };
   }
   if (allowTakeaway && !allowTableOrders) {
     return {
       body:
-        "Tocca il + per comporre l'ordine da asporto. Il cuore salva i preferiti. L'ordine al tavolo dal sito non è attivo: in sala segui le indicazioni dello staff.",
+        "Aggiungi con il +; il cuore salva i preferiti. Chiudi l’ordine quando sei pronto.",
       showTableCta: false,
     };
   }
   if (!allowTakeaway && allowTableOrders) {
     return {
-      body:
-        "Il cuore salva i preferiti. Per ordinare al tavolo inquadra il QR sul tavolo oppure usa il link qui sotto. L'asporto online non è disponibile da questa pagina.",
+      body: "Il cuore salva i preferiti. Scansiona il QR in sala oppure",
       showTableCta: true,
     };
   }
   return {
-    body:
-      "Tocca il cuore per tenere i piatti nei preferiti. Da questa pagina l'ordine online non è disponibile: rivolgiti al personale.",
+    body: "Sfoglia i piatti e tieni i preferiti col cuore.",
     showTableCta: false,
   };
 }

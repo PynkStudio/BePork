@@ -4,7 +4,6 @@ import { useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { MenuCardInteractive } from "./menu-card-interactive";
 import { MenuCategoryNav } from "./menu-category-nav";
-import { MenuCopertoNote } from "./menu-coperto-note";
 import { MenuDisclaimer } from "./menu-disclaimer";
 import {
   useMenuStore,
@@ -79,13 +78,13 @@ export function InteractiveMenu({
     <>
       <MenuCategoryNav categories={categoryNavCategories} />
 
-      <div className="bg-pork-cream pb-32 pt-10">
+      <div className="bg-pork-cream pb-[max(8rem,calc(6rem+env(safe-area-inset-bottom)))] pt-10">
         <div className="container-wide space-y-20">
           {populatedCategories.map((category) => (
             <section
               key={category.id}
               id={category.id}
-              className="scroll-mt-40"
+              className="scroll-mt-[calc(10.5rem+env(safe-area-inset-top))] md:scroll-mt-[calc(11.5rem+env(safe-area-inset-top))]"
             >
               <header className="mb-8 flex flex-col gap-2 border-b-2 border-pork-ink/10 pb-4">
                 <span className="impact-title text-sm text-pork-red">
@@ -104,7 +103,6 @@ export function InteractiveMenu({
           ))}
 
           <div className="space-y-6 pt-10">
-            <MenuCopertoNote />
             <MenuDisclaimer />
           </div>
         </div>

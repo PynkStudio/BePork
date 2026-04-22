@@ -23,7 +23,8 @@ export type SettingsStore = SiteSettingsState & {
   resetDefaults: () => void;
 };
 
-const defaults: SiteSettingsState = {
+/** Valori di default delle impostazioni sito (anche per testi legali SSR). */
+export const SITE_SETTINGS_DEFAULTS: SiteSettingsState = {
   dinerSeparationAtTables: false,
   allowTakeaway: true,
   allowTableOrders: true,
@@ -36,12 +37,12 @@ const defaults: SiteSettingsState = {
 export const useSettingsStore = create<SettingsStore>()(
   persist(
     (set) => ({
-      ...defaults,
+      ...SITE_SETTINGS_DEFAULTS,
       set: (patch) => set((s) => ({ ...s, ...patch })),
       resetDefaults: () =>
         set((prev) => ({
           ...prev,
-          ...defaults,
+          ...SITE_SETTINGS_DEFAULTS,
           hoursWeek: defaultHoursWeek(),
         })),
     }),

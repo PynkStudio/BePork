@@ -12,7 +12,7 @@ import {
 
 export function Footer() {
   return (
-    <footer className="relative mt-16 bg-pork-ink text-pork-cream">
+    <footer className="relative mt-16 bg-pork-ink pb-[env(safe-area-inset-bottom)] text-pork-cream">
       <div className="container-wide grid gap-12 pt-16 pb-8 md:grid-cols-4">
         <div className="md:col-span-2">
           <div className="flex items-center gap-4">
@@ -91,6 +91,36 @@ export function Footer() {
             >
               <Lock size={10} /> Staff
             </Link>
+          </p>
+          <p className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <span className="flex flex-wrap gap-x-4 gap-y-1">
+              <Link
+                href="/privacy"
+                className="text-pork-cream/55 transition-colors hover:text-pork-mustard hover:underline"
+              >
+                Privacy
+              </Link>
+              <Link
+                href="/cookie"
+                className="text-pork-cream/55 transition-colors hover:text-pork-mustard hover:underline"
+              >
+                Cookie
+              </Link>
+            </span>
+            <span className="hidden text-pork-cream/25 sm:inline" aria-hidden>
+              ·
+            </span>
+            <span>
+              Realizzato da{" "}
+              <a
+                href="https://pynkstudio.it"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-pork-cream/70 transition-colors hover:text-pork-mustard hover:underline"
+              >
+                PynkStudio
+              </a>
+            </span>
           </p>
         </div>
       </div>

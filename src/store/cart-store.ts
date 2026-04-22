@@ -25,9 +25,12 @@ export interface CartState {
   addLine: (line: Omit<CartLine, "lineId">) => void;
   incLine: (lineId: string, delta: number) => void;
   removeLine: (lineId: string) => void;
+  replaceLine: (lineId: string, line: Omit<CartLine, "lineId">) => void;
   setLineNote: (lineId: string, note: string) => void;
   clear: () => void;
   setOpen: (open: boolean) => void;
+  /** Toglie una unità da una riga qualsiasi con questo `itemId` (ordine inverso delle righe). */
+  decOneUnitOfItem: (itemId: string) => void;
 }
 
 export const useCartStore = create<CartState>()(
@@ -65,14 +68,44 @@ export const useCartStore = create<CartState>()(
       removeLine: (lineId) =>
         set((s) => ({ lines: s.lines.filter((l) => l.lineId !== lineId) })),
 
+      replaceLine: (lineId, line) =>
+        set((s) => ({
+          lines: s.lines.map((l) =>
+            l.lineId === lineId ? { ...line, lineId } : l,
+          ),
+        })),
+
       setLineNote: (lineId, note) =>
         set((s) => ({
-          lines: s.lines.map((l) => (l.lineId === lineId ? { ...l, note } : l)),
+          lines: s.lines.map((l) =>
+            l.lineId === lineId
+              ? { ...l, note: note.trim() ? note.trim() : undefined }
+              : l,
+          ),
         })),
 
       clear: () => set({ lines: [] }),
 
       setOpen: (openDrawer) => set({ openDrawer }),
+
+      decOneUnitOfItem: (itemId) =>
+        set((s) => {
+          for (let i = s.lines.length - 1; i >= 0; i--) {
+            const l = s.lines[i]!;
+            if (l.itemId !== itemId || l.qty <= 0) continue;
+            if (l.qty <= 1) {
+              return {
+                lines: s.lines.filter((_, j) => j !== i),
+              };
+            }
+            return {
+              lines: s.lines.map((x, j) =>
+                j === i ? { ...x, qty: x.qty - 1 } : x,
+              ),
+            };
+          }
+          return s;
+        }),
     }),
     {
       name: CART_KEY,
@@ -89,6 +122,12 @@ export function cartTotal(lines: CartLine[]): number {
 
 export function cartCount(lines: CartLine[]): number {
   return lines.reduce((acc, l) => acc + l.qty, 0);
+}
+
+export function cartQtyForItem(lines: CartLine[], itemId: string): number {
+  return lines
+    .filter((l) => l.itemId === itemId)
+    .reduce((acc, l) => acc + l.qty, 0);
 }
 
 function sameSet(a?: string[], b?: string[]): boolean {

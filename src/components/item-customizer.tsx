@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Minus, Plus, X } from "lucide-react";
-import type { AdminMenuItem } from "@/lib/types";
+import type { AdminMenuItem, CartLine } from "@/lib/types";
 import { priceVariants, formatEuro } from "@/lib/price-utils";
 import { useCartStore } from "@/store/cart-store";
+import { spawnCartFly } from "@/lib/cart-fly";
 import { cn } from "@/lib/utils";
+import { bodyScrollLock, bodyScrollUnlock } from "@/lib/body-scroll-lock";
 import { AllergenBadges } from "./allergen-badges";
 import { SpicyLevelBadge } from "./spicy-level-badge";
 import { getResolvedPiccanteLevel } from "@/lib/piccante";
@@ -21,28 +23,39 @@ export function needsCustomization(item: AdminMenuItem): boolean {
 export function ItemCustomizer({
   item,
   onClose,
+  editLineId,
+  initialLine,
 }: {
   item: AdminMenuItem;
   onClose: () => void;
+  /** Se impostato, salva sostituendo la riga esistente. */
+  editLineId?: string;
+  initialLine?: CartLine;
 }) {
   const variants = priceVariants(item.price);
   const addLine = useCartStore((s) => s.addLine);
-  const setOpenDrawer = useCartStore((s) => s.setOpen);
+  const replaceLine = useCartStore((s) => s.replaceLine);
+  const addBtnRef = useRef<HTMLButtonElement>(null);
 
-  const [variantKey, setVariantKey] = useState<string>(variants[0].key);
-  const [removed, setRemoved] = useState<string[]>([]);
-  const [extras, setExtras] = useState<string[]>([]);
-  const [note, setNote] = useState("");
-  const [qty, setQty] = useState(1);
+  const [variantKey, setVariantKey] = useState<string>(() => {
+    const first = variants[0]?.key ?? "default";
+    if (!initialLine?.variantKey) return first;
+    return variants.find((v) => v.key === initialLine.variantKey)?.key ?? first;
+  });
+  const [removed, setRemoved] = useState<string[]>(
+    () => initialLine?.removedIngredients ?? [],
+  );
+  const [extras, setExtras] = useState<string[]>(
+    () => initialLine?.addedExtras?.map((e) => e.id) ?? [],
+  );
+  const [note, setNote] = useState(() => initialLine?.note ?? "");
+  const [qty, setQty] = useState(() => initialLine?.qty ?? 1);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
+    bodyScrollLock();
+    return () => bodyScrollUnlock();
   }, []);
 
   useEffect(() => {
@@ -75,7 +88,8 @@ export function ItemCustomizer({
   }
 
   function handleAdd() {
-    addLine({
+    const flyFrom = addBtnRef.current?.getBoundingClientRect();
+    const payload = {
       itemId: item.id,
       categoryId: item.categoryId,
       name: item.name,
@@ -89,9 +103,17 @@ export function ItemCustomizer({
         ? selectedExtras.map((e) => ({ id: e.id, name: e.name, price: e.price }))
         : undefined,
       note: note.trim() || undefined,
-    });
+    };
+    if (editLineId) {
+      replaceLine(editLineId, {
+        ...payload,
+        bundlePicks: initialLine?.bundlePicks,
+      });
+    } else {
+      addLine(payload);
+    }
     onClose();
-    setOpenDrawer(true);
+    spawnCartFly(flyFrom ?? null, item.image ?? null);
   }
 
   if (!mounted) return null;
@@ -102,12 +124,14 @@ export function ItemCustomizer({
       onClick={onClose}
     >
       <div
-        className="flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden rounded-t-3xl bg-pork-cream shadow-2xl sm:max-h-[85vh] sm:rounded-3xl"
+        className="flex max-h-[92dvh] w-full max-w-xl flex-col overflow-hidden rounded-t-3xl bg-pork-cream shadow-2xl sm:max-h-[85dvh] sm:rounded-3xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <header className="flex items-start justify-between gap-3 border-b border-pork-ink/10 px-5 py-4">
+        <header className="flex shrink-0 items-start justify-between gap-3 border-b border-pork-ink/10 px-5 pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:pt-4">
           <div>
-            <p className="impact-title text-xs text-pork-red">Personalizza</p>
+            <p className="impact-title text-xs text-pork-red">
+              {editLineId ? "Modifica" : "Personalizza"}
+            </p>
             <h2 className="headline text-2xl leading-tight">{item.name}</h2>
             {item.description && (
               <p className="mt-1 text-xs text-pork-ink/60">{item.description}</p>
@@ -129,14 +153,14 @@ export function ItemCustomizer({
           <button
             type="button"
             onClick={onClose}
-            className="shrink-0 rounded-full p-2 hover:bg-pork-ink/10"
+            className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full hover:bg-pork-ink/10 active:bg-pork-ink/15"
             aria-label="Chiudi"
           >
             <X size={20} />
           </button>
         </header>
 
-        <div className="flex-1 overflow-y-auto px-5 py-4">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-5 py-4">
           {variants.length > 1 && (
             <Section title="Formato">
               <div className="grid grid-cols-2 gap-2">
@@ -262,37 +286,38 @@ export function ItemCustomizer({
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="Es. ben cotto, senza sale, da dividere…"
-              className="w-full resize-none rounded-xl border-2 border-pork-ink/10 bg-white px-3 py-2 text-sm outline-none focus:border-pork-red"
+              className="w-full resize-none rounded-xl border-2 border-pork-ink/10 bg-white px-3 py-2.5 text-base outline-none focus:border-pork-red sm:text-sm"
             />
           </Section>
         </div>
 
-        <footer className="flex items-center justify-between gap-3 border-t border-pork-ink/10 bg-white px-5 py-4">
+        <footer className="flex shrink-0 items-center justify-between gap-3 border-t border-pork-ink/10 bg-white px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4">
           <div className="inline-flex items-center gap-1 rounded-full bg-pork-cream p-1">
             <button
               type="button"
               onClick={() => setQty((q) => Math.max(1, q - 1))}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white text-pork-ink shadow-sm hover:bg-pork-ink hover:text-pork-cream"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-pork-ink shadow-sm hover:bg-pork-ink hover:text-pork-cream sm:h-9 sm:w-9"
               aria-label="Rimuovi uno"
             >
-              <Minus size={14} />
+              <Minus size={16} />
             </button>
-            <span className="min-w-8 text-center font-bold">{qty}</span>
+            <span className="min-w-9 text-center text-lg font-bold tabular-nums sm:text-base">{qty}</span>
             <button
               type="button"
               onClick={() => setQty((q) => q + 1)}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white text-pork-ink shadow-sm hover:bg-pork-ink hover:text-pork-cream"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-pork-ink shadow-sm hover:bg-pork-ink hover:text-pork-cream sm:h-9 sm:w-9"
               aria-label="Aggiungi uno"
             >
-              <Plus size={14} />
+              <Plus size={16} />
             </button>
           </div>
           <button
+            ref={addBtnRef}
             type="button"
             onClick={handleAdd}
             className="btn-primary flex-1 text-base"
           >
-            Aggiungi · {formatEuro(total)}
+            {editLineId ? "Salva" : "Aggiungi"} · {formatEuro(total)}
           </button>
         </footer>
       </div>

@@ -44,8 +44,7 @@ export function TableOrderEntryModal({
           Entra al tuo tavolo
         </h2>
         <p className="mt-2 text-sm text-pork-ink/65">
-          Numero tavolo e passkey a quattro cifre (solo se il tavolo &egrave; gi&agrave;
-          attivo). Conferma: resti sul menu con il carrello al tavolo.
+          Numero tavolo e, se richiesto, codice a 4 cifre come in sala.
         </p>
         <TableOrderJoinFlow
           key={flowKey}

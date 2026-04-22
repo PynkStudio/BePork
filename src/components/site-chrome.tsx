@@ -6,6 +6,7 @@ import { Footer } from "./footer";
 import { WhatsappFloat } from "./whatsapp-float";
 import { ShopFabs } from "./shop-fabs";
 import { CartDrawer } from "./cart-drawer";
+import { CartFlyOverlay } from "./cart-fly-overlay";
 
 function isInternal(pathname: string | null): boolean {
   if (!pathname) return false;
@@ -20,6 +21,7 @@ export function SiteChrome() {
       <Navbar />
       <WhatsappFloat />
       <ShopFabs />
+      <CartFlyOverlay />
       <CartDrawer />
     </>
   );

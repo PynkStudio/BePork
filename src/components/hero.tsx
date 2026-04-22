@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { MessageCircle, UtensilsCrossed } from "lucide-react";
 import { whatsappUrl } from "@/lib/site-config";
 
 export function Hero() {
+  const reduceMotion = useReducedMotion();
   return (
-    <section className="relative isolate overflow-hidden bg-pork-ink pt-28 pb-20 text-pork-cream md:pt-36 md:pb-28">
+    <section className="relative isolate overflow-hidden bg-pork-ink pb-20 pt-[calc(7rem+env(safe-area-inset-top))] text-pork-cream md:pb-28 md:pt-[calc(9rem+env(safe-area-inset-top))]">
       <div className="absolute inset-0 -z-10">
         <Image
           src="/photos/burger-esagerato.png"
@@ -16,7 +17,7 @@ export function Hero() {
           fill
           priority
           sizes="100vw"
-          className="animate-slow-zoom object-cover opacity-40"
+          className={reduceMotion ? "object-cover opacity-40" : "animate-slow-zoom object-cover opacity-40"}
         />
         <div className="absolute inset-0 bg-gradient-to-br from-pork-ink via-pork-ink/80 to-pork-brick/60" />
         <div className="absolute inset-0 bg-gradient-to-t from-pork-ink via-transparent to-transparent" />
@@ -25,9 +26,11 @@ export function Hero() {
       <div className="container-wide relative">
         <div className="grid gap-10 lg:grid-cols-[1.3fr_1fr] lg:items-center">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={reduceMotion ? false : { opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: "easeOut" }}
+            transition={
+              reduceMotion ? { duration: 0 } : { duration: 0.7, ease: "easeOut" }
+            }
             className="max-w-3xl"
           >
             <span className="inline-flex items-center gap-2 rounded-full bg-pork-mustard/15 px-4 py-1.5 text-xs font-black uppercase tracking-widest text-pork-mustard ring-1 ring-pork-mustard/30">
@@ -60,9 +63,13 @@ export function Hero() {
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, scale: 0.92, rotate: -6 }}
+            initial={reduceMotion ? false : { opacity: 0, scale: 0.92, rotate: -6 }}
             animate={{ opacity: 1, scale: 1, rotate: -4 }}
-            transition={{ duration: 0.8, delay: 0.1, ease: "easeOut" }}
+            transition={
+              reduceMotion
+                ? { duration: 0 }
+                : { duration: 0.8, delay: 0.1, ease: "easeOut" }
+            }
             className="relative hidden lg:block"
           >
             <div className="relative mx-auto aspect-square w-full max-w-md isolate">

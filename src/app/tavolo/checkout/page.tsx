@@ -145,11 +145,10 @@ function CheckoutTavoloBody() {
           {!sessionStillOpen ? (
             <div className="rounded-3xl bg-white p-12 text-center ring-1 ring-pork-ink/5">
               <p className="impact-title text-2xl text-pork-red">
-                La tua sessione &egrave; stata chiusa.
+                Conto chiuso.
               </p>
               <p className="mt-2 text-pork-ink/60">
-                Lo staff ha chiuso il conto del tavolo. Per fare un nuovo ordine
-                scansiona di nuovo il QR code o chiedi al bancone.
+                Per un nuovo ordine scansiona di nuovo il QR o chiedi al bancone.
               </p>
               <button
                 type="button"
@@ -179,8 +178,7 @@ function CheckoutTavoloBody() {
               >
                 <h2 className="headline text-3xl">Note per la cucina</h2>
                 <p className="mt-2 text-sm text-pork-ink/60">
-                  Allergie, intolleranze, preferenze. Qualsiasi cosa la cucina
-                  debba sapere.
+                  Allergie, tempi di cottura o altre richieste.
                 </p>
 
                 <label className="mt-5 block">
@@ -227,9 +225,6 @@ function CheckoutTavoloBody() {
                       <div className="min-w-0">
                         <p className="font-semibold leading-tight">
                           1 × {COPERTO_DISPLAY_NAME}
-                        </p>
-                        <p className="text-[11px] text-pork-cream/50">
-                          Una tantum per commensale, primo invio in cucina
                         </p>
                       </div>
                       <span className="shrink-0 font-impact text-lg">

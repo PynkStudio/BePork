@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { Menu, X, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { bodyScrollLock, bodyScrollUnlock } from "@/lib/body-scroll-lock";
 import { whatsappUrl } from "@/lib/site-config";
 import { useSettingsStore } from "@/store/settings-store";
 
@@ -35,17 +36,16 @@ export function Navbar() {
   }, []);
 
   useEffect(() => {
-    document.body.style.overflow = open ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
+    if (!open) return;
+    bodyScrollLock();
+    return () => bodyScrollUnlock();
   }, [open]);
 
   return (
     <>
       <header
         className={cn(
-          "fixed inset-x-0 top-0 z-50 transition-all duration-300",
+          "fixed inset-x-0 top-0 z-50 pt-[env(safe-area-inset-top)] transition-all duration-300",
           scrolled
             ? "bg-pork-cream shadow-md"
             : "bg-transparent"
@@ -103,19 +103,19 @@ export function Navbar() {
       <div
         aria-hidden={!open}
         className={cn(
-          "fixed inset-0 z-[60] bg-pork-ink transition-opacity duration-300 lg:hidden",
+          "fixed inset-0 z-[60] min-h-dvh bg-pork-ink transition-opacity duration-300 ease-out lg:hidden",
           open ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
         )}
       >
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(245,197,24,0.18),transparent_60%),radial-gradient(circle_at_bottom_left,rgba(184,51,46,0.28),transparent_55%)]" />
-        <div className="container-wide relative flex h-full flex-col justify-between pt-28 pb-12">
-          <nav className="flex flex-col gap-2" aria-label="Mobile">
+        <div className="container-wide relative flex min-h-dvh flex-col justify-between pb-[max(3rem,env(safe-area-inset-bottom))] pt-[calc(7rem+env(safe-area-inset-top))]">
+          <nav className="flex flex-col gap-1" aria-label="Mobile">
             {nav.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setOpen(false)}
-                className="headline block text-5xl text-pork-cream hover:text-pork-mustard"
+                className="headline block py-1 text-4xl text-pork-cream active:text-pork-mustard sm:text-5xl"
               >
                 {item.label}
               </Link>

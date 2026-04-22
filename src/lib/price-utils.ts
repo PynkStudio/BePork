@@ -1,10 +1,20 @@
 import type { PriceFormat } from "./menu-data";
+import type { AdminMenuItem } from "./types";
 
 export type PriceVariant = {
   key: string;
   label?: string;
   price: number;
 };
+
+/** Solo prezzi multipli, senza ingredienti/extra da configurare. */
+export function hasOnlyPriceVariants(item: AdminMenuItem): boolean {
+  const v = priceVariants(item.price);
+  if (v.length <= 1) return false;
+  const hasIng = (item.ingredients?.length ?? 0) > 0;
+  const hasEx = (item.extras?.length ?? 0) > 0;
+  return !hasIng && !hasEx;
+}
 
 export function priceVariants(price: PriceFormat): PriceVariant[] {
   switch (price.kind) {

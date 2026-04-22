@@ -148,11 +148,11 @@ export function TableOrderJoinFlow({
     } else {
       const pk = menuPasskey.replace(/\D/g, "");
       if (pk.length < 4) {
-        setError("Inserisci la passkey a 4 cifre del tavolo.");
+        setError("Inserisci il codice a 4 cifre.");
         return;
       }
       if (pk !== active.code) {
-        setError("Passkey non valida per questo tavolo.");
+        setError("Codice non corretto per questo tavolo.");
         return;
       }
     }
@@ -184,7 +184,7 @@ export function TableOrderJoinFlow({
 
     const fresh = selectActiveSession(useMenuStore.getState().sessions, table.id);
     if (!fresh) {
-      setError("Sessione non più attiva. Riprova.");
+      setError("Tavolo non più attivo. Riprova.");
       setMenuNicknameCtx(null);
       return;
     }
@@ -226,14 +226,14 @@ export function TableOrderJoinFlow({
           </label>
           <label className="block text-left">
             <span className="text-xs font-bold uppercase tracking-wide text-pork-ink/50">
-              Passkey
+              Codice (4 cifre)
             </span>
             <input
               type="tel"
               inputMode="numeric"
               pattern="[0-9]*"
               maxLength={4}
-              placeholder="4 cifre se il tavolo è già attivo"
+              placeholder="solo se il tavolo è già attivo"
               value={menuPasskey}
               onChange={(e) =>
                 setMenuPasskey(e.target.value.replace(/\D/g, ""))
@@ -241,8 +241,7 @@ export function TableOrderJoinFlow({
               className="mt-1 w-full rounded-xl border-2 border-pork-ink/10 bg-white px-3 py-3 text-center font-impact text-2xl tracking-[0.3em] outline-none focus:border-pork-red"
             />
             <span className="mt-1 block text-xs text-pork-ink/50">
-              Se siete i primi a sedervi, lascia vuoto: apriamo il tavolo. Se
-              avete già iniziato, inserisci il codice che vedete sullo schermo.
+              Primi seduti? Lascia vuoto. Già al tavolo? Il codice che vedi in sala.
             </span>
           </label>
           {error && (
@@ -294,9 +293,8 @@ export function TableOrderJoinFlow({
       ) : (
         <form onSubmit={submitCode} className="space-y-3">
           <p className="text-left text-sm text-pork-ink/70">
-            C&apos;&egrave; gi&agrave; una sessione su{" "}
-            <strong>{resolvedTable?.label}</strong>. Inserisci il codice a 4 cifre
-            che vedi sul tavolo o che ti ha passato chi &egrave; arrivato prima.
+            Su <strong>{resolvedTable?.label}</strong> &egrave; gi&agrave; aperto un
+            ordine. Inserisci il codice a 4 cifre che vedi in sala.
           </p>
           <input
             type="tel"

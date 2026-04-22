@@ -95,11 +95,11 @@ export default function OrdinaPage() {
   if (hydrated && !takeawayOk) {
     return (
       <div className="container-wide py-32 text-center">
-        <p className="impact-title text-pork-red">Asporto non disponibile</p>
-        <h1 className="headline mt-2 text-4xl">Ordina dal tavolo</h1>
+        <p className="impact-title text-pork-red">Percorso non attivo</p>
+        <h1 className="headline mt-2 text-4xl">Torna al menu</h1>
         <p className="mx-auto mt-3 max-w-md text-pork-ink/65">
-          Gli ordini da asporto sono stati disattivati. Scansiona il QR sul tavolo
-          oppure chiedi al bancone.
+          Da qui non si completa un ordine digitale. Il menu resta disponibile in
+          home.
         </p>
         <Link href="/menu" className="btn-primary mt-8 inline-flex">
           Vai al menu
