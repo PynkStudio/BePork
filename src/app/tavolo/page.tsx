@@ -17,6 +17,7 @@ import { formatEuro } from "@/lib/price-utils";
 import { getClientId } from "@/lib/client-id";
 import type { TableSession, Table } from "@/lib/types";
 import { TableOrderJoinFlow } from "@/components/table-order-join-flow";
+import { NicknameGate } from "@/components/nickname-gate";
 
 function sameTavoloSessionBinding(
   a: CartContext,
@@ -390,59 +391,6 @@ function SessionBadge({
         )}
       </div>
     </section>
-  );
-}
-
-function NicknameGate({
-  initialSuggestion,
-  onSubmit,
-}: {
-  initialSuggestion: string;
-  onSubmit: (nick: string) => void;
-}) {
-  const [value, setValue] = useState("");
-
-  return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-pork-ink/90 p-5">
-      <div className="w-full max-w-md rounded-3xl bg-pork-cream p-6 shadow-2xl">
-        <p className="impact-title text-xs text-pork-red">Chi sei?</p>
-        <h2 className="headline text-3xl">Come ti chiamiamo?</h2>
-        <p className="mt-1 text-sm text-pork-ink/60">
-          Serve solo a distinguere i tuoi ordini da quelli degli altri commensali
-          al tuo tavolo. Niente di pi&ugrave;.
-        </p>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            const v = value.trim() || initialSuggestion;
-            onSubmit(v);
-          }}
-          className="mt-4 space-y-3"
-        >
-          <input
-            type="text"
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            placeholder={initialSuggestion}
-            maxLength={24}
-            autoFocus
-            className="w-full rounded-xl border-2 border-pork-ink/10 bg-white px-4 py-3 text-lg outline-none focus:border-pork-red"
-          />
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => onSubmit(initialSuggestion)}
-              className="btn-ghost flex-1 text-sm"
-            >
-              Salta
-            </button>
-            <button type="submit" className="btn-primary flex-1 text-sm">
-              Iniziamo
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
   );
 }
 

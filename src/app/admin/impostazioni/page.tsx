@@ -14,8 +14,9 @@ import {
   hoursWeekEquals,
   sanitizeHoursWeek,
 } from "@/lib/venue-hours";
+import { cn } from "@/lib/utils";
 
-function Toggle({
+function ModuleToggle({
   label,
   description,
   checked,
@@ -27,18 +28,49 @@ function Toggle({
   onChange: (v: boolean) => void;
 }) {
   return (
-    <label className="flex cursor-pointer items-start justify-between gap-4 rounded-2xl border-2 border-pork-ink/10 bg-white p-4">
-      <div>
-        <p className="font-bold">{label}</p>
-        <p className="mt-1 text-sm text-pork-ink/60">{description}</p>
+    <div className="rounded-2xl border-2 border-pork-ink/10 bg-white p-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 flex-1">
+          <p className="font-bold">{label}</p>
+          <p className="mt-1 text-sm text-pork-ink/60">{description}</p>
+        </div>
+        <div className="flex shrink-0 flex-col items-stretch gap-1.5 sm:items-end">
+          <span className="text-[10px] font-bold uppercase tracking-wide text-pork-ink/45">
+            Stato sul sito
+          </span>
+          <div
+            className="inline-flex rounded-full bg-pork-ink/10 p-0.5"
+            role="group"
+            aria-label={`${label}: stato servizio`}
+          >
+            <button
+              type="button"
+              onClick={() => onChange(false)}
+              className={cn(
+                "rounded-full px-3 py-2 text-xs font-bold transition sm:min-w-[5.5rem]",
+                !checked
+                  ? "bg-white text-pork-ink shadow-sm ring-1 ring-pork-ink/10"
+                  : "text-pork-ink/45 hover:text-pork-ink/70",
+              )}
+            >
+              Non attivo
+            </button>
+            <button
+              type="button"
+              onClick={() => onChange(true)}
+              className={cn(
+                "rounded-full px-3 py-2 text-xs font-bold transition sm:min-w-[5.5rem]",
+                checked
+                  ? "bg-pork-red text-white shadow-sm"
+                  : "text-pork-ink/45 hover:text-pork-ink/70",
+              )}
+            >
+              Attivo
+            </button>
+          </div>
+        </div>
       </div>
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-        className="mt-1 h-5 w-5 shrink-0 accent-pork-red"
-      />
-    </label>
+    </div>
   );
 }
 
@@ -95,43 +127,45 @@ export default function AdminImpostazioniPage() {
         <p className="impact-title text-xs text-pork-red">Staff</p>
         <h1 className="headline text-4xl">Impostazioni</h1>
         <p className="mt-1 text-pork-ink/60">
-          Controlli del mockup: flussi, cucina e informazioni mostrate al pubblico.
+          Moduli per ospiti e squadra, più i recapiti e gli orari mostrati al pubblico.
         </p>
         <p className="mt-3 rounded-xl bg-pork-mustard/25 px-4 py-3 text-sm text-pork-ink/80 ring-1 ring-pork-mustard/40">
-          <strong>Demo persistente:</strong> i quattro interruttori sotto si salvano subito nel
-          browser (localStorage <code className="rounded bg-white/60 px-1">bepork-settings-v1</code>
-          ). Telefono, indirizzo e orari si confermano con &quot;Salva info locale&quot;. Il menu
-          e gli ordini restano su{" "}
-          <code className="rounded bg-white/60 px-1">bepork-menu-v1</code>.
+          <strong>Anteprima:</strong> gli interruttori dei moduli hanno effetto subito su questo
+          dispositivo. Telefono, indirizzo e orari si applicano quando tocchi
+          &quot;Salva modifiche&quot;. In produzione, l’attivazione di alcuni moduli potrà essere
+          legata al tuo piano o a un acquisto dedicato: qui puoi provare liberamente le
+          combinazioni.
         </p>
       </header>
 
       <section className="space-y-4">
-        <h2 className="impact-title text-sm text-pork-ink/70">Funzionalità</h2>
-        <p className="text-xs text-pork-ink/50">
-          Attiva/disattiva: il cambiamento è immediato sulle pagine pubbliche (stesso browser).
+        <h2 className="impact-title text-sm text-pork-ink/70">Moduli del locale</h2>
+        <p className="text-xs text-pork-ink/55">
+          Decidi cosa resta disponibile per chi visita il sito e per la cucina. Ogni voce è un
+          servizio distinto: in versione definitiva potrebbe richiedere abbonamento o acquisto
+          singolo; in anteprima lo attivi o lo spegni senza costi.
         </p>
-        <Toggle
+        <ModuleToggle
           label="Ordini da asporto"
-          description="Se disattivo, il carrello e l’invio ordine sono possibili solo dalla pagina tavolo (QR / codice)."
+          description="Permette di compilare il carrello e inviare l’ordine per il ritiro al bancone. Se lo spegni, il percorso asporto sparisce e si resta sul menu e sul tavolo tramite invito del locale."
           checked={settings.allowTakeaway}
           onChange={(v) => setSettings({ allowTakeaway: v })}
         />
-        <Toggle
+        <ModuleToggle
           label="Ordini al tavolo"
-          description="Se disattivo, /tavolo non accetta ordini: resta il menu interattivo con i preferiti, senza carrello al tavolo."
+          description="Abilita carrello e invio ordine quando i commensali entrano con QR o codice tavolo. Se lo spegni, restano menu e preferiti senza ordinazione digitale al tavolo."
           checked={settings.allowTableOrders}
           onChange={(v) => setSettings({ allowTableOrders: v })}
         />
-        <Toggle
-          label="Kitchen display"
-          description="Se disattivo, la pagina /cucina mostra solo un avviso (nessun flusso in cucina)."
+        <ModuleToggle
+          label="Schermo cucina"
+          description="Mostra alla squadra in cucina la coda ordini in tempo reale. Se lo spegni, la vista dedicata non è più disponibile (resta un messaggio di servizio non attivo)."
           checked={settings.kitchenDisplayEnabled}
           onChange={(v) => setSettings({ kitchenDisplayEnabled: v })}
         />
-        <Toggle
-          label="Commensali al tavolo (ordini separati)"
-          description="Se attivo, ogni dispositivo indica un nome e gli ordini restano distinti in cucina e in cassa. Se disattivo, un solo conteggio per tavolo (righe sommate in cucina e nel riepilogo chiusura)."
+        <ModuleToggle
+          label="Commensali distinti al tavolo"
+          description="Se attivo, ogni telefono indica un nome e gli ordini restano separati in cucina e in cassa. Se non attivo, un unico conto per tavolo con righe unite nel riepilogo."
           checked={settings.dinerSeparationAtTables}
           onChange={(v) => setSettings({ dinerSeparationAtTables: v })}
         />
@@ -155,7 +189,7 @@ export default function AdminImpostazioniPage() {
 
         <div>
           <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-pork-ink/60">
-            Telefono (mostrato e link tel:)
+            Telefono (contatti e chiamata da smartphone)
           </label>
           <input
             type="text"
@@ -185,7 +219,7 @@ export default function AdminImpostazioniPage() {
           disabled={!dirtyVenue}
           className="btn-primary text-sm disabled:pointer-events-none disabled:opacity-40"
         >
-          <Save size={16} /> Salva info locale
+          <Save size={16} /> Salva modifiche
         </button>
       </section>
 
@@ -194,9 +228,9 @@ export default function AdminImpostazioniPage() {
           <AlertTriangle size={16} /> Zona pericolosa
         </h2>
         <p className="mt-2 text-sm text-pork-ink/70">
-          Ripristina menu, prezzi, disponibilità, tavoli, sessioni e ordini ai dati
-          iniziali del mockup. Le impostazioni di questa pagina non vengono cancellate
-          (usa &quot;Ripristina impostazioni&quot; sotto se serve).
+          Riporta piatti, prezzi, disponibilità, tavoli, sessioni e ordini allo stato iniziale
+          fornito da Be Pork. Le scelte di questa pagina (moduli e recapiti) non cambiano: per
+          quelle usa &quot;Ripristina impostazioni&quot; qui sotto.
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
           <button
@@ -204,7 +238,7 @@ export default function AdminImpostazioniPage() {
             onClick={() => {
               if (
                 confirm(
-                  "Ripristinare menu, ordini, tavoli e sessioni ai valori iniziali?",
+                  "Ripristinare menu, ordini, tavoli e sessioni allo stato iniziale?",
                 )
               ) {
                 resetMenu();
@@ -212,7 +246,7 @@ export default function AdminImpostazioniPage() {
             }}
             className="inline-flex items-center gap-2 rounded-full bg-pork-ink px-5 py-2.5 text-sm font-bold text-pork-cream hover:bg-pork-red"
           >
-            <RotateCcw size={16} /> Reset dati menu e ordini
+            <RotateCcw size={16} /> Ripristina menu e ordini
           </button>
           <button
             type="button"

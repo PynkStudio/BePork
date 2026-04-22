@@ -1,6 +1,9 @@
 import Image from "next/image";
 import { Flame, Leaf, Star } from "lucide-react";
 import type { MenuItem } from "@/lib/menu-data";
+import { AllergenBadges } from "./allergen-badges";
+import { SpicyLevelBadge } from "./spicy-level-badge";
+import { getResolvedPiccanteLevel } from "@/lib/piccante";
 import { PriceSticker } from "./price-sticker";
 import { cn } from "@/lib/utils";
 
@@ -76,6 +79,7 @@ function formatPriceChunks(price: MenuItem["price"]): {
 
 export function MenuCard({ item, compact }: { item: MenuItem; compact?: boolean }) {
   const prices = formatPriceChunks(item.price);
+  const spicyLevel = getResolvedPiccanteLevel(item);
 
   return (
     <article
@@ -141,21 +145,25 @@ export function MenuCard({ item, compact }: { item: MenuItem; compact?: boolean 
               {item.abv} vol.
             </span>
           )}
-          {item.tags?.map((t) => {
-            const meta = tagMeta[t];
-            return (
-              <span
-                key={t}
-                className={cn(
-                  "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide",
-                  meta.className
-                )}
-              >
-                {meta.icon}
-                {meta.label}
-              </span>
-            );
-          })}
+          <AllergenBadges allergens={item.allergens} />
+          {spicyLevel ? <SpicyLevelBadge level={spicyLevel} /> : null}
+          {item.tags
+            ?.filter((t) => t !== "piccante")
+            .map((t) => {
+              const meta = tagMeta[t];
+              return (
+                <span
+                  key={t}
+                  className={cn(
+                    "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide",
+                    meta.className
+                  )}
+                >
+                  {meta.icon}
+                  {meta.label}
+                </span>
+              );
+            })}
         </div>
       </div>
     </article>

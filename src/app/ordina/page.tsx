@@ -186,7 +186,8 @@ export default function OrdinaPage() {
                   Invia ordine ({formatEuro(total)})
                 </button>
                 <p className="mt-2 text-center text-[11px] text-pork-ink/50">
-                  Mockup demo — ordine inviato alla cucina interna, nessun pagamento.
+                  L’ordine arriva in cucina; il pagamento avviene al ritiro al bancone, salvo
+                  diverse indicazioni del locale.
                 </p>
               </form>
 

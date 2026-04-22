@@ -447,7 +447,7 @@ function QrModal({
             invitare gli altri con il codice a 4 cifre.
           </p>
           <div className="flex w-full items-center gap-2 rounded-xl bg-white px-3 py-2 ring-1 ring-pork-ink/10">
-            <code className="flex-1 truncate text-xs">{url}</code>
+            <span className="flex-1 truncate font-mono text-xs text-pork-ink/80">{url}</span>
             <button
               type="button"
               onClick={copy}

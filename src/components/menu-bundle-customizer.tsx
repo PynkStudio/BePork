@@ -9,6 +9,9 @@ import { useCartStore } from "@/store/cart-store";
 import { useMenuStore } from "@/store/menu-store";
 import { bundleSlotOptionGroups } from "@/lib/menu-bundle";
 import { cn } from "@/lib/utils";
+import { AllergenBadges } from "./allergen-badges";
+import { SpicyLevelBadge } from "./spicy-level-badge";
+import { getResolvedPiccanteLevel } from "@/lib/piccante";
 
 export function MenuBundleCustomizer({
   item,
@@ -93,6 +96,7 @@ export function MenuBundleCustomizer({
   const complete = bundlePicks !== undefined && bundlePicks.length === slots.length;
   const unitPrice = activeVariant?.price ?? 0;
   const total = unitPrice * qty;
+  const spicyLevel = getResolvedPiccanteLevel(item);
 
   function selectChoice(slotId: string, choiceItemId: string) {
     setPickBySlot((prev) => ({ ...prev, [slotId]: choiceItemId }));
@@ -138,6 +142,19 @@ export function MenuBundleCustomizer({
             <h2 className="headline text-2xl leading-tight">{item.name}</h2>
             {item.description && (
               <p className="mt-1 text-xs text-pork-ink/60">{item.description}</p>
+            )}
+            {spicyLevel ? (
+              <div className="mt-2">
+                <SpicyLevelBadge level={spicyLevel} compact />
+              </div>
+            ) : null}
+            {item.allergens && item.allergens.length > 0 && (
+              <div className="mt-2">
+                <p className="impact-title mb-1 text-[10px] text-pork-red">
+                  Allergeni
+                </p>
+                <AllergenBadges allergens={item.allergens} compact />
+              </div>
             )}
           </div>
           <button

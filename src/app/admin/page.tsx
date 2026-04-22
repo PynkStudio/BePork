@@ -19,7 +19,11 @@ export default function AdminHome() {
   const items = useMenuStore((s) => s.items);
   const orders = useMenuStore((s) => s.orders);
   const sessions = useMenuStore((s) => s.sessions);
+  const allowTakeaway = useSettingsStore((s) => s.allowTakeaway);
+  const allowTableOrders = useSettingsStore((s) => s.allowTableOrders);
   const kitchenOn = useSettingsStore((s) => s.kitchenDisplayEnabled);
+  const showOrdini = allowTakeaway || allowTableOrders;
+  const showTavoli = allowTableOrders;
 
   const stats = useMemo(() => {
     const total = items.length;
@@ -48,7 +52,7 @@ export default function AdminHome() {
       <header>
         <h1 className="headline text-4xl">Dashboard</h1>
         <p className="text-pork-ink/60">
-          Panoramica del locale. Menu, ordini, kitchen display.
+          Panoramica del locale: menu, ordini e moduli attivi.
         </p>
       </header>
 
@@ -82,42 +86,44 @@ export default function AdminHome() {
         </div>
       )}
 
-      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <Quick
           href="/admin/menu"
           title="Gestisci menu"
           desc="Disponibilità, prezzi, foto, ingredienti"
           icon={<UtensilsCrossed size={22} />}
         />
-        <Quick
-          href="/admin/ordini"
-          title="Ordini"
-          desc="Vedi e aggiorna gli ordini in corso"
-          icon={<ClipboardList size={22} />}
-        />
-        <Quick
-          href="/admin/tavoli"
-          title="Tavoli & QR"
-          desc="Crea tavoli, stampa QR, chiudi conti"
-          icon={<QrCode size={22} />}
-        />
+        {showOrdini && (
+          <Quick
+            href="/admin/ordini"
+            title="Ordini"
+            desc="Vedi e aggiorna gli ordini in corso"
+            icon={<ClipboardList size={22} />}
+          />
+        )}
+        {showTavoli && (
+          <Quick
+            href="/admin/tavoli"
+            title="Tavoli & QR"
+            desc="Crea tavoli, stampa QR, chiudi conti"
+            icon={<QrCode size={22} />}
+          />
+        )}
         <Quick
           href="/admin/impostazioni"
           title="Impostazioni"
-          desc="Funzionalità, orari, reset dati e mock"
+          desc="Moduli del sito, orari, contatti e ripristini"
           icon={<Settings size={22} />}
         />
-        <Quick
-          href="/cucina"
-          title="Kitchen display"
-          desc={
-            kitchenOn
-              ? "Pagina dedicata per il monitor in cucina"
-              : "Disattivato — riattivalo da Impostazioni"
-          }
-          icon={<ChefHat size={22} />}
-          external
-        />
+        {kitchenOn && (
+          <Quick
+            href="/cucina"
+            title="Schermo cucina"
+            desc="Coda ordini per il monitor in cucina"
+            icon={<ChefHat size={22} />}
+            external
+          />
+        )}
       </div>
     </div>
   );

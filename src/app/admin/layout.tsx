@@ -4,7 +4,7 @@ import { AuthGate } from "@/components/admin/auth-gate";
 import { AdminLayoutSwitch } from "@/components/admin/admin-layout-switch";
 
 export const metadata: Metadata = {
-  title: "Admin",
+  title: "Gestione",
   robots: { index: false, follow: false },
 };
 

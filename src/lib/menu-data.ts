@@ -1,3 +1,7 @@
+import type { MenuAllergen } from "./allergens";
+
+export type { MenuAllergen };
+
 export type PriceFormat =
   | { kind: "single"; value: number }
   | { kind: "sized"; big: number; small: number }
@@ -9,6 +13,16 @@ export type PriceFormat =
     };
 
 export type MenuTag = "firma" | "piccante" | "veg" | "novita";
+
+/** Intensità piccante (tocchi consecutivi su «Piccante» in admin). */
+export type PiccanteLevel = 1 | 2 | 3 | 4;
+
+/** Integrazioni di prezzo mostrate sulla scheda prodotto (non nel footer). */
+export type MenuServiceNoteKey =
+  | "eventi"
+  | "aggiunte"
+  | "senzaLattosio"
+  | "impastoNapoletano";
 
 /** Scelte obbligatorie per menu fissi (es. pizza classica + bibita). */
 export type MenuBundleSlot = {
@@ -25,9 +39,18 @@ export type MenuItem = {
   description?: string;
   price: PriceFormat;
   tags?: MenuTag[];
+  /** Livello piccante se il tag `piccante` è attivo (default in lettura: 1). */
+  piccanteLevel?: PiccanteLevel;
+  /** Allegati Reg. UE 1169/2011 — Allegato II. */
+  allergens?: MenuAllergen[];
   abv?: string;
   image?: string;
   bundleSlots?: MenuBundleSlot[];
+  /**
+   * Note su integrazioni/prezzi: se omesso si usano i default per categoria
+   * (`getMenuServiceNotes`). Array vuoto = nessuna nota sulla scheda.
+   */
+  serviceNotes?: MenuServiceNoteKey[];
 };
 
 export type MenuCategory = {

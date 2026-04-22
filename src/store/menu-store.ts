@@ -169,9 +169,12 @@ export const useMenuStore = create<MenuState>()(
           description: draft.description,
           price: draft.price ?? { kind: "single", value: 0 },
           tags: draft.tags,
+          piccanteLevel: draft.piccanteLevel,
+          allergens: draft.allergens,
           abv: draft.abv,
           image: draft.image,
           ingredients: draft.ingredients,
+          extras: draft.extras,
           bundleSlots: draft.bundleSlots,
         };
         set((s) => ({ items: [...s.items, newItem] }));

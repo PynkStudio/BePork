@@ -59,6 +59,7 @@ export function Navbar() {
               width={56}
               height={56}
               priority
+              unoptimized
               className="h-12 w-12 md:h-14 md:w-14 object-contain transition-transform group-hover:rotate-[-4deg]"
             />
             <span className="sr-only">Be Pork</span>

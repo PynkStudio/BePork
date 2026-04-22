@@ -7,6 +7,9 @@ import type { AdminMenuItem } from "@/lib/types";
 import { priceVariants, formatEuro } from "@/lib/price-utils";
 import { useCartStore } from "@/store/cart-store";
 import { cn } from "@/lib/utils";
+import { AllergenBadges } from "./allergen-badges";
+import { SpicyLevelBadge } from "./spicy-level-badge";
+import { getResolvedPiccanteLevel } from "@/lib/piccante";
 
 export function needsCustomization(item: AdminMenuItem): boolean {
   const variantsCount = priceVariants(item.price).length;
@@ -58,6 +61,7 @@ export function ItemCustomizer({
   const extrasTotal = selectedExtras.reduce((a, e) => a + e.price, 0);
   const unitPrice = activeVariant.price + extrasTotal;
   const total = unitPrice * qty;
+  const spicyLevel = getResolvedPiccanteLevel(item);
 
   function toggleRemove(ing: string) {
     setRemoved((prev) =>
@@ -107,6 +111,19 @@ export function ItemCustomizer({
             <h2 className="headline text-2xl leading-tight">{item.name}</h2>
             {item.description && (
               <p className="mt-1 text-xs text-pork-ink/60">{item.description}</p>
+            )}
+            {spicyLevel ? (
+              <div className="mt-2">
+                <SpicyLevelBadge level={spicyLevel} compact />
+              </div>
+            ) : null}
+            {item.allergens && item.allergens.length > 0 && (
+              <div className="mt-2">
+                <p className="impact-title mb-1 text-[10px] text-pork-red">
+                  Allergeni
+                </p>
+                <AllergenBadges allergens={item.allergens} compact />
+              </div>
             )}
           </div>
           <button

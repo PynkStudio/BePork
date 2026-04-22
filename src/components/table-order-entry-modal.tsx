@@ -44,10 +44,15 @@ export function TableOrderEntryModal({
           Entra al tuo tavolo
         </h2>
         <p className="mt-2 text-sm text-pork-ink/65">
-          Inserisci il numero o il nome del tavolo (come sul QR). Se la sessione
-          &egrave; gi&agrave; aperta, ti chiediamo il codice a quattro cifre.
+          Numero tavolo e passkey a quattro cifre (solo se il tavolo &egrave; gi&agrave;
+          attivo). Conferma: resti sul menu con il carrello al tavolo.
         </p>
-        <TableOrderJoinFlow key={flowKey} onDone={onClose} className="mt-5" />
+        <TableOrderJoinFlow
+          key={flowKey}
+          joinBehavior="menu-page"
+          onDone={onClose}
+          className="mt-5"
+        />
       </div>
     </div>
   );

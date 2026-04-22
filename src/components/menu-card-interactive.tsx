@@ -13,8 +13,15 @@ import { useFavoritesStore } from "@/store/favorites-store";
 import { ItemCustomizer, needsCustomization } from "./item-customizer";
 import { MenuBundleCustomizer } from "./menu-bundle-customizer";
 import { hasMenuBundle } from "@/lib/menu-bundle";
+import {
+  getMenuServiceNotes,
+  menuServiceNoteText,
+} from "@/lib/menu-service-notes";
 import { useSettingsStore } from "@/store/settings-store";
 import { canAddToCart } from "@/lib/ordering-rules";
+import { AllergenBadges } from "./allergen-badges";
+import { SpicyLevelBadge } from "./spicy-level-badge";
+import { getResolvedPiccanteLevel } from "@/lib/piccante";
 
 const tagMeta: Record<
   NonNullable<AdminMenuItem["tags"]>[number],
@@ -54,6 +61,7 @@ export function MenuCardInteractive({ item }: { item: AdminMenuItem }) {
   });
 
   const variants = priceVariants(item.price);
+  const serviceNotes = getMenuServiceNotes(item.categoryId, item);
   const [customizerOpen, setCustomizerOpen] = useState(false);
   const [bundleOpen, setBundleOpen] = useState(false);
 
@@ -65,6 +73,7 @@ export function MenuCardInteractive({ item }: { item: AdminMenuItem }) {
 
   const unavailable = !item.available;
   const canCustomize = needsCustomization(item);
+  const spicyLevel = getResolvedPiccanteLevel(item);
 
   function handleAddClick() {
     if (unavailable || !orderingAllowed) return;
@@ -161,78 +170,92 @@ export function MenuCardInteractive({ item }: { item: AdminMenuItem }) {
               {item.abv} vol.
             </span>
           )}
-          {item.tags?.map((t) => {
-            const meta = tagMeta[t];
-            return (
-              <span
-                key={t}
-                className={cn(
-                  "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide",
-                  meta.className,
-                )}
-              >
-                {meta.icon}
-                {meta.label}
-              </span>
-            );
-          })}
+          <AllergenBadges allergens={item.allergens} />
+          {spicyLevel ? <SpicyLevelBadge level={spicyLevel} /> : null}
+          {item.tags
+            ?.filter((t) => t !== "piccante")
+            .map((t) => {
+              const meta = tagMeta[t];
+              return (
+                <span
+                  key={t}
+                  className={cn(
+                    "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide",
+                    meta.className,
+                  )}
+                >
+                  {meta.icon}
+                  {meta.label}
+                </span>
+              );
+            })}
         </div>
 
-        <div className="mt-auto flex items-end justify-between gap-3 pt-2">
-          <div className="flex flex-wrap items-end gap-1.5">
-            {variants.map((v, i) => (
-              <PriceSticker
-                key={v.key}
-                variant={priceVariantColors[i % 2]}
-                rotate={i % 2 === 0 ? -3 : 3}
-              >
-                {formatEuro(v.price)}
-                {v.label && (
-                  <span className="ml-1 text-xs font-normal opacity-80">
-                    {v.label}
-                  </span>
+        <div className="mt-auto flex flex-col gap-2 pt-2">
+          <div className="flex items-end justify-between gap-3">
+            <div className="flex flex-wrap items-end gap-1.5">
+              {variants.map((v, i) => (
+                <PriceSticker
+                  key={v.key}
+                  variant={priceVariantColors[i % 2]}
+                  rotate={i % 2 === 0 ? -3 : 3}
+                >
+                  {formatEuro(v.price)}
+                  {v.label && (
+                    <span className="ml-1 text-xs font-normal opacity-80">
+                      {v.label}
+                    </span>
+                  )}
+                </PriceSticker>
+              ))}
+            </div>
+
+            <div className="flex shrink-0 flex-col items-end gap-1">
+              {hasMenuBundle(item) && !unavailable && orderingAllowed && (
+                <span className="hidden rounded-full bg-pork-mustard/40 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-pork-ink sm:block">
+                  Scegli nel menu
+                </span>
+              )}
+              {canCustomize && !hasMenuBundle(item) && !unavailable && orderingAllowed && (
+                <span className="hidden rounded-full bg-pork-mustard/40 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-pork-ink sm:block">
+                  Personalizza
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={handleAddClick}
+                disabled={unavailable || !orderingAllowed}
+                title={
+                  !orderingAllowed
+                    ? "Ordine non disponibile da questa pagina"
+                    : undefined
+                }
+                className={cn(
+                  "inline-flex h-11 w-11 items-center justify-center rounded-full shadow-lg transition-all active:scale-90",
+                  unavailable || !orderingAllowed
+                    ? "cursor-not-allowed bg-pork-ink/10 text-pork-ink/30"
+                    : "bg-pork-ink text-pork-cream hover:bg-pork-red",
                 )}
-              </PriceSticker>
-            ))}
+                aria-label={
+                  unavailable
+                    ? "Non disponibile"
+                    : !orderingAllowed
+                      ? "Aggiunta al carrello non disponibile"
+                      : `Aggiungi ${item.name} al carrello`
+                }
+              >
+                <Plus size={20} />
+              </button>
+            </div>
           </div>
 
-          <div className="flex shrink-0 flex-col items-end gap-1">
-            {hasMenuBundle(item) && !unavailable && orderingAllowed && (
-              <span className="hidden rounded-full bg-pork-mustard/40 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-pork-ink sm:block">
-                Scegli nel menu
-              </span>
-            )}
-            {canCustomize && !hasMenuBundle(item) && !unavailable && orderingAllowed && (
-              <span className="hidden rounded-full bg-pork-mustard/40 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-pork-ink sm:block">
-                Personalizza
-              </span>
-            )}
-            <button
-              type="button"
-              onClick={handleAddClick}
-              disabled={unavailable || !orderingAllowed}
-              title={
-                !orderingAllowed
-                  ? "Ordine non disponibile da questa pagina"
-                  : undefined
-              }
-              className={cn(
-                "inline-flex h-11 w-11 items-center justify-center rounded-full shadow-lg transition-all active:scale-90",
-                unavailable || !orderingAllowed
-                  ? "cursor-not-allowed bg-pork-ink/10 text-pork-ink/30"
-                  : "bg-pork-ink text-pork-cream hover:bg-pork-red",
-              )}
-              aria-label={
-                unavailable
-                  ? "Non disponibile"
-                  : !orderingAllowed
-                    ? "Aggiunta al carrello non disponibile"
-                    : `Aggiungi ${item.name} al carrello`
-              }
-            >
-              <Plus size={20} />
-            </button>
-          </div>
+          {serviceNotes.length > 0 && (
+            <ul className="space-y-0.5 text-[11px] leading-snug text-pork-ink/55">
+              {serviceNotes.map((k) => (
+                <li key={k}>{menuServiceNoteText(k)}</li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
 

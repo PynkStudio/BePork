@@ -65,13 +65,13 @@ export function Hero() {
             transition={{ duration: 0.8, delay: 0.1, ease: "easeOut" }}
             className="relative hidden lg:block"
           >
-            <div className="relative mx-auto aspect-square w-full max-w-md">
-              <div className="absolute inset-0 rounded-full bg-pork-mustard/20 blur-3xl" />
+            <div className="relative mx-auto aspect-square w-full max-w-md isolate">
               <Image
                 src="/logo-payoff.png"
                 alt="Be Pork — Mordi e Godi"
                 fill
                 priority
+                unoptimized
                 sizes="(max-width: 1024px) 0vw, 400px"
                 className="object-contain drop-shadow-[0_30px_60px_rgba(0,0,0,0.6)]"
               />

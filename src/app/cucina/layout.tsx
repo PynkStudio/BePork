@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { AuthGate } from "@/components/admin/auth-gate";
 
 export const metadata: Metadata = {
-  title: "Kitchen Display",
+  title: "Schermo cucina",
   robots: { index: false, follow: false },
 };
 

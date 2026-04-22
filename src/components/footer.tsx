@@ -21,6 +21,7 @@ export function Footer() {
               alt="Be Pork"
               width={72}
               height={72}
+              unoptimized
               className="h-16 w-16 object-contain"
             />
             <div>
@@ -91,17 +92,6 @@ export function Footer() {
               <Lock size={10} /> Staff
             </Link>
           </p>
-          <div className="flex flex-wrap gap-x-4 gap-y-1">
-            <span>{siteConfig.disclaimers.coperto}</span>
-            <span>•</span>
-            <span>{siteConfig.disclaimers.eventi}</span>
-            <span>•</span>
-            <span>{siteConfig.disclaimers.aggiunte}</span>
-            <span>•</span>
-            <span>{siteConfig.disclaimers.senzaLattosio}</span>
-            <span>•</span>
-            <span>{siteConfig.disclaimers.impastoNapoletano}</span>
-          </div>
         </div>
       </div>
     </footer>

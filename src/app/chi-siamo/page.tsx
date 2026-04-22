@@ -49,12 +49,12 @@ export default function ChiSiamoPage() {
               Mangiare bene senza mettersi cravatta.
             </p>
           </div>
-          <div className="relative mx-auto aspect-square w-full max-w-sm">
-            <div className="absolute inset-0 rounded-full bg-pork-mustard/10 blur-3xl" />
+          <div className="relative mx-auto aspect-square w-full max-w-sm isolate">
             <Image
               src="/logo-payoff.png"
               alt="Be Pork — Mordi e Godi"
               fill
+              unoptimized
               sizes="(max-width: 1024px) 60vw, 320px"
               className="object-contain drop-shadow-[0_20px_60px_rgba(0,0,0,0.6)]"
             />

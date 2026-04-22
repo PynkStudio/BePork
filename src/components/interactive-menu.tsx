@@ -4,6 +4,7 @@ import { useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { MenuCardInteractive } from "./menu-card-interactive";
 import { MenuCategoryNav } from "./menu-category-nav";
+import { MenuCopertoNote } from "./menu-coperto-note";
 import { MenuDisclaimer } from "./menu-disclaimer";
 import {
   useMenuStore,
@@ -102,7 +103,8 @@ export function InteractiveMenu({
             </section>
           ))}
 
-          <div className="pt-10">
+          <div className="space-y-6 pt-10">
+            <MenuCopertoNote />
             <MenuDisclaimer />
           </div>
         </div>

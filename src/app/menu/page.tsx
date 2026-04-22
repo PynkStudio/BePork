@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { InteractiveMenu } from "@/components/interactive-menu";
 import { DeliveryStrip } from "@/components/delivery-strip";
 import { MenuIntroParagraph } from "@/components/menu-intro-paragraph";
+import { MenuActiveTableBar } from "@/components/menu-active-table-bar";
 
 export const metadata: Metadata = {
   title: "Menu",
@@ -24,6 +25,7 @@ export default function MenuPage() {
             </span>
           </h1>
           <MenuIntroParagraph />
+          <MenuActiveTableBar />
         </div>
       </section>
 

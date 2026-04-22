@@ -2,13 +2,7 @@ import { Info } from "lucide-react";
 import { siteConfig } from "@/lib/site-config";
 
 export function MenuDisclaimer() {
-  const items = [
-    siteConfig.disclaimers.coperto,
-    siteConfig.disclaimers.eventi,
-    siteConfig.disclaimers.aggiunte,
-    siteConfig.disclaimers.senzaLattosio,
-    siteConfig.disclaimers.impastoNapoletano,
-  ];
+  const items = [siteConfig.disclaimers.eventi];
 
   return (
     <aside className="rounded-3xl bg-pork-brick p-6 text-pork-cream shadow-lg md:p-8">

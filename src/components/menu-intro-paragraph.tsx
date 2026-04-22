@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useHydrated } from "@/components/providers";
 import { useSettingsStore } from "@/store/settings-store";
 import { TableOrderEntryModal } from "@/components/table-order-entry-modal";
@@ -28,7 +27,7 @@ function introParts(allowTakeaway: boolean, allowTableOrders: boolean): {
   if (allowTakeaway && allowTableOrders) {
     return {
       body:
-        "Da qui puoi ordinare per asporto: tocca il + sulle pietanze e completa l'ordine. Se sei al tavolo, inquadra il QR appoggiato sul tavolo oppure vai alla pagina /tavolo e inserisci il numero del tavolo; se la sessione è già aperta, ti chiederemo il codice a 4 cifre.",
+        "Da qui puoi ordinare per asporto: tocca il + sulle pietanze e completa l'ordine. Se sei al tavolo, inquadra il QR appoggiato sul tavolo oppure usa il link qui sotto.",
       showTableCta: true,
     };
   }
@@ -42,7 +41,7 @@ function introParts(allowTakeaway: boolean, allowTableOrders: boolean): {
   if (!allowTakeaway && allowTableOrders) {
     return {
       body:
-        "Il cuore salva i preferiti. Per ordinare al tavolo inquadra il QR sul tavolo oppure apri la pagina /tavolo e inserisci il numero del tavolo; se la sessione è già aperta, servirà anche il codice a 4 cifre. L'asporto online non è disponibile da questa pagina.",
+        "Il cuore salva i preferiti. Per ordinare al tavolo inquadra il QR sul tavolo oppure usa il link qui sotto. L'asporto online non è disponibile da questa pagina.",
       showTableCta: true,
     };
   }
@@ -69,22 +68,13 @@ export function MenuIntroParagraph() {
       <p className="mt-6 max-w-2xl text-lg text-pork-cream/70">
         {renderWithOptionalPlus(body)}{" "}
         {showTableCta && (
-          <>
-            <button
-              type="button"
-              onClick={() => setModalOpen(true)}
-              className="font-semibold text-pork-mustard underline decoration-pork-mustard/50 underline-offset-4 hover:decoration-pork-mustard"
-            >
-              Inserisci il numero del tuo tavolo
-            </button>
-            {" · "}
-            <Link
-              href="/tavolo"
-              className="font-semibold text-pork-mustard underline decoration-pork-mustard/50 underline-offset-4 hover:decoration-pork-mustard"
-            >
-              Apri /tavolo
-            </Link>
-          </>
+          <button
+            type="button"
+            onClick={() => setModalOpen(true)}
+            className="font-semibold text-pork-mustard underline decoration-pork-mustard/50 underline-offset-4 hover:decoration-pork-mustard"
+          >
+            Inserisci il numero del tuo tavolo
+          </button>
         )}
       </p>
       {showTableCta && (

@@ -13,23 +13,71 @@ import {
   UtensilsCrossed,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import type { LucideIcon } from "lucide-react";
+import { useMemo, useState } from "react";
 import { clearAdminSession } from "@/lib/admin-auth";
 import { cn } from "@/lib/utils";
+import { useSettingsStore } from "@/store/settings-store";
 
-const items = [
+type NavFlags = {
+  allowTakeaway: boolean;
+  allowTableOrders: boolean;
+  kitchenDisplayEnabled: boolean;
+};
+
+type NavItem = {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  external?: boolean;
+  /** Se assente, sempre visibile. */
+  visible?: (s: NavFlags) => boolean;
+};
+
+const NAV_ITEMS: NavItem[] = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/menu", label: "Menu", icon: UtensilsCrossed },
-  { href: "/admin/ordini", label: "Ordini", icon: ClipboardList },
-  { href: "/admin/tavoli", label: "Tavoli & QR", icon: QrCode },
+  {
+    href: "/admin/ordini",
+    label: "Ordini",
+    icon: ClipboardList,
+    visible: (s) => s.allowTakeaway || s.allowTableOrders,
+  },
+  {
+    href: "/admin/tavoli",
+    label: "Tavoli & QR",
+    icon: QrCode,
+    visible: (s) => s.allowTableOrders,
+  },
   { href: "/admin/impostazioni", label: "Impostazioni", icon: Settings },
-  { href: "/cucina", label: "Kitchen display", icon: ChefHat, external: true },
+  {
+    href: "/cucina",
+    label: "Schermo cucina",
+    icon: ChefHat,
+    external: true,
+    visible: (s) => s.kitchenDisplayEnabled,
+  },
 ];
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+
+  const allowTakeaway = useSettingsStore((s) => s.allowTakeaway);
+  const allowTableOrders = useSettingsStore((s) => s.allowTableOrders);
+  const kitchenDisplayEnabled = useSettingsStore(
+    (s) => s.kitchenDisplayEnabled,
+  );
+
+  const navItems = useMemo(() => {
+    const flags: NavFlags = {
+      allowTakeaway,
+      allowTableOrders,
+      kitchenDisplayEnabled,
+    };
+    return NAV_ITEMS.filter((it) => (it.visible ? it.visible(flags) : true));
+  }, [allowTakeaway, allowTableOrders, kitchenDisplayEnabled]);
 
   function logout() {
     clearAdminSession();
@@ -46,7 +94,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       >
         <div className="flex items-center justify-between border-b border-pork-cream/10 p-5">
           <Link href="/admin" className="headline text-2xl text-pork-mustard">
-            Be Pork · admin
+            Be Pork · gestione
           </Link>
           <button
             className="lg:hidden"
@@ -57,7 +105,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </button>
         </div>
         <nav className="flex-1 space-y-1 p-3">
-          {items.map((it) => {
+          {navItems.map((it) => {
             const active =
               !it.external &&
               (pathname === it.href ||
@@ -112,7 +160,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           >
             <MenuIcon size={20} />
           </button>
-          <span className="impact-title text-pork-ink">Admin</span>
+          <span className="impact-title text-pork-ink">Gestione</span>
           <div className="w-10" />
         </header>
 

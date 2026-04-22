@@ -4,9 +4,21 @@ import type {
   PriceFormat,
   MenuTag,
   MenuBundleSlot,
+  MenuAllergen,
+  MenuServiceNoteKey,
+  PiccanteLevel,
 } from "./menu-data";
 
-export type { MenuItem, MenuCategory, PriceFormat, MenuTag, MenuBundleSlot };
+export type {
+  MenuItem,
+  MenuCategory,
+  PriceFormat,
+  MenuTag,
+  MenuBundleSlot,
+  MenuAllergen,
+  MenuServiceNoteKey,
+  PiccanteLevel,
+};
 
 export type BundlePick = {
   slotId: string;

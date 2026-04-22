@@ -84,10 +84,10 @@ export default function KitchenDisplay() {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-pork-ink px-6 text-center text-pork-cream">
         <Flame size={40} className="text-pork-mustard" />
-        <h1 className="headline mt-4 text-4xl">Kitchen display disattivato</h1>
+        <h1 className="headline mt-4 text-4xl">Schermo cucina non attivo</h1>
         <p className="mt-3 max-w-md text-pork-cream/70">
-          Riattiva la funzione da Admin → Impostazioni per mostrare di nuovo la
-          coda ordini in cucina.
+          Riattiva il modulo dalla gestione, sezione Impostazioni, per mostrare di nuovo la coda
+          ordini qui.
         </p>
       </div>
     );
@@ -104,7 +104,7 @@ export default function KitchenDisplay() {
             <p className="impact-title text-xs text-pork-mustard">
               Be Pork · cucina
             </p>
-            <h1 className="headline text-2xl">Kitchen Display</h1>
+            <h1 className="headline text-2xl">Schermo cucina</h1>
           </div>
         </div>
         <div className="text-right">

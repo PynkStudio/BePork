@@ -67,8 +67,8 @@ export default function LoginPage() {
         </button>
 
         <p className="mt-4 text-center text-[11px] text-pork-ink/50">
-          Mockup demo · password di default in <code>.env.local</code> oppure
-          fallback interno.
+          Usa la password fornita per il tuo ambiente. Per assistenza sull’accesso contatta chi
+          gestisce il servizio Be Pork.
         </p>
       </form>
     </div>
