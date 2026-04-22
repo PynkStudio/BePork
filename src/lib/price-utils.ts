@@ -1,5 +1,6 @@
 import type { PriceFormat } from "./menu-data";
 import { categoryOffersSenzaLattosio } from "./menu-service-notes";
+import { resolveExtrasForItem, type ExtraList } from "./extra-lists";
 import { normalizeMenuIngredients } from "./ingredients";
 import type { AdminMenuItem } from "./types";
 
@@ -10,11 +11,14 @@ export type PriceVariant = {
 };
 
 /** Solo prezzi multipli, senza ingredienti/extra da configurare. */
-export function hasOnlyPriceVariants(item: AdminMenuItem): boolean {
+export function hasOnlyPriceVariants(
+  item: AdminMenuItem,
+  extraLists: ExtraList[],
+): boolean {
   const v = priceVariants(item.price);
   if (v.length <= 1) return false;
   const hasIng = normalizeMenuIngredients(item.id, item.ingredients).length > 0;
-  const hasEx = (item.extras?.length ?? 0) > 0;
+  const hasEx = resolveExtrasForItem(item, extraLists).length > 0;
   if (hasIng || hasEx) return false;
   if (categoryOffersSenzaLattosio(item.categoryId)) return false;
   return true;

@@ -5,6 +5,11 @@ import { persist } from "zustand/middleware";
 import { createBrowserLocalJSONStorage } from "@/lib/zustand-json-storage";
 import { menu as seedMenu } from "@/lib/menu-data";
 import {
+  type ExtraList,
+  DEFAULT_EXTRA_LISTS,
+  mergeExtraListsWithDefaults,
+} from "@/lib/extra-lists";
+import {
   isMenuIngredient,
   normalizeMenuIngredients,
 } from "@/lib/ingredients";
@@ -64,6 +69,8 @@ function seedItems(): AdminMenuItem[] {
 export interface MenuState {
   categories: AdminMenuCategory[];
   items: AdminMenuItem[];
+  /** Liste aggiunte condivise: modificate una volta, tutti i piatti collegati le vedono. */
+  extraLists: ExtraList[];
   orders: Order[];
   lastOrderSeq: number;
 
@@ -77,6 +84,10 @@ export interface MenuState {
   updateExtras: (id: string, extras: Extra[]) => void;
   updateImage: (id: string, image: string | undefined) => void;
   updateTags: (id: string, tags: MenuTag[]) => void;
+  addExtraList: (name: string) => string;
+  updateExtraList: (id: string, list: ExtraList) => void;
+  removeExtraList: (id: string) => void;
+  applyExtraListToItemIds: (listId: string, itemIds: string[]) => void;
   addItem: (categoryId: string, draft: Partial<AdminMenuItem>) => string;
   removeItem: (id: string) => void;
 
@@ -115,6 +126,7 @@ function buildInitial() {
   return {
     categories: seedCategories(),
     items: seedItems(),
+    extraLists: mergeExtraListsWithDefaults(undefined, DEFAULT_EXTRA_LISTS),
     orders: [] as Order[],
     lastOrderSeq: 0,
     tables: seedTables(),
@@ -161,9 +173,50 @@ export const useMenuStore = create<MenuState>()(
       updateExtras: (id, extras) =>
         set((s) => ({
           items: s.items.map((it) =>
-            it.id === id ? { ...it, extras } : it,
+            it.id === id
+              ? { ...it, extraListId: undefined, extras }
+              : it,
           ),
         })),
+
+      addExtraList: (name) => {
+        const id = genId("exl");
+        const list: ExtraList = {
+          id,
+          name: name.trim() || "Nuova lista",
+          extras: [],
+        };
+        set((s) => ({ extraLists: [...s.extraLists, list] }));
+        return id;
+      },
+
+      updateExtraList: (id, list) =>
+        set((s) => ({
+          extraLists: s.extraLists.map((l) =>
+            l.id === id ? { ...list, id } : l,
+          ),
+        })),
+
+      removeExtraList: (id) =>
+        set((s) => ({
+          extraLists: s.extraLists.filter((l) => l.id !== id),
+          items: s.items.map((it) =>
+            it.extraListId === id
+              ? { ...it, extraListId: undefined, extras: [] }
+              : it,
+          ),
+        })),
+
+      applyExtraListToItemIds: (listId, itemIds) => {
+        const setIds = new Set(itemIds);
+        set((s) => ({
+          items: s.items.map((it) =>
+            setIds.has(it.id)
+              ? { ...it, extraListId: listId, extras: undefined }
+              : it,
+          ),
+        }));
+      },
 
       updateImage: (id, image) =>
         set((s) => ({
@@ -193,6 +246,7 @@ export const useMenuStore = create<MenuState>()(
           abv: draft.abv,
           image: draft.image,
           ingredients: draft.ingredients,
+          extraListId: draft.extraListId,
           extras: draft.extras,
           bundleSlots: draft.bundleSlots,
         };
@@ -328,6 +382,7 @@ export const useMenuStore = create<MenuState>()(
       partialize: (s) => ({
         categories: s.categories,
         items: s.items,
+        extraLists: s.extraLists,
         orders: s.orders,
         lastOrderSeq: s.lastOrderSeq,
         tables: s.tables,
@@ -337,7 +392,11 @@ export const useMenuStore = create<MenuState>()(
         if (!persisted || typeof persisted !== "object") return current;
         const p = persisted as Partial<MenuState>;
         const items = p.items?.map(migrateItemIngredients) ?? current.items;
-        return { ...current, ...p, items };
+        const extraLists = mergeExtraListsWithDefaults(
+          p.extraLists as ExtraList[] | undefined,
+          DEFAULT_EXTRA_LISTS,
+        );
+        return { ...current, ...p, items, extraLists };
       },
     },
   ),

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Save, X } from "lucide-react";
+import { resolveExtrasForItem } from "@/lib/extra-lists";
 import type {
   AdminMenuItem,
   Extra,
@@ -32,14 +33,34 @@ export function ItemEditor({
 }) {
   const updateItem = useMenuStore((s) => s.updateItem);
   const removeItem = useMenuStore((s) => s.removeItem);
+  const extraLists = useMenuStore((s) => s.extraLists);
 
   const [draft, setDraft] = useState<AdminMenuItem>(item);
+  const [extrasMode, setExtrasMode] = useState<"none" | "list" | "inline">(
+    () =>
+      item.extraListId
+        ? "list"
+        : item.extras && item.extras.length > 0
+          ? "inline"
+          : "none",
+  );
+  const [listId, setListId] = useState(item.extraListId ?? "");
   const [ingInput, setIngInput] = useState("");
   const [extraName, setExtraName] = useState("");
   const [extraPrice, setExtraPrice] = useState("");
 
   function save() {
-    updateItem(draft.id, draft);
+    if (extrasMode === "list") {
+      updateItem(draft.id, {
+        ...draft,
+        extraListId: listId || undefined,
+        extras: undefined,
+      });
+    } else if (extrasMode === "inline") {
+      updateItem(draft.id, { ...draft, extraListId: undefined, extras: draft.extras });
+    } else {
+      updateItem(draft.id, { ...draft, extraListId: undefined, extras: undefined });
+    }
     onClose();
   }
 
@@ -63,6 +84,7 @@ export function ItemEditor({
   }
 
   function addExtra() {
+    if (extrasMode !== "inline") return;
     const name = extraName.trim();
     const price = parseFloat(extraPrice.replace(",", "."));
     if (!name || !Number.isFinite(price) || price < 0) return;
@@ -70,6 +92,7 @@ export function ItemEditor({
     const newExtra: Extra = { id, name, price };
     setDraft((d) => ({
       ...d,
+      extraListId: undefined,
       extras: [...(d.extras ?? []), newExtra],
     }));
     setExtraName("");
@@ -81,6 +104,44 @@ export function ItemEditor({
       ...d,
       extras: (d.extras ?? []).filter((e) => e.id !== id),
     }));
+  }
+
+  function setExtrasModeAndDraft(next: "none" | "list" | "inline") {
+    if (next === "none") {
+      setExtrasMode("none");
+      setListId("");
+      setDraft((d) => ({
+        ...d,
+        extraListId: undefined,
+        extras: undefined,
+      }));
+      return;
+    }
+    if (next === "list") {
+      setExtrasMode("list");
+      const first = listId || extraLists[0]?.id || "";
+      setListId(first);
+      setDraft((d) => ({
+        ...d,
+        extraListId: first,
+        extras: undefined,
+      }));
+      return;
+    }
+    if (next === "inline") {
+      setExtrasMode("inline");
+      setListId("");
+      setDraft((d) => {
+        const base = d.extraListId
+          ? resolveExtrasForItem(d, extraLists)
+          : (d.extras ?? []);
+        return {
+          ...d,
+          extraListId: undefined,
+          extras: base.map((e) => ({ ...e })),
+        };
+      });
+    }
   }
 
   function toggleTag(t: MenuTag) {
@@ -233,60 +294,126 @@ export function ItemEditor({
               </Field>
 
               <Field label="Aggiunte (sovrapprezzo)">
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={extraName}
-                    onChange={(e) => setExtraName(e.target.value)}
-                    placeholder="Nome (es. Extra bacon)"
-                    className="flex-1 rounded-xl border-2 border-pork-ink/10 bg-white px-3 py-2 outline-none focus:border-pork-red"
-                  />
-                  <input
-                    type="text"
-                    value={extraPrice}
-                    onChange={(e) => setExtraPrice(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        addExtra();
+                <p className="mb-2 text-[11px] text-pork-ink/50">
+                  Lista condivisa: stesso set per più piatti; se aggiorni la lista in
+                  &ldquo;Liste aggiunte&rdquo; cambia per tutti.
+                </p>
+                <div className="mb-2 flex flex-wrap gap-1">
+                  {(
+                    [
+                      ["none", "Nessuna"] as const,
+                      ["list", "Lista condivisa"] as const,
+                      ["inline", "Solo su questo piatto"] as const,
+                    ] as const
+                  ).map(([k, lab]) => (
+                    <button
+                      key={k}
+                      type="button"
+                      onClick={() => setExtrasModeAndDraft(k)}
+                      className={
+                        "rounded-full px-2.5 py-1 text-[11px] font-bold " +
+                        (extrasMode === k
+                          ? "bg-pork-red text-white"
+                          : "bg-pork-ink/5 text-pork-ink/70 hover:bg-pork-ink/10")
                       }
-                    }}
-                    placeholder="€"
-                    inputMode="decimal"
-                    className="w-20 rounded-xl border-2 border-pork-ink/10 bg-white px-3 py-2 outline-none focus:border-pork-red"
-                  />
-                  <button
-                    type="button"
-                    onClick={addExtra}
-                    className="rounded-xl bg-pork-ink px-4 text-sm font-bold text-pork-cream"
-                  >
-                    +
-                  </button>
+                    >
+                      {lab}
+                    </button>
+                  ))}
                 </div>
-                {draft.extras && draft.extras.length > 0 && (
-                  <ul className="mt-2 space-y-1.5">
-                    {draft.extras.map((ex) => (
-                      <li
-                        key={ex.id}
-                        className="flex items-center justify-between gap-2 rounded-lg bg-white px-3 py-2 text-sm ring-1 ring-pork-ink/10"
+                {extrasMode === "list" && (
+                  <div>
+                    {extraLists.length > 0 ? (
+                      <select
+                        className="mb-2 w-full rounded-xl border-2 border-pork-ink/10 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-pork-red"
+                        value={listId}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setListId(v);
+                          setDraft((d) => ({ ...d, extraListId: v, extras: undefined }));
+                        }}
                       >
-                        <span className="font-semibold">{ex.name}</span>
-                        <div className="flex items-center gap-2">
-                          <span className="font-impact text-pork-red">
-                            +{formatEuro(ex.price)}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => removeExtra(ex.id)}
-                            className="text-pork-ink/40 hover:text-pork-red"
-                            aria-label="Rimuovi"
+                        {extraLists.map((l) => (
+                          <option key={l.id} value={l.id}>
+                            {l.name} ({l.extras.length} voci)
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <p className="text-sm text-pork-ink/50">Crea una lista sopra.</p>
+                    )}
+                    {listId && (
+                      <ul className="space-y-1 rounded-lg bg-white/50 p-2 text-xs text-pork-ink/80 ring-1 ring-pork-ink/5">
+                        {(extraLists.find((l) => l.id === listId)?.extras ?? []).map(
+                          (ex) => (
+                            <li key={ex.id} className="flex justify-between">
+                              <span>{ex.name}</span>
+                              <span className="text-pork-red">+{formatEuro(ex.price)}</span>
+                            </li>
+                          ),
+                        )}
+                      </ul>
+                    )}
+                  </div>
+                )}
+                {extrasMode === "inline" && (
+                  <>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={extraName}
+                        onChange={(e) => setExtraName(e.target.value)}
+                        placeholder="Nome (es. Extra bacon)"
+                        className="flex-1 rounded-xl border-2 border-pork-ink/10 bg-white px-3 py-2 outline-none focus:border-pork-red"
+                      />
+                      <input
+                        type="text"
+                        value={extraPrice}
+                        onChange={(e) => setExtraPrice(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            addExtra();
+                          }
+                        }}
+                        placeholder="€"
+                        inputMode="decimal"
+                        className="w-20 rounded-xl border-2 border-pork-ink/10 bg-white px-3 py-2 outline-none focus:border-pork-red"
+                      />
+                      <button
+                        type="button"
+                        onClick={addExtra}
+                        className="rounded-xl bg-pork-ink px-4 text-sm font-bold text-pork-cream"
+                      >
+                        +
+                      </button>
+                    </div>
+                    {draft.extras && draft.extras.length > 0 && (
+                      <ul className="mt-2 space-y-1.5">
+                        {draft.extras.map((ex) => (
+                          <li
+                            key={ex.id}
+                            className="flex items-center justify-between gap-2 rounded-lg bg-white px-3 py-2 text-sm ring-1 ring-pork-ink/10"
                           >
-                            ×
-                          </button>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
+                            <span className="font-semibold">{ex.name}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-impact text-pork-red">
+                                +{formatEuro(ex.price)}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => removeExtra(ex.id)}
+                                className="text-pork-ink/40 hover:text-pork-red"
+                                aria-label="Rimuovi"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </>
                 )}
               </Field>
 

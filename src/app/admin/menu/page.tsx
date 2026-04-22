@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Image from "next/image";
-import { CheckCircle2, Plus, Search, XCircle } from "lucide-react";
+import { CheckCircle2, ListPlus, Plus, Search, XCircle } from "lucide-react";
 import {
   useMenuStore,
   selectCategoriesOrdered,
@@ -11,6 +11,7 @@ import {
 import type { AdminMenuItem } from "@/lib/types";
 import { formatEuro, minPrice } from "@/lib/price-utils";
 import { ItemEditor } from "@/components/admin/item-editor";
+import { ExtraListsManager } from "@/components/admin/extra-lists-manager";
 import { useHydrated } from "@/components/providers";
 
 export default function AdminMenuPage() {
@@ -19,12 +20,37 @@ export default function AdminMenuPage() {
   const items = useMenuStore((s) => s.items);
   const setAvailable = useMenuStore((s) => s.setAvailable);
   const addItem = useMenuStore((s) => s.addItem);
+  const extraLists = useMenuStore((s) => s.extraLists);
+  const applyExtraListToItemIds = useMenuStore((s) => s.applyExtraListToItemIds);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "available" | "unavailable">(
     "all",
   );
+  const [selected, setSelected] = useState<Set<string>>(() => new Set());
+  const [bulkListId, setBulkListId] = useState("");
+
+  function toggleSelect(id: string) {
+    setSelected((prev) => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+  }
+
+  function selectAllInList(all: AdminMenuItem[]) {
+    setSelected((prev) => {
+      const n = new Set(prev);
+      for (const it of all) n.add(it.id);
+      return n;
+    });
+  }
+
+  function clearSelection() {
+    setSelected(new Set());
+  }
 
   const categories = useMemo(
     () => selectCategoriesOrdered({ categories: categoriesRaw } as never),
@@ -56,6 +82,48 @@ export default function AdminMenuPage() {
           Disponibilità, prezzi, foto, ingredienti. Le modifiche sono istantanee.
         </p>
       </header>
+
+      <ExtraListsManager />
+
+      {selected.size > 0 && (
+        <div className="flex flex-wrap items-center gap-2 rounded-2xl border-2 border-pork-mustard/50 bg-pork-mustard/10 p-3">
+          <span className="text-sm font-bold text-pork-ink">
+            {selected.size} selezionati
+          </span>
+          <select
+            className="min-w-0 flex-1 rounded-lg border-2 border-pork-ink/10 bg-white px-2 py-1.5 text-sm sm:max-w-xs"
+            value={bulkListId}
+            onChange={(e) => setBulkListId(e.target.value)}
+          >
+            <option value="">Scegli lista…</option>
+            {extraLists.map((l) => (
+              <option key={l.id} value={l.id}>
+                {l.name}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            disabled={!bulkListId}
+            onClick={() => {
+              if (!bulkListId) return;
+              applyExtraListToItemIds(bulkListId, [...selected]);
+              clearSelection();
+            }}
+            className="inline-flex items-center gap-1 rounded-lg bg-pork-ink px-3 py-1.5 text-sm font-bold text-pork-cream disabled:opacity-40"
+          >
+            <ListPlus size={16} />
+            Applica
+          </button>
+          <button
+            type="button"
+            onClick={clearSelection}
+            className="text-sm font-semibold text-pork-ink/60 hover:underline"
+          >
+            Annulla
+          </button>
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-white p-3 ring-1 ring-pork-ink/5">
         <div className="flex flex-1 items-center gap-2 rounded-xl bg-pork-cream px-3 py-2">
@@ -103,19 +171,30 @@ export default function AdminMenuPage() {
                     {catItems.length}
                   </span>
                 </h2>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const id = addItem(cat.id, {
-                      name: `Nuovo in ${cat.title}`,
-                      price: { kind: "single", value: 0 },
-                    });
-                    setEditingId(id);
-                  }}
-                  className="inline-flex items-center gap-1 rounded-full bg-pork-ink/5 px-3 py-1 text-xs font-bold hover:bg-pork-ink hover:text-pork-cream"
-                >
-                  <Plus size={12} /> Aggiungi
-                </button>
+                <div className="flex items-center gap-2">
+                  {catItems.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => selectAllInList(catItems)}
+                      className="rounded-full border border-pork-ink/15 bg-white px-2 py-1 text-[10px] font-bold uppercase text-pork-ink/60 hover:border-pork-red/40"
+                    >
+                      Seleziona categoria
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const id = addItem(cat.id, {
+                        name: `Nuovo in ${cat.title}`,
+                        price: { kind: "single", value: 0 },
+                      });
+                      setEditingId(id);
+                    }}
+                    className="inline-flex items-center gap-1 rounded-full bg-pork-ink/5 px-3 py-1 text-xs font-bold hover:bg-pork-ink hover:text-pork-cream"
+                  >
+                    <Plus size={12} /> Aggiungi
+                  </button>
+                </div>
               </div>
 
               <ul className="grid gap-2 md:grid-cols-2">
@@ -129,6 +208,13 @@ export default function AdminMenuPage() {
                       key={it.id}
                       className="group flex items-center gap-3 rounded-2xl bg-white p-3 ring-1 ring-pork-ink/5"
                     >
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 shrink-0 accent-pork-red"
+                        checked={selected.has(it.id)}
+                        onChange={() => toggleSelect(it.id)}
+                        aria-label={`Seleziona ${it.name}`}
+                      />
                       <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-pork-cream">
                         {it.image ? (
                           <Image

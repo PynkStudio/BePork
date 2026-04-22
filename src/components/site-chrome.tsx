@@ -7,6 +7,7 @@ import { WhatsappFloat } from "./whatsapp-float";
 import { ShopFabs } from "./shop-fabs";
 import { CartDrawer } from "./cart-drawer";
 import { CartFlyOverlay } from "./cart-fly-overlay";
+import { FavoritesDrawer } from "./favorites-drawer";
 
 function isInternal(pathname: string | null): boolean {
   if (!pathname) return false;
@@ -23,6 +24,7 @@ export function SiteChrome() {
       <ShopFabs />
       <CartFlyOverlay />
       <CartDrawer />
+      <FavoritesDrawer />
     </>
   );
 }

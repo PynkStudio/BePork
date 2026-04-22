@@ -1,4 +1,9 @@
 import { sortAllergens, type MenuAllergen } from "./allergens";
+import {
+  LIST_ID_BURGER,
+  LIST_ID_CLUB,
+  LIST_ID_PIZZA,
+} from "./extra-lists";
 import { ingList, type MenuIngredient } from "./ingredients";
 
 export type { MenuIngredient } from "./ingredients";
@@ -59,49 +64,13 @@ export type MenuItem = {
   /**
    * Aggiunte a pagamento (categorie abilitate in `menu-service-notes` mostrano anche
    * l’opzione «Senza lattosio» +1 € da codice, senza elencarla qui).
+   * Con `extraListId` le voci risolvono dallo store; altrimenti `extras` inline.
    */
+  extraListId?: string;
   extras?: MenuExtra[];
 };
 
 export type MenuExtra = { id: string; name: string; price: number };
-
-/** Pizze — range €0,50–1,00 come in sala (vedi `siteConfig.disclaimers.aggiunte`). */
-const PIZZA_EXTRAS: readonly MenuExtra[] = [
-  { id: "pz-patatine", name: "Patatine fritte", price: 0.5 },
-  { id: "pz-wurstel", name: "Wurstel", price: 0.5 },
-  { id: "pz-funghi", name: "Funghi", price: 1 },
-  { id: "pz-proc-cotto", name: "Prosciutto cotto", price: 1 },
-  { id: "pz-salame", name: "Salame", price: 1 },
-  { id: "pz-olive", name: "Olive", price: 0.5 },
-  { id: "pz-rucola", name: "Rucola", price: 0.5 },
-  { id: "pz-grana", name: "Grattugiato / grana", price: 0.5 },
-  { id: "pz-bufala", name: "Bufala in strisce", price: 1 },
-  { id: "pz-peperone", name: "Peperoncino", price: 0.5 },
-  { id: "pz-acciughe", name: "Acciughe", price: 1 },
-  { id: "pz-bacon", name: "Bacon", price: 1 },
-  { id: "pz-ventricina", name: "Salsiccia / ventricina", price: 1 },
-  { id: "pz-cipolla", name: "Cipolla", price: 0.5 },
-] as const;
-
-const BURGER_EXTRAS: readonly MenuExtra[] = [
-  { id: "bg-bacon", name: "Bacon", price: 1 },
-  { id: "bg-cheddar", name: "Cheddar fuso", price: 1 },
-  { id: "bg-bbq", name: "Salsa BBQ", price: 0.5 },
-  { id: "bg-doppia", name: "Doppia carne", price: 2 },
-  { id: "bg-cipolla", name: "Cipolla caramellata", price: 0.5 },
-  { id: "bg-uovo", name: "Uovo fritto", price: 1 },
-] as const;
-
-const CLUB_EXTRAS: readonly MenuExtra[] = [
-  { id: "cl-bacon", name: "Bacon", price: 1 },
-  { id: "cl-cheddar", name: "Cheddar", price: 0.5 },
-  { id: "cl-bbq", name: "Salsa BBQ", price: 0.5 },
-  { id: "cl-mayo", name: "Mayo extra", price: 0.5 },
-] as const;
-
-const pizzaExtras = (): MenuExtra[] => [...PIZZA_EXTRAS];
-const burgerExtras = (): MenuExtra[] => [...BURGER_EXTRAS];
-const clubExtras = (): MenuExtra[] => [...CLUB_EXTRAS];
 
 /** Allergeni in ordine Allegato II. */
 const ix = (...a: MenuAllergen[]): MenuAllergen[] => sortAllergens(a);
@@ -399,7 +368,7 @@ export const menu: MenuCategory[] = [
           "Maionese",
         ]),
         allergens: ix("glutine", "uova", "latte", "senape", "solfiti", "soia", "arachidi", "sesamo"),
-        extras: clubExtras(),
+        extraListId: LIST_ID_CLUB,
       },
       {
         id: "pollo-pork",
@@ -415,7 +384,7 @@ export const menu: MenuCategory[] = [
           "Maionese",
         ]),
         allergens: ix("glutine", "uova", "latte", "senape", "solfiti", "soia", "arachidi", "sesamo"),
-        extras: clubExtras(),
+        extraListId: LIST_ID_CLUB,
       },
       {
         id: "pulled-pork-sandwich",
@@ -430,7 +399,7 @@ export const menu: MenuCategory[] = [
           "Salsa cheddar",
         ]),
         allergens: ix("glutine", "uova", "latte", "senape", "solfiti", "soia", "arachidi", "frutta_guscio", "sesamo"),
-        extras: clubExtras(),
+        extraListId: LIST_ID_CLUB,
       },
     ],
   },
@@ -606,7 +575,7 @@ export const menu: MenuCategory[] = [
           "Maionese",
         ]),
         allergens: ix("glutine", "uova", "latte", "senape", "soia", "arachidi", "solfiti", "sesamo"),
-        extras: burgerExtras(),
+        extraListId: LIST_ID_BURGER,
       },
       {
         id: "porkaccio",
@@ -623,7 +592,7 @@ export const menu: MenuCategory[] = [
           "Salsa BBQ",
         ]),
         allergens: ix("glutine", "uova", "latte", "senape", "soia", "arachidi", "sesamo", "solfiti"),
-        extras: burgerExtras(),
+        extraListId: LIST_ID_BURGER,
       },
       {
         id: "esagerato-pork",
@@ -643,7 +612,7 @@ export const menu: MenuCategory[] = [
           "Stracciatella",
         ]),
         allergens: ix("glutine", "uova", "latte", "soia", "arachidi", "senape", "solfiti", "sesamo"),
-        extras: burgerExtras(),
+        extraListId: LIST_ID_BURGER,
       },
       {
         id: "affumipork",
@@ -663,7 +632,7 @@ export const menu: MenuCategory[] = [
           "Salsa bacon",
         ]),
         allergens: ix("glutine", "uova", "latte", "soia", "arachidi", "senape", "solfiti", "sesamo"),
-        extras: burgerExtras(),
+        extraListId: LIST_ID_BURGER,
       },
       {
         id: "carbonara-pork",
@@ -681,7 +650,7 @@ export const menu: MenuCategory[] = [
           "Salsa carbonara",
         ]),
         allergens: ix("glutine", "uova", "latte", "senape", "soia", "arachidi", "sesamo", "solfiti"),
-        extras: burgerExtras(),
+        extraListId: LIST_ID_BURGER,
       },
       {
         id: "assassina-pork",
@@ -698,7 +667,7 @@ export const menu: MenuCategory[] = [
           "Stracciatella",
         ]),
         allergens: ix("glutine", "uova", "latte", "soia", "arachidi", "sesamo", "senape", "solfiti", "frutta_guscio"),
-        extras: burgerExtras(),
+        extraListId: LIST_ID_BURGER,
       },
       {
         id: "godo-pork",
@@ -716,7 +685,7 @@ export const menu: MenuCategory[] = [
           "Crema di grana",
         ]),
         allergens: ix("glutine", "uova", "latte", "senape", "soia", "arachidi", "sesamo", "solfiti", "frutta_guscio"),
-        extras: burgerExtras(),
+        extraListId: LIST_ID_BURGER,
       },
       {
         id: "chicken-pork",
@@ -734,7 +703,7 @@ export const menu: MenuCategory[] = [
           "Maionese",
         ]),
         allergens: ix("glutine", "uova", "latte", "senape", "soia", "arachidi", "sesamo", "solfiti"),
-        extras: burgerExtras(),
+        extraListId: LIST_ID_BURGER,
       },
       {
         id: "porkpistacchio",
@@ -753,7 +722,7 @@ export const menu: MenuCategory[] = [
           "Crema di pistacchio",
         ]),
         allergens: ix("glutine", "uova", "latte", "soia", "arachidi", "senape", "solfiti", "sesamo", "frutta_guscio"),
-        extras: burgerExtras(),
+        extraListId: LIST_ID_BURGER,
       },
       {
         id: "crispy-pork",
@@ -770,7 +739,7 @@ export const menu: MenuCategory[] = [
           "Salsa crispy (maionese/condimenti)",
         ]),
         allergens: ix("glutine", "uova", "latte", "soia", "arachidi", "senape", "solfiti", "sesamo"),
-        extras: burgerExtras(),
+        extraListId: LIST_ID_BURGER,
       },
       {
         id: "straccia-pork",
@@ -787,7 +756,7 @@ export const menu: MenuCategory[] = [
           "Crema di pistacchio",
         ]),
         allergens: ix("glutine", "uova", "latte", "soia", "arachidi", "senape", "solfiti", "sesamo", "frutta_guscio"),
-        extras: burgerExtras(),
+        extraListId: LIST_ID_BURGER,
       },
       {
         id: "american-pork",
@@ -806,7 +775,7 @@ export const menu: MenuCategory[] = [
           "Salsa cheddar",
         ]),
         allergens: ix("glutine", "uova", "latte", "soia", "arachidi", "senape", "solfiti", "sesamo", "frutta_guscio"),
-        extras: burgerExtras(),
+        extraListId: LIST_ID_BURGER,
       },
       {
         id: "baby-pork",
@@ -823,7 +792,7 @@ export const menu: MenuCategory[] = [
           "Maionese",
         ]),
         allergens: ix("glutine", "uova", "latte", "senape", "soia", "arachidi", "sesamo", "solfiti"),
-        extras: burgerExtras(),
+        extraListId: LIST_ID_BURGER,
       },
       {
         id: "cheddar-pork",
@@ -839,7 +808,7 @@ export const menu: MenuCategory[] = [
           "Salsa BBQ",
         ]),
         allergens: ix("glutine", "uova", "latte", "soia", "arachidi", "senape", "solfiti", "sesamo", "frutta_guscio"),
-        extras: burgerExtras(),
+        extraListId: LIST_ID_BURGER,
       },
     ],
   },
@@ -862,7 +831,7 @@ export const menu: MenuCategory[] = [
           "Impasto a lievitazione lenta",
         ]),
         allergens: ix("glutine", "latte", "solfiti"),
-        extras: pizzaExtras(),
+        extraListId: LIST_ID_PIZZA,
       },
       {
         id: "americana",
@@ -877,7 +846,7 @@ export const menu: MenuCategory[] = [
           "Impasto",
         ]),
         allergens: ix("glutine", "latte", "soia", "arachidi", "senape", "solfiti", "uova", "frutta_guscio", "sesamo"),
-        extras: pizzaExtras(),
+        extraListId: LIST_ID_PIZZA,
       },
       {
         id: "romana",
@@ -892,7 +861,7 @@ export const menu: MenuCategory[] = [
           "Impasto",
         ]),
         allergens: ix("glutine", "latte", "pesce", "solfiti"),
-        extras: pizzaExtras(),
+        extraListId: LIST_ID_PIZZA,
       },
       {
         id: "diavola",
@@ -908,7 +877,7 @@ export const menu: MenuCategory[] = [
           "Impasto",
         ]),
         allergens: ix("glutine", "latte", "soia", "arachidi", "senape", "solfiti", "uova", "frutta_guscio", "sesamo"),
-        extras: pizzaExtras(),
+        extraListId: LIST_ID_PIZZA,
       },
       {
         id: "capricciosa",
@@ -926,7 +895,7 @@ export const menu: MenuCategory[] = [
           "Impasto",
         ]),
         allergens: ix("glutine", "latte", "solfiti", "uova", "senape", "arachidi", "soia", "sesamo", "frutta_guscio"),
-        extras: pizzaExtras(),
+        extraListId: LIST_ID_PIZZA,
       },
       {
         id: "quattro-stagioni",
@@ -944,7 +913,7 @@ export const menu: MenuCategory[] = [
           "Impasto",
         ]),
         allergens: ix("glutine", "latte", "solfiti", "senape", "arachidi", "soia", "uova", "sesamo", "frutta_guscio"),
-        extras: pizzaExtras(),
+        extraListId: LIST_ID_PIZZA,
       },
       {
         id: "quattro-formaggi",
@@ -961,7 +930,7 @@ export const menu: MenuCategory[] = [
           "Impasto",
         ]),
         allergens: ix("glutine", "latte", "soia", "uova", "arachidi", "senape", "solfiti", "frutta_guscio", "sesamo"),
-        extras: pizzaExtras(),
+        extraListId: LIST_ID_PIZZA,
       },
       {
         id: "provola-speck",
@@ -976,7 +945,7 @@ export const menu: MenuCategory[] = [
           "Impasto",
         ]),
         allergens: ix("glutine", "latte", "soia", "uova", "arachidi", "senape", "solfiti", "frutta_guscio", "sesamo"),
-        extras: pizzaExtras(),
+        extraListId: LIST_ID_PIZZA,
       },
       {
         id: "vegetariana",
@@ -995,7 +964,7 @@ export const menu: MenuCategory[] = [
           "Impasto",
         ]),
         allergens: ix("glutine", "latte", "soia", "uova", "arachidi", "senape", "solfiti", "frutta_guscio", "sesamo"),
-        extras: pizzaExtras(),
+        extraListId: LIST_ID_PIZZA,
       },
       {
         id: "bufalina",
@@ -1010,7 +979,7 @@ export const menu: MenuCategory[] = [
           "Impasto",
         ]),
         allergens: ix("glutine", "latte", "solfiti"),
-        extras: pizzaExtras(),
+        extraListId: LIST_ID_PIZZA,
       },
       {
         id: "norcia-funghi",
@@ -1025,7 +994,7 @@ export const menu: MenuCategory[] = [
           "Impasto",
         ]),
         allergens: ix("glutine", "latte", "soia", "arachidi", "senape", "solfiti", "uova", "frutta_guscio", "sesamo"),
-        extras: pizzaExtras(),
+        extraListId: LIST_ID_PIZZA,
       },
       {
         id: "bufala-norcia",
@@ -1039,7 +1008,7 @@ export const menu: MenuCategory[] = [
           "Impasto",
         ]),
         allergens: ix("glutine", "latte", "soia", "arachidi", "senape", "solfiti", "uova", "frutta_guscio", "sesamo"),
-        extras: pizzaExtras(),
+        extraListId: LIST_ID_PIZZA,
       },
       {
         id: "fa-pizzaiolo",
@@ -1052,7 +1021,7 @@ export const menu: MenuCategory[] = [
           "Formaggi, salumi e/o verdure a seconda della giornata (staff)",
         ]),
         allergens: ix("glutine", "latte", "uova", "soia", "arachidi", "senape", "solfiti", "frutta_guscio", "sesamo"),
-        extras: pizzaExtras(),
+        extraListId: LIST_ID_PIZZA,
       },
       {
         id: "multigusto-14",
@@ -1073,7 +1042,7 @@ export const menu: MenuCategory[] = [
           "Sezione 4: stile all'Assassina (pasta, sugo piccante, olio EVO)",
         ]),
         allergens: ix("glutine", "uova", "latte", "soia", "arachidi", "senape", "solfiti", "frutta_guscio", "sesamo"),
-        extras: pizzaExtras(),
+        extraListId: LIST_ID_PIZZA,
       },
       {
         id: "multigusto-15",
@@ -1096,7 +1065,7 @@ export const menu: MenuCategory[] = [
           "Sezione 4: scamorza",
         ]),
         allergens: ix("glutine", "uova", "latte", "soia", "arachidi", "senape", "solfiti", "frutta_guscio", "sesamo"),
-        extras: pizzaExtras(),
+        extraListId: LIST_ID_PIZZA,
       },
     ],
   },
@@ -1119,7 +1088,7 @@ export const menu: MenuCategory[] = [
           "Impasto",
         ]),
         allergens: ix("glutine", "latte", "uova", "arachidi", "senape", "soia", "frutta_guscio", "solfiti", "sesamo"),
-        extras: pizzaExtras(),
+        extraListId: LIST_ID_PIZZA,
       },
       {
         id: "mortazza",
@@ -1137,7 +1106,7 @@ export const menu: MenuCategory[] = [
           "Impasto",
         ]),
         allergens: ix("glutine", "latte", "uova", "arachidi", "senape", "soia", "frutta_guscio", "sesamo", "solfiti"),
-        extras: pizzaExtras(),
+        extraListId: LIST_ID_PIZZA,
       },
       {
         id: "padana",
@@ -1153,7 +1122,7 @@ export const menu: MenuCategory[] = [
           "Impasto",
         ]),
         allergens: ix("glutine", "uova", "latte", "arachidi", "senape", "soia", "solfiti", "frutta_guscio", "sesamo"),
-        extras: pizzaExtras(),
+        extraListId: LIST_ID_PIZZA,
       },
       {
         id: "allitaliana",
@@ -1170,7 +1139,7 @@ export const menu: MenuCategory[] = [
           "Impasto",
         ]),
         allergens: ix("glutine", "latte", "uova", "arachidi", "senape", "soia", "solfiti", "frutta_guscio", "sesamo"),
-        extras: pizzaExtras(),
+        extraListId: LIST_ID_PIZZA,
       },
       {
         id: "carbonara-pizza",
@@ -1187,7 +1156,7 @@ export const menu: MenuCategory[] = [
           "Impasto",
         ]),
         allergens: ix("glutine", "uova", "latte", "arachidi", "senape", "soia", "solfiti", "frutta_guscio", "sesamo"),
-        extras: pizzaExtras(),
+        extraListId: LIST_ID_PIZZA,
       },
       {
         id: "giu-al-sud",
@@ -1203,7 +1172,7 @@ export const menu: MenuCategory[] = [
           "Impasto",
         ]),
         allergens: ix("glutine", "latte", "uova", "arachidi", "senape", "soia", "solfiti", "frutta_guscio", "sesamo"),
-        extras: pizzaExtras(),
+        extraListId: LIST_ID_PIZZA,
       },
       {
         id: "la-sarda",
@@ -1221,7 +1190,7 @@ export const menu: MenuCategory[] = [
           "Impasto",
         ]),
         allergens: ix("glutine", "latte", "uova", "arachidi", "senape", "soia", "solfiti", "frutta_guscio", "sesamo"),
-        extras: pizzaExtras(),
+        extraListId: LIST_ID_PIZZA,
       },
       {
         id: "deliziosa",
@@ -1239,7 +1208,7 @@ export const menu: MenuCategory[] = [
           "Impasto",
         ]),
         allergens: ix("glutine", "latte", "uova", "arachidi", "senape", "soia", "solfiti", "frutta_guscio", "sesamo"),
-        extras: pizzaExtras(),
+        extraListId: LIST_ID_PIZZA,
       },
       {
         id: "pizza-allassassina",
@@ -1259,7 +1228,7 @@ export const menu: MenuCategory[] = [
           "Peperoncino",
         ]),
         allergens: ix("glutine", "uova", "latte", "arachidi", "senape", "soia", "solfiti", "frutta_guscio", "sesamo"),
-        extras: pizzaExtras(),
+        extraListId: LIST_ID_PIZZA,
       },
       {
         id: "pulled-pizza",
@@ -1277,7 +1246,7 @@ export const menu: MenuCategory[] = [
           "Impasto",
         ]),
         allergens: ix("glutine", "uova", "latte", "arachidi", "senape", "soia", "solfiti", "frutta_guscio", "sesamo"),
-        extras: pizzaExtras(),
+        extraListId: LIST_ID_PIZZA,
       },
       {
         id: "crock",
@@ -1297,7 +1266,7 @@ export const menu: MenuCategory[] = [
           "Impasto",
         ]),
         allergens: ix("glutine", "uova", "latte", "arachidi", "senape", "soia", "solfiti", "frutta_guscio", "sesamo"),
-        extras: pizzaExtras(),
+        extraListId: LIST_ID_PIZZA,
       },
       {
         id: "cheese-pizza",
@@ -1315,7 +1284,7 @@ export const menu: MenuCategory[] = [
           "Impasto",
         ]),
         allergens: ix("glutine", "uova", "latte", "arachidi", "senape", "soia", "solfiti", "frutta_guscio", "sesamo"),
-        extras: pizzaExtras(),
+        extraListId: LIST_ID_PIZZA,
       },
       {
         id: "mortadella-pork",
@@ -1333,7 +1302,7 @@ export const menu: MenuCategory[] = [
           "Impasto",
         ]),
         allergens: ix("glutine", "uova", "latte", "arachidi", "senape", "soia", "solfiti", "frutta_guscio", "sesamo"),
-        extras: pizzaExtras(),
+        extraListId: LIST_ID_PIZZA,
       },
       {
         id: "nonna-pork",
@@ -1348,7 +1317,7 @@ export const menu: MenuCategory[] = [
           "Pesto di pistacchio a goccia",
         ]),
         allergens: ix("glutine", "uova", "latte", "arachidi", "senape", "soia", "solfiti", "frutta_guscio", "sesamo"),
-        extras: pizzaExtras(),
+        extraListId: LIST_ID_PIZZA,
       },
       {
         id: "parmiggiana-pizza",
@@ -1366,7 +1335,7 @@ export const menu: MenuCategory[] = [
           "Impasto",
         ]),
         allergens: ix("glutine", "uova", "latte", "arachidi", "senape", "soia", "solfiti", "frutta_guscio", "sesamo"),
-        extras: pizzaExtras(),
+        extraListId: LIST_ID_PIZZA,
       },
       {
         id: "bacon-pizza",
@@ -1385,7 +1354,7 @@ export const menu: MenuCategory[] = [
           "Impasto",
         ]),
         allergens: ix("glutine", "uova", "latte", "arachidi", "senape", "soia", "solfiti", "frutta_guscio", "sesamo"),
-        extras: pizzaExtras(),
+        extraListId: LIST_ID_PIZZA,
       },
       {
         id: "porka-brascio",
@@ -1401,7 +1370,7 @@ export const menu: MenuCategory[] = [
           "Impasto",
         ]),
         allergens: ix("glutine", "uova", "latte", "arachidi", "senape", "soia", "solfiti", "frutta_guscio", "sesamo"),
-        extras: pizzaExtras(),
+        extraListId: LIST_ID_PIZZA,
       },
     ],
   },

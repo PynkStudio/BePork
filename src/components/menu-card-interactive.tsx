@@ -33,6 +33,7 @@ import { FormatoChoiceModal } from "./formato-choice-modal";
 import { AllergenBadges } from "./allergen-badges";
 import { SpicyLevelBadge } from "./spicy-level-badge";
 import { getResolvedPiccanteLevel } from "@/lib/piccante";
+import { useMenuStore } from "@/store/menu-store";
 
 const tagMeta: Record<
   NonNullable<AdminMenuItem["tags"]>[number],
@@ -85,6 +86,7 @@ export function MenuCardInteractive({ item }: { item: AdminMenuItem }) {
   const lines = useCartStore((s) => s.lines);
   const addLine = useCartStore((s) => s.addLine);
   const decOneUnitOfItem = useCartStore((s) => s.decOneUnitOfItem);
+  const extraLists = useMenuStore((s) => s.extraLists);
   const addBtnRef = useRef<HTMLButtonElement>(null);
 
   const qtyInCart = useMemo(
@@ -96,7 +98,7 @@ export function MenuCardInteractive({ item }: { item: AdminMenuItem }) {
   const isFav = favIds.includes(item.id);
 
   const unavailable = !item.available;
-  const canCustomize = needsCustomization(item);
+  const canCustomize = needsCustomization(item, extraLists);
   const spicyLevel = getResolvedPiccanteLevel(item);
 
   function handleAddClick() {
@@ -105,7 +107,7 @@ export function MenuCardInteractive({ item }: { item: AdminMenuItem }) {
       setBundleOpen(true);
       return;
     }
-    if (hasOnlyPriceVariants(item)) {
+    if (hasOnlyPriceVariants(item, extraLists)) {
       setFormatoOpen(true);
       return;
     }
@@ -273,7 +275,7 @@ export function MenuCardInteractive({ item }: { item: AdminMenuItem }) {
               )}
               {canCustomize &&
                 !hasMenuBundle(item) &&
-                !hasOnlyPriceVariants(item) &&
+                !hasOnlyPriceVariants(item, extraLists) &&
                 showAdd && (
                   <span className="hidden rounded-full bg-pork-mustard/40 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-pork-ink sm:block">
                     Personalizza
@@ -321,7 +323,11 @@ export function MenuCardInteractive({ item }: { item: AdminMenuItem }) {
       </div>
 
       {customizerOpen && (
-        <ItemCustomizer item={item} onClose={() => setCustomizerOpen(false)} />
+        <ItemCustomizer
+          item={item}
+          extraLists={extraLists}
+          onClose={() => setCustomizerOpen(false)}
+        />
       )}
       {bundleOpen && (
         <MenuBundleCustomizer item={item} onClose={() => setBundleOpen(false)} />

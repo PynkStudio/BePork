@@ -40,6 +40,7 @@ export function CartDrawer() {
   const context = useCartStore((s) => s.context);
   const favIds = useFavoritesStore((s) => s.ids);
   const items = useMenuStore((s) => s.items);
+  const extraLists = useMenuStore((s) => s.extraLists);
 
   const [customizeItem, setCustomizeItem] = useState<AdminMenuItem | null>(null);
   const [customizeEdit, setCustomizeEdit] = useState<CartLine | null>(null);
@@ -143,7 +144,7 @@ export function CartDrawer() {
                       setBundleEdit(l);
                       return;
                     }
-                    if (needsCustomization(menuItem)) {
+                    if (needsCustomization(menuItem, extraLists)) {
                       setCustomizeItem(menuItem);
                       setCustomizeEdit(l);
                       return;
@@ -295,11 +296,11 @@ export function CartDrawer() {
                                 setBundleItem(it);
                                 return;
                               }
-                              if (hasOnlyPriceVariants(it)) {
+                              if (hasOnlyPriceVariants(it, extraLists)) {
                                 setFormatoFavItem(it);
                                 return;
                               }
-                              if (needsCustomization(it)) {
+                              if (needsCustomization(it, extraLists)) {
                                 setCustomizeItem(it);
                                 return;
                               }
@@ -342,6 +343,7 @@ export function CartDrawer() {
         {customizeItem && (
           <ItemCustomizer
             item={customizeItem}
+            extraLists={extraLists}
             editLineId={customizeEdit?.lineId}
             initialLine={customizeEdit ?? undefined}
             onClose={() => {

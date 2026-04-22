@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { Heart, ShoppingBag } from "lucide-react";
 import { useCartStore, cartCount } from "@/store/cart-store";
 import { useFavoritesStore } from "@/store/favorites-store";
@@ -16,6 +15,7 @@ export function ShopFabs() {
   const setOpen = useCartStore((s) => s.setOpen);
   const cartQty = cartCount(lines);
   const favIds = useFavoritesStore((s) => s.ids);
+  const setFavOpen = useFavoritesStore((s) => s.setOpen);
 
   if (!hydrated) return null;
 
@@ -31,8 +31,9 @@ export function ShopFabs() {
     >
       <div className="pointer-events-auto flex flex-col items-stretch gap-2">
         {showFav && (
-          <Link
-            href="/preferiti"
+          <button
+            type="button"
+            onClick={() => setFavOpen(true)}
             className={cn(fabClass, "ring-2 ring-pork-mustard/80 hover:ring-pork-mustard")}
             aria-label={`Preferiti: ${favIds.length} piatti`}
           >
@@ -41,7 +42,7 @@ export function ShopFabs() {
             <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-pork-mustard px-1.5 text-xs font-black text-pork-ink">
               {favIds.length}
             </span>
-          </Link>
+          </button>
         )}
         {showCart && (
           <button

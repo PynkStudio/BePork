@@ -8,11 +8,12 @@ import { cn } from "@/lib/utils";
 import { bodyScrollLock, bodyScrollUnlock } from "@/lib/body-scroll-lock";
 import { whatsappUrl } from "@/lib/site-config";
 import { useSettingsStore } from "@/store/settings-store";
+import { useFavoritesStore } from "@/store/favorites-store";
 
 const navBase = [
   { label: "Menu", href: "/menu" },
   { label: "Ordina", href: "/ordina" },
-  { label: "Preferiti", href: "/preferiti" },
+  { label: "Preferiti", href: "/preferiti", favorites: true as const },
   { label: "Chi siamo", href: "/chi-siamo" },
   { label: "Galleria", href: "/galleria" },
   { label: "Recensioni", href: "/recensioni" },
@@ -22,6 +23,7 @@ const navBase = [
 export function Navbar() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const setFavOpen = useFavoritesStore((s) => s.setOpen);
   const allowTakeaway = useSettingsStore((s) => s.allowTakeaway);
   const nav = useMemo(
     () => navBase.filter((i) => i.href !== "/ordina" || allowTakeaway),
@@ -66,15 +68,26 @@ export function Navbar() {
           </Link>
 
           <nav className="hidden items-center gap-1 lg:flex" aria-label="Principale">
-            {nav.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="rounded-full px-4 py-2 text-sm font-semibold text-pork-ink/80 transition-colors hover:bg-pork-ink/5 hover:text-pork-ink"
-              >
-                {item.label}
-              </Link>
-            ))}
+            {nav.map((item) =>
+              "favorites" in item && item.favorites ? (
+                <button
+                  key="preferiti"
+                  type="button"
+                  onClick={() => setFavOpen(true)}
+                  className="rounded-full px-4 py-2 text-sm font-semibold text-pork-ink/80 transition-colors hover:bg-pork-ink/5 hover:text-pork-ink"
+                >
+                  {item.label}
+                </button>
+              ) : (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="rounded-full px-4 py-2 text-sm font-semibold text-pork-ink/80 transition-colors hover:bg-pork-ink/5 hover:text-pork-ink"
+                >
+                  {item.label}
+                </Link>
+              ),
+            )}
           </nav>
 
           <div className="hidden items-center gap-2 lg:flex">
@@ -110,16 +123,30 @@ export function Navbar() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(245,197,24,0.18),transparent_60%),radial-gradient(circle_at_bottom_left,rgba(184,51,46,0.28),transparent_55%)]" />
         <div className="container-wide relative flex min-h-dvh flex-col justify-between pb-[max(3rem,env(safe-area-inset-bottom))] pt-[calc(7rem+env(safe-area-inset-top))]">
           <nav className="flex flex-col gap-1" aria-label="Mobile">
-            {nav.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className="headline block py-1 text-4xl text-pork-cream active:text-pork-mustard sm:text-5xl"
-              >
-                {item.label}
-              </Link>
-            ))}
+            {nav.map((item) =>
+              "favorites" in item && item.favorites ? (
+                <button
+                  key="preferiti"
+                  type="button"
+                  onClick={() => {
+                    setFavOpen(true);
+                    setOpen(false);
+                  }}
+                  className="headline block py-1 text-left text-4xl text-pork-cream active:text-pork-mustard sm:text-5xl"
+                >
+                  {item.label}
+                </button>
+              ) : (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  className="headline block py-1 text-4xl text-pork-cream active:text-pork-mustard sm:text-5xl"
+                >
+                  {item.label}
+                </Link>
+              ),
+            )}
           </nav>
           <a
             href={whatsappUrl()}

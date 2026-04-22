@@ -17,23 +17,29 @@ import {
   SENZA_LATTOSIO_EXTRA,
 } from "@/lib/menu-service-notes";
 import { normalizeMenuIngredients, type MenuIngredient } from "@/lib/ingredients";
+import { resolveExtrasForItem, type ExtraList } from "@/lib/extra-lists";
 
-export function needsCustomization(item: AdminMenuItem): boolean {
+export function needsCustomization(
+  item: AdminMenuItem,
+  extraLists: ExtraList[],
+): boolean {
   const variantsCount = priceVariants(item.price).length;
   const hasIngredients =
     (normalizeMenuIngredients(item.id, item.ingredients).length ?? 0) > 0;
-  const hasExtras = (item.extras?.length ?? 0) > 0;
+  const hasExtras = resolveExtrasForItem(item, extraLists).length > 0;
   const lactose = categoryOffersSenzaLattosio(item.categoryId);
   return variantsCount > 1 || hasIngredients || hasExtras || lactose;
 }
 
 export function ItemCustomizer({
   item,
+  extraLists,
   onClose,
   editLineId,
   initialLine,
 }: {
   item: AdminMenuItem;
+  extraLists: ExtraList[];
   onClose: () => void;
   /** Se impostato, salva sostituendo la riga esistente. */
   editLineId?: string;
@@ -41,7 +47,7 @@ export function ItemCustomizer({
 }) {
   const variants = priceVariants(item.price);
   const mergedExtras = useMemo(() => {
-    const real = [...(item.extras ?? [])];
+    const real = [...resolveExtrasForItem(item, extraLists)];
     if (
       categoryOffersSenzaLattosio(item.categoryId) &&
       !real.some((e) => e.id === SENZA_LATTOSIO_EXTRA.id)
@@ -49,7 +55,7 @@ export function ItemCustomizer({
       return [SENZA_LATTOSIO_EXTRA, ...real];
     }
     return real;
-  }, [item.extras, item.categoryId]);
+  }, [item, extraLists]);
   const addLine = useCartStore((s) => s.addLine);
   const replaceLine = useCartStore((s) => s.replaceLine);
   const addBtnRef = useRef<HTMLButtonElement>(null);
