@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { Minus, Plus, X } from "lucide-react";
 import type { AdminMenuItem } from "@/lib/types";
 import { priceVariants, formatEuro } from "@/lib/price-utils";
@@ -30,6 +31,24 @@ export function ItemCustomizer({
   const [extras, setExtras] = useState<string[]>([]);
   const [note, setNote] = useState("");
   const [qty, setQty] = useState(1);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
 
   const activeVariant = variants.find((v) => v.key === variantKey) ?? variants[0];
   const selectedExtras = useMemo(
@@ -70,9 +89,11 @@ export function ItemCustomizer({
     setOpenDrawer(true);
   }
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div
-      className="fixed inset-0 z-[65] flex items-end justify-center bg-pork-ink/70 backdrop-blur-sm sm:items-center"
+      className="fixed inset-0 z-[80] flex items-end justify-center bg-pork-ink/70 backdrop-blur-sm sm:items-center"
       onClick={onClose}
     >
       <div
@@ -257,7 +278,8 @@ export function ItemCustomizer({
           </button>
         </footer>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
