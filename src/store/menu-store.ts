@@ -4,6 +4,10 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { createBrowserLocalJSONStorage } from "@/lib/zustand-json-storage";
 import { menu as seedMenu } from "@/lib/menu-data";
+import {
+  isMenuIngredient,
+  normalizeMenuIngredients,
+} from "@/lib/ingredients";
 import type {
   AdminMenuCategory,
   AdminMenuItem,
@@ -15,8 +19,22 @@ import type {
   Table,
   TableSession,
 } from "@/lib/types";
+import type { MenuIngredient } from "@/lib/ingredients";
 
-const STORAGE_KEY = "bepork-menu-v2";
+const STORAGE_KEY = "bepork-menu-v3";
+
+function migrateItemIngredients(it: AdminMenuItem): AdminMenuItem {
+  const ing = it.ingredients;
+  if (!ing?.length) return it;
+  if (isMenuIngredient(ing[0])) return it;
+  return {
+    ...it,
+    ingredients: normalizeMenuIngredients(
+      it.id,
+      ing as unknown as string[],
+    ),
+  };
+}
 
 function seedCategories(): AdminMenuCategory[] {
   return seedMenu.map((c, order) => ({
@@ -55,7 +73,7 @@ export interface MenuState {
   updateItem: (id: string, patch: Partial<AdminMenuItem>) => void;
   setAvailable: (id: string, available: boolean) => void;
   updatePrice: (id: string, price: PriceFormat) => void;
-  updateIngredients: (id: string, ingredients: string[]) => void;
+  updateIngredients: (id: string, ingredients: MenuIngredient[]) => void;
   updateExtras: (id: string, extras: Extra[]) => void;
   updateImage: (id: string, image: string | undefined) => void;
   updateTags: (id: string, tags: MenuTag[]) => void;
@@ -315,6 +333,12 @@ export const useMenuStore = create<MenuState>()(
         tables: s.tables,
         sessions: s.sessions,
       }),
+      merge: (persisted, current) => {
+        if (!persisted || typeof persisted !== "object") return current;
+        const p = persisted as Partial<MenuState>;
+        const items = p.items?.map(migrateItemIngredients) ?? current.items;
+        return { ...current, ...p, items };
+      },
     },
   ),
 );

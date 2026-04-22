@@ -179,7 +179,7 @@ export function MenuBundleCustomizer({
                 <p className="impact-title mb-1 text-[10px] text-pork-red">
                   Allergeni
                 </p>
-                <AllergenBadges allergens={item.allergens} compact />
+                <AllergenBadges allergens={item.allergens} showLabels compact />
               </div>
             )}
           </div>

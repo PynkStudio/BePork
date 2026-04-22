@@ -19,6 +19,8 @@ import {
   groupKitchenOrderLines,
   kitchenGroupsForColumn,
 } from "@/lib/kitchen-merge";
+import { selectItemById } from "@/store/menu-store";
+import { formatRemovedForLine } from "@/lib/ingredients";
 
 const COLUMNS: Array<{ key: OrderStatus; title: string; accent: string }> = [
   { key: "nuovo", title: "Nuovi", accent: "bg-pork-red text-white" },
@@ -261,7 +263,12 @@ function KitchenCard({
                   </div>
                   {l.removedIngredients && l.removedIngredients.length > 0 && (
                     <p className="mt-0.5 text-[13px] font-bold uppercase tracking-wide text-pork-red">
-                      – senza {l.removedIngredients.join(", ")}
+                      – senza{" "}
+                      {formatRemovedForLine(
+                        l.itemId,
+                        selectItemById(items, l.itemId)?.ingredients,
+                        l.removedIngredients,
+                      )}
                     </p>
                   )}
                   {l.addedExtras && l.addedExtras.length > 0 && (

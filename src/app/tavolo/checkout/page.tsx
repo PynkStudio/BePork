@@ -5,7 +5,8 @@ import { Suspense, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { StickyNote, Send } from "lucide-react";
 import { useCartStore, cartTotal } from "@/store/cart-store";
-import { useMenuStore } from "@/store/menu-store";
+import { useMenuStore, selectItemById } from "@/store/menu-store";
+import { formatRemovedForLine } from "@/lib/ingredients";
 import { formatEuro } from "@/lib/price-utils";
 import {
   COPERTO_DISPLAY_NAME,
@@ -25,6 +26,7 @@ function CheckoutTavoloBody() {
   const clear = useCartStore((s) => s.clear);
   const context = useCartStore((s) => s.context);
   const addOrder = useMenuStore((s) => s.addOrder);
+  const items = useMenuStore((s) => s.items);
   const sessions = useMenuStore((s) => s.sessions);
   const orders = useMenuStore((s) => s.orders);
   const dinerSeparation = useSettingsStore((s) => s.dinerSeparationAtTables);
@@ -248,6 +250,11 @@ function CheckoutTavoloBody() {
                         )}
                         <LineMods
                           removed={l.removedIngredients}
+                          removedDisplay={formatRemovedForLine(
+                            l.itemId,
+                            selectItemById(items, l.itemId)?.ingredients,
+                            l.removedIngredients,
+                          )}
                           extras={l.addedExtras}
                           note={l.note}
                           bundlePicks={l.bundlePicks}

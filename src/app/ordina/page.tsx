@@ -5,7 +5,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Clock, User, StickyNote, Package } from "lucide-react";
 import { useCartStore, cartTotal } from "@/store/cart-store";
-import { useMenuStore } from "@/store/menu-store";
+import { useMenuStore, selectItemById } from "@/store/menu-store";
+import { formatRemovedForLine } from "@/lib/ingredients";
 import { formatEuro } from "@/lib/price-utils";
 import { useHydrated } from "@/components/providers";
 import { LineMods } from "@/components/line-mods";
@@ -38,6 +39,7 @@ export default function OrdinaPage() {
   const clear = useCartStore((s) => s.clear);
   const setContext = useCartStore((s) => s.setContext);
   const addOrder = useMenuStore((s) => s.addOrder);
+  const items = useMenuStore((s) => s.items);
 
   const [name, setName] = useState("");
   const [pickupTime, setPickupTime] = useState("");
@@ -210,6 +212,11 @@ export default function OrdinaPage() {
                         )}
                         <LineMods
                           removed={l.removedIngredients}
+                          removedDisplay={formatRemovedForLine(
+                            l.itemId,
+                            selectItemById(items, l.itemId)?.ingredients,
+                            l.removedIngredients,
+                          )}
                           extras={l.addedExtras}
                           note={l.note}
                           bundlePicks={l.bundlePicks}

@@ -4,7 +4,8 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { CheckCircle2, Clock, Package } from "lucide-react";
-import { useMenuStore } from "@/store/menu-store";
+import { useMenuStore, selectItemById } from "@/store/menu-store";
+import { formatRemovedForLine } from "@/lib/ingredients";
 import { formatEuro } from "@/lib/price-utils";
 import { useHydrated } from "@/components/providers";
 import { LineMods } from "@/components/line-mods";
@@ -14,6 +15,7 @@ function ConfermaContent() {
   const params = useSearchParams();
   const id = params.get("id");
   const orders = useMenuStore((s) => s.orders);
+  const items = useMenuStore((s) => s.items);
   const order = hydrated ? orders.find((o) => o.id === id) : undefined;
 
   if (!hydrated) return null;
@@ -90,6 +92,11 @@ function ConfermaContent() {
                     </p>
                     <LineMods
                       removed={l.removedIngredients}
+                      removedDisplay={formatRemovedForLine(
+                        l.itemId,
+                        selectItemById(items, l.itemId)?.ingredients,
+                        l.removedIngredients,
+                      )}
                       extras={l.addedExtras}
                       note={l.note}
                       bundlePicks={l.bundlePicks}

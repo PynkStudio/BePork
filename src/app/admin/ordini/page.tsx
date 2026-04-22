@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { ArrowRight, Trash2, XCircle } from "lucide-react";
-import { useMenuStore } from "@/store/menu-store";
+import { useMenuStore, selectItemById } from "@/store/menu-store";
+import { formatRemovedForLine } from "@/lib/ingredients";
 import { useHydrated } from "@/components/providers";
 import type { OrderStatus } from "@/lib/types";
 import {
@@ -30,6 +31,7 @@ export default function AdminOrdersPage() {
   const hydrated = useHydrated();
   const dinerSeparation = useSettingsStore((s) => s.dinerSeparationAtTables);
   const orders = useMenuStore((s) => s.orders);
+  const items = useMenuStore((s) => s.items);
   const updateStatus = useMenuStore((s) => s.updateOrderStatus);
   const removeOrder = useMenuStore((s) => s.removeOrder);
   const clearDone = useMenuStore((s) => s.clearCompletedOrders);
@@ -152,6 +154,11 @@ export default function AdminOrdersPage() {
                             </span>
                             <LineMods
                               removed={l.removedIngredients}
+                              removedDisplay={formatRemovedForLine(
+                                l.itemId,
+                                selectItemById(items, l.itemId)?.ingredients,
+                                l.removedIngredients,
+                              )}
                               extras={l.addedExtras}
                               note={l.note}
                               bundlePicks={l.bundlePicks}

@@ -15,8 +15,10 @@ import { QRCodeSVG } from "qrcode.react";
 import {
   useMenuStore,
   selectActiveSession,
+  selectItemById,
   selectOrdersBySession,
 } from "@/store/menu-store";
+import { formatRemovedForLine } from "@/lib/ingredients";
 import { useHydrated } from "@/components/providers";
 import { formatEuro } from "@/lib/price-utils";
 import type { Table, TableSession } from "@/lib/types";
@@ -509,6 +511,7 @@ function CloseSessionModal({
   onClose: () => void;
   onConfirm: () => void;
 }) {
+  const items = useMenuStore((s) => s.items);
   const dinerSeparation = useSettingsStore((s) => s.dinerSeparationAtTables);
   const total = orders.reduce((a, o) => a + o.total, 0);
   const aggregated =
@@ -563,6 +566,11 @@ function CloseSessionModal({
                     </div>
                     <LineMods
                       removed={l.removedIngredients}
+                      removedDisplay={formatRemovedForLine(
+                        l.itemId,
+                        selectItemById(items, l.itemId)?.ingredients,
+                        l.removedIngredients,
+                      )}
                       extras={l.addedExtras}
                       note={l.note}
                       bundlePicks={l.bundlePicks}
@@ -604,6 +612,11 @@ function CloseSessionModal({
                         </div>
                         <LineMods
                           removed={l.removedIngredients}
+                          removedDisplay={formatRemovedForLine(
+                            l.itemId,
+                            selectItemById(items, l.itemId)?.ingredients,
+                            l.removedIngredients,
+                          )}
                           extras={l.addedExtras}
                           note={l.note}
                           bundlePicks={l.bundlePicks}

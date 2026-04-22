@@ -25,6 +25,7 @@ import { useSettingsStore } from "@/store/settings-store";
 import { canAddToCart } from "@/lib/ordering-rules";
 import { bodyScrollLock, bodyScrollUnlock } from "@/lib/body-scroll-lock";
 import { spawnCartFly } from "@/lib/cart-fly";
+import { formatRemovedForLine } from "@/lib/ingredients";
 
 export function CartDrawer() {
   const pathname = usePathname();
@@ -164,7 +165,14 @@ export function CartDrawer() {
                         )}
                         {l.removedIngredients && l.removedIngredients.length > 0 && (
                           <p className="mt-1 text-[11px] font-semibold text-pork-red">
-                            – senza {l.removedIngredients.join(", ")}
+                            – senza{" "}
+                            {menuItem
+                              ? formatRemovedForLine(
+                                  menuItem.id,
+                                  menuItem.ingredients,
+                                  l.removedIngredients,
+                                )
+                              : l.removedIngredients.join(", ")}
                           </p>
                         )}
                         {l.addedExtras && l.addedExtras.length > 0 && (

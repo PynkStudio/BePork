@@ -16,10 +16,12 @@ import {
   categoryOffersSenzaLattosio,
   SENZA_LATTOSIO_EXTRA,
 } from "@/lib/menu-service-notes";
+import { normalizeMenuIngredients, type MenuIngredient } from "@/lib/ingredients";
 
 export function needsCustomization(item: AdminMenuItem): boolean {
   const variantsCount = priceVariants(item.price).length;
-  const hasIngredients = (item.ingredients?.length ?? 0) > 0;
+  const hasIngredients =
+    (normalizeMenuIngredients(item.id, item.ingredients).length ?? 0) > 0;
   const hasExtras = (item.extras?.length ?? 0) > 0;
   const lactose = categoryOffersSenzaLattosio(item.categoryId);
   return variantsCount > 1 || hasIngredients || hasExtras || lactose;
@@ -57,9 +59,32 @@ export function ItemCustomizer({
     if (!initialLine?.variantKey) return first;
     return variants.find((v) => v.key === initialLine.variantKey)?.key ?? first;
   });
-  const [removed, setRemoved] = useState<string[]>(
-    () => initialLine?.removedIngredients ?? [],
+  const ingredientRows = useMemo<MenuIngredient[]>(
+    () => normalizeMenuIngredients(item.id, item.ingredients),
+    [item.id, item.ingredients],
   );
+  const [removed, setRemoved] = useState<string[]>(() => {
+    const rows = normalizeMenuIngredients(item.id, item.ingredients);
+    const raw = initialLine?.removedIngredients ?? [];
+    if (raw.length === 0) return raw;
+    const byId = new Set(rows.map((r) => r.id));
+    const isLegacy = raw.some((r) => r && !byId.has(r));
+    if (!isLegacy) return raw;
+    const out: string[] = [];
+    const used = new Map<string, number>();
+    for (const token of raw) {
+      if (byId.has(token)) {
+        out.push(token);
+        continue;
+      }
+      const n = (used.get(token) ?? 0) + 1;
+      used.set(token, n);
+      const withName = rows.filter((x) => x.name === token);
+      const line = withName[n - 1] ?? withName[0];
+      if (line) out.push(line.id);
+    }
+    return out;
+  });
   const [extras, setExtras] = useState<string[]>(
     () => initialLine?.addedExtras?.map((e) => e.id) ?? [],
   );
@@ -91,9 +116,9 @@ export function ItemCustomizer({
   const total = unitPrice * qty;
   const spicyLevel = getResolvedPiccanteLevel(item);
 
-  function toggleRemove(ing: string) {
+  function toggleRemoveSlot(ingId: string) {
     setRemoved((prev) =>
-      prev.includes(ing) ? prev.filter((x) => x !== ing) : [...prev, ing],
+      prev.includes(ingId) ? prev.filter((x) => x !== ingId) : [...prev, ingId],
     );
   }
   function toggleExtra(id: string) {
@@ -113,7 +138,9 @@ export function ItemCustomizer({
       variantLabel: activeVariant.label,
       basePrice: activeVariant.price,
       unitPrice,
-      removedIngredients: removed.length ? removed : undefined,
+      removedIngredients: removed.length
+        ? [...removed].sort()
+        : undefined,
       addedExtras: selectedExtras.length
         ? selectedExtras.map((e) => ({ id: e.id, name: e.name, price: e.price }))
         : undefined,
@@ -161,7 +188,7 @@ export function ItemCustomizer({
                 <p className="impact-title mb-1 text-[10px] text-pork-red">
                   Allergeni
                 </p>
-                <AllergenBadges allergens={item.allergens} compact />
+                <AllergenBadges allergens={item.allergens} showLabels compact />
               </div>
             )}
           </div>
@@ -203,21 +230,19 @@ export function ItemCustomizer({
             </Section>
           )}
 
-          {item.ingredients && item.ingredients.length > 0 && (
+          {ingredientRows.length > 0 && (
             <Section
               title="Ingredienti"
-              subtitle="Tocca per togliere ciò che non vuoi"
+              subtitle="Ogni riga: − togli una sola unità, + se cambi idea (doppi = due righe)"
             >
-              <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                {item.ingredients.map((ing) => {
-                  const isRemoved = removed.includes(ing);
+              <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {ingredientRows.map((ing) => {
+                  const isRemoved = removed.includes(ing.id);
                   return (
-                    <li key={ing}>
-                      <button
-                        type="button"
-                        onClick={() => toggleRemove(ing)}
+                    <li key={ing.id}>
+                      <div
                         className={cn(
-                          "group flex w-full items-center justify-between gap-2 rounded-xl border-2 bg-white px-3 py-2 text-left text-sm transition-all active:scale-95",
+                          "flex w-full items-center justify-between gap-2 rounded-xl border-2 bg-white px-3 py-2 text-left text-sm",
                           isRemoved
                             ? "border-pork-red/40 bg-pork-red/5"
                             : "border-pork-ink/10",
@@ -225,30 +250,47 @@ export function ItemCustomizer({
                       >
                         <span
                           className={cn(
-                            "flex-1 truncate",
+                            "min-w-0 flex-1 leading-snug",
                             isRemoved && "text-pork-red/80 line-through",
                           )}
                         >
-                          {ing}
+                          {ing.name}
                         </span>
-                        <span
-                          className={cn(
-                            "inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-black",
-                            isRemoved
-                              ? "bg-pork-red text-white"
-                              : "bg-pork-green/10 text-pork-green",
-                          )}
-                        >
-                          {isRemoved ? "–" : "✓"}
-                        </span>
-                      </button>
+                        {isRemoved ? (
+                          <button
+                            type="button"
+                            onClick={() => toggleRemoveSlot(ing.id)}
+                            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-pork-green/15 text-pork-green transition hover:bg-pork-green/25"
+                            title="Rimetti"
+                            aria-label={`Rimetti ${ing.name}`}
+                          >
+                            <Plus size={16} />
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => toggleRemoveSlot(ing.id)}
+                            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-pork-ink/10 text-pork-ink transition hover:bg-pork-red/20 hover:text-pork-red"
+                            title="Togli questa unità"
+                            aria-label={`Togli ${ing.name}`}
+                          >
+                            <Minus size={16} />
+                          </button>
+                        )}
+                      </div>
                     </li>
                   );
                 })}
               </ul>
               {removed.length > 0 && (
-                <p className="mt-2 text-[11px] text-pork-red">
-                  Togli: {removed.join(", ")}
+                <p className="mt-2 text-[11px] text-pork-ink/70">
+                  Escluso:{" "}
+                  {removed
+                    .map((id) => {
+                      const r = ingredientRows.find((x) => x.id === id);
+                      return r?.name ?? id;
+                    })
+                    .join(", ")}
                 </p>
               )}
             </Section>

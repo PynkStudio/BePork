@@ -14,6 +14,7 @@ import { PriceEditor } from "./price-editor";
 import { ImageUpload } from "./image-upload";
 import { useMenuStore } from "@/store/menu-store";
 import { formatEuro } from "@/lib/price-utils";
+import { normalizeMenuIngredients, type MenuIngredient } from "@/lib/ingredients";
 
 const TAGS: { key: MenuTag; label: string }[] = [
   { key: "firma", label: "Firma" },
@@ -45,9 +46,11 @@ export function ItemEditor({
   function addIngredient() {
     const v = ingInput.trim();
     if (!v) return;
+    const id = `ing-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+    const row: MenuIngredient = { id, name: v };
     setDraft((d) => ({
       ...d,
-      ingredients: [...(d.ingredients ?? []), v],
+      ingredients: [...(d.ingredients ?? []), row],
     }));
     setIngInput("");
   }
@@ -206,12 +209,15 @@ export function ItemEditor({
                 </div>
                 {draft.ingredients && draft.ingredients.length > 0 && (
                   <ul className="mt-2 flex flex-wrap gap-1.5">
-                    {draft.ingredients.map((ing, i) => (
+                    {normalizeMenuIngredients(
+                      draft.id,
+                      draft.ingredients,
+                    ).map((ing, i) => (
                       <li
-                        key={`${ing}-${i}`}
+                        key={ing.id}
                         className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-xs font-semibold ring-1 ring-pork-ink/10"
                       >
-                        {ing}
+                        {ing.name}
                         <button
                           type="button"
                           onClick={() => removeIngredient(i)}
@@ -348,7 +354,8 @@ export function ItemEditor({
               <Field label="Allergeni (UE 1169/2011)">
                 <p className="mb-2 text-[11px] text-pork-ink/50">
                   Seleziona tutti gli allegati presenti nel piatto. In menu compaiono
-                  come numeri 1–14 (passa il mouse o tocchi per il nome completo).
+                  come icone (su desktop passando il mouse il bubble si allarga e
+                  mostra il nome accanto; in scheda prodotto icona e nome insieme).
                 </p>
                 <div className="grid gap-2 sm:grid-cols-2">
                   {ALLERGEN_OPTIONS.map((o) => {

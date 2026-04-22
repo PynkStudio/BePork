@@ -7,6 +7,7 @@ import type {
   MenuAllergen,
   MenuServiceNoteKey,
   PiccanteLevel,
+  MenuIngredient,
 } from "./menu-data";
 
 export type {
@@ -18,6 +19,7 @@ export type {
   MenuAllergen,
   MenuServiceNoteKey,
   PiccanteLevel,
+  MenuIngredient,
 };
 
 export type BundlePick = {
@@ -37,7 +39,7 @@ export type AdminMenuItem = MenuItem & {
   categoryId: string;
   order: number;
   available: boolean;
-  ingredients?: string[];
+  ingredients?: MenuIngredient[];
   extras?: Extra[];
 };
 

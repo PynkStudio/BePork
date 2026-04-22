@@ -25,6 +25,10 @@ import {
 } from "@/lib/menu-service-notes";
 import { useSettingsStore } from "@/store/settings-store";
 import { canAddToCart } from "@/lib/ordering-rules";
+import {
+  formatIngredientsLine,
+  normalizeMenuIngredients,
+} from "@/lib/ingredients";
 import { FormatoChoiceModal } from "./formato-choice-modal";
 import { AllergenBadges } from "./allergen-badges";
 import { SpicyLevelBadge } from "./spicy-level-badge";
@@ -196,7 +200,9 @@ export function MenuCardInteractive({ item }: { item: AdminMenuItem }) {
 
         {item.ingredients && item.ingredients.length > 0 && (
           <p className="text-xs italic text-pork-ink/50">
-            {item.ingredients.join(" · ")}
+            {formatIngredientsLine(
+              normalizeMenuIngredients(item.id, item.ingredients),
+            )}
           </p>
         )}
 

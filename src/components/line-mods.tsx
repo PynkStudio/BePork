@@ -5,7 +5,10 @@ type Extra = { id: string; name: string; price: number };
 type BundlePickLine = { slotLabel: string; choiceName: string };
 
 type Props = {
+  /** Id ingredienti o etichette legacy (join se `removedDisplay` assente). */
   removed?: string[];
+  /** Nomi già risolti (ingredienti a slot) — ha priorità sulla join di `removed`. */
+  removedDisplay?: string;
   extras?: Extra[];
   note?: string;
   bundlePicks?: BundlePickLine[];
@@ -15,13 +18,15 @@ type Props = {
 
 export function LineMods({
   removed,
+  removedDisplay,
   extras,
   note,
   bundlePicks,
   tone = "dark",
   withPrices = false,
 }: Props) {
-  const hasRemoved = (removed?.length ?? 0) > 0;
+  const hasRemoved =
+    !!removedDisplay?.trim() || (removed?.length ?? 0) > 0;
   const hasExtras = (extras?.length ?? 0) > 0;
   const hasNote = !!note;
   const hasBundle = (bundlePicks?.length ?? 0) > 0;
@@ -46,7 +51,9 @@ export function LineMods({
       )}
       {hasRemoved && (
         <p className={`${removedColor} font-semibold`}>
-          – senza {removed!.join(", ")}
+          – senza{" "}
+          {removedDisplay?.trim() ||
+            (removed && removed.length > 0 ? removed.join(", ") : "")}
         </p>
       )}
       {hasExtras && (
