@@ -1,4 +1,4 @@
-import type { MenuAllergen } from "./allergens";
+import { sortAllergens, type MenuAllergen } from "./allergens";
 
 export type { MenuAllergen };
 
@@ -51,7 +51,57 @@ export type MenuItem = {
    * (`getMenuServiceNotes`). Array vuoto = nessuna nota sulla scheda.
    */
   serviceNotes?: MenuServiceNoteKey[];
+  /** Per pizze/burger/club: elenco scomponibile (anche “senza …” in modale). */
+  ingredients?: string[];
+  /**
+   * Aggiunte a pagamento (categorie abilitate in `menu-service-notes` mostrano anche
+   * l’opzione «Senza lattosio» +1 € da codice, senza elencarla qui).
+   */
+  extras?: MenuExtra[];
 };
+
+export type MenuExtra = { id: string; name: string; price: number };
+
+/** Pizze — range €0,50–1,00 come in sala (vedi `siteConfig.disclaimers.aggiunte`). */
+const PIZZA_EXTRAS: readonly MenuExtra[] = [
+  { id: "pz-patatine", name: "Patatine fritte", price: 0.5 },
+  { id: "pz-wurstel", name: "Wurstel", price: 0.5 },
+  { id: "pz-funghi", name: "Funghi", price: 1 },
+  { id: "pz-proc-cotto", name: "Prosciutto cotto", price: 1 },
+  { id: "pz-salame", name: "Salame", price: 1 },
+  { id: "pz-olive", name: "Olive", price: 0.5 },
+  { id: "pz-rucola", name: "Rucola", price: 0.5 },
+  { id: "pz-grana", name: "Grattugiato / grana", price: 0.5 },
+  { id: "pz-bufala", name: "Bufala in strisce", price: 1 },
+  { id: "pz-peperone", name: "Peperoncino", price: 0.5 },
+  { id: "pz-acciughe", name: "Acciughe", price: 1 },
+  { id: "pz-bacon", name: "Bacon", price: 1 },
+  { id: "pz-ventricina", name: "Salsiccia / ventricina", price: 1 },
+  { id: "pz-cipolla", name: "Cipolla", price: 0.5 },
+] as const;
+
+const BURGER_EXTRAS: readonly MenuExtra[] = [
+  { id: "bg-bacon", name: "Bacon", price: 1 },
+  { id: "bg-cheddar", name: "Cheddar fuso", price: 1 },
+  { id: "bg-bbq", name: "Salsa BBQ", price: 0.5 },
+  { id: "bg-doppia", name: "Doppia carne", price: 2 },
+  { id: "bg-cipolla", name: "Cipolla caramellata", price: 0.5 },
+  { id: "bg-uovo", name: "Uovo fritto", price: 1 },
+] as const;
+
+const CLUB_EXTRAS: readonly MenuExtra[] = [
+  { id: "cl-bacon", name: "Bacon", price: 1 },
+  { id: "cl-cheddar", name: "Cheddar", price: 0.5 },
+  { id: "cl-bbq", name: "Salsa BBQ", price: 0.5 },
+  { id: "cl-mayo", name: "Mayo extra", price: 0.5 },
+] as const;
+
+const pizzaExtras = (): MenuExtra[] => [...PIZZA_EXTRAS];
+const burgerExtras = (): MenuExtra[] => [...BURGER_EXTRAS];
+const clubExtras = (): MenuExtra[] => [...CLUB_EXTRAS];
+
+/** Allergeni in ordine Allegato II. */
+const ix = (...a: MenuAllergen[]): MenuAllergen[] => sortAllergens(a);
 
 export type MenuCategory = {
   id: string;
@@ -74,6 +124,7 @@ export const menu: MenuCategory[] = [
         name: "Pepite di pollo",
         description: "Straccetti di pollo con panatura ai corn flakes",
         price: s(8),
+        allergens: ix("glutine", "uova", "latte", "senape"),
       },
       {
         id: "mortadella-arrosto-barese",
@@ -81,18 +132,21 @@ export const menu: MenuCategory[] = [
         description: "Con pistacchio e provolone",
         price: s(6),
         tags: ["firma"],
+        allergens: ix("latte", "frutta_guscio", "senape", "solfiti"),
       },
       {
         id: "crudo-alla-barese",
         name: "Crudo alla barese",
         description: "Porzione di prosciutto crudo tagliato a dadini o strisce",
         price: s(6),
+        allergens: ix("solfiti"),
       },
       {
         id: "antipasto-italiana",
         name: "Antipasto all'italiana",
         description: "Piatto di prosciutto crudo e nodini",
         price: s(10),
+        allergens: ix("latte", "solfiti"),
       },
       {
         id: "tris-alette",
@@ -100,24 +154,28 @@ export const menu: MenuCategory[] = [
         description:
           "Alette di pollo classiche servite con salsa cheddar, miele e agrodolce",
         price: s(8),
+        allergens: ix("glutine", "uova", "latte", "soia", "senape", "sesamo", "solfiti"),
       },
       {
         id: "ribs",
         name: "Ribs",
         description: "Costine di maiale, BBQ, fonduta al cheddar",
         price: s(12),
+        allergens: ix("glutine", "latte", "senape", "soia", "solfiti", "frutta_guscio"),
       },
       {
         id: "anelli-di-cipolla",
         name: "Anelli di cipolla",
         description: "Con miele, BBQ e cheddar",
         price: s(6),
+        allergens: ix("glutine", "uova", "latte", "senape", "solfiti", "soia", "frutta_guscio"),
       },
       {
         id: "nachos",
         name: "Nachos",
         description: "Con pulled, cheddar fuso e salsa BBQ",
         price: s(8),
+        allergens: ix("glutine", "latte", "senape", "soia", "solfiti"),
       },
       {
         id: "parmigiana",
@@ -126,36 +184,43 @@ export const menu: MenuCategory[] = [
           "Strati di melanzane fritte, salsa di pomodoro, mozzarella filante e parmigiano, gratinate al forno secondo la tradizione italiana",
         price: s(8),
         tags: ["veg"],
+        allergens: ix("glutine", "uova", "latte", "sedano", "solfiti"),
       },
       {
         id: "pepite-patate-dolci-bacon",
         name: "Pepite di pollo con patate dolci e salsa bacon",
         price: s(10),
+        allergens: ix("glutine", "uova", "latte", "senape", "solfiti", "soia", "frutta_guscio"),
       },
       {
         id: "pepite-agrodolce",
         name: "Pepite di pollo con salsa agrodolce",
         price: s(10),
+        allergens: ix("glutine", "uova", "latte", "soia", "senape", "solfiti", "sesamo"),
       },
       {
         id: "pepite-patatine-ketchup-maio",
         name: "Pepite di pollo con patatine, ketchup e maionese",
         price: s(10),
+        allergens: ix("glutine", "uova", "latte", "senape", "solfiti", "soia", "frutta_guscio"),
       },
       {
         id: "pepite-cheddar-bacon",
         name: "Pepite di pollo con salsa cheddar e bacon",
         price: s(10),
+        allergens: ix("glutine", "uova", "latte", "senape", "soia", "solfiti", "frutta_guscio"),
       },
       {
         id: "polpettine-agrodolce",
         name: "Polpettine in salsa agrodolce",
         price: s(10),
+        allergens: ix("glutine", "uova", "latte", "soia", "sesamo", "senape", "solfiti"),
       },
       {
         id: "polpettine-gouda",
         name: "Polpettine in salsa gouda",
         price: s(10),
+        allergens: ix("glutine", "uova", "latte", "senape", "solfiti", "soia"),
       },
       {
         id: "antipasto-della-casa",
@@ -164,6 +229,17 @@ export const menu: MenuCategory[] = [
           "Crudo alla Barese, polpette cacio e pepe, parmigiana di melanzane, tagliere salumi e formaggi, latticini e nachos con salsa cheddar",
         price: { kind: "persone", per2: 25, per4: 50 },
         tags: ["firma"],
+        allergens: ix(
+          "glutine",
+          "uova",
+          "latte",
+          "soia",
+          "frutta_guscio",
+          "arachidi",
+          "sesamo",
+          "senape",
+          "solfiti",
+        ),
       },
     ],
   },
@@ -178,6 +254,7 @@ export const menu: MenuCategory[] = [
         description:
           "Prosciutto crudo di Parma, mortadella al pistacchio, capocollo di Martina Franca, salsiccia sarda, cotto di Praga, grana padano, pecorino sardo e formaggio dolce sardo",
         price: { kind: "persone", per2: 18, per4: 30 },
+        allergens: ix("latte", "solfiti", "frutta_guscio", "senape", "glutine", "uova", "soia", "arachidi"),
       },
       {
         id: "stuzzipork",
@@ -186,6 +263,7 @@ export const menu: MenuCategory[] = [
           "Tris di patate (dippers, dolci, stick), alette di pollo, nachos (pulled, cheddar e BBQ), pop corn di pollo, stick di cheddar fuso e polpette di emmental",
         price: { kind: "persone", per2: 18, per4: 30 },
         tags: ["firma"],
+        allergens: ix("glutine", "uova", "latte", "soia", "sesamo", "senape", "frutta_guscio", "solfiti", "arachidi"),
       },
       {
         id: "ciuppapork",
@@ -195,6 +273,17 @@ export const menu: MenuCategory[] = [
         price: { kind: "persone", per2: 18, per4: 30 },
         tags: ["firma"],
         image: "/photos/bombette-fonduta.png",
+        allergens: ix(
+          "glutine",
+          "uova",
+          "latte",
+          "soia",
+          "sesamo",
+          "frutta_guscio",
+          "senape",
+          "solfiti",
+          "arachidi",
+        ),
       },
     ],
   },
@@ -207,11 +296,13 @@ export const menu: MenuCategory[] = [
         id: "chips-normali",
         name: "Chips normali",
         price: { kind: "sized", big: 6, small: 4.5 },
+        allergens: ix("glutine", "senape", "soia", "arachidi", "frutta_guscio", "solfiti", "uova", "latte", "sesamo"),
       },
       {
         id: "chips-cacio-pepe",
         name: "Chips cacio e pepe",
         price: { kind: "sized", big: 6.5, small: 5.5 },
+        allergens: ix("glutine", "latte", "uova", "sesamo", "soia", "arachidi", "senape", "solfiti", "frutta_guscio"),
       },
       {
         id: "chips-bacon-cheddar",
@@ -219,57 +310,68 @@ export const menu: MenuCategory[] = [
         price: { kind: "sized", big: 6.5, small: 5.5 },
         image: "/photos/chips-bacon-cheddar.png",
         tags: ["firma"],
+        allergens: ix("glutine", "latte", "uova", "soia", "arachidi", "senape", "solfiti", "frutta_guscio", "sesamo"),
       },
       {
         id: "patate-stick",
         name: "Patate stick",
         price: { kind: "sized", big: 6, small: 4.5 },
+        allergens: ix("glutine", "uova", "soia", "arachidi", "senape", "solfiti", "frutta_guscio", "sesamo", "latte"),
       },
       {
         id: "patate-salsiccia",
         name: "Patate salsiccia sbriciolata e salsa bacon",
         price: { kind: "sized", big: 6.5, small: 5.5 },
+        allergens: ix("glutine", "uova", "latte", "soia", "arachidi", "senape", "solfiti", "frutta_guscio", "sesamo"),
       },
       {
         id: "patate-polpettine-cheddar",
         name: "Patate e polpettine con cheddar e bacon",
         price: { kind: "sized", big: 6.5, small: 5.5 },
+        allergens: ix("glutine", "uova", "latte", "soia", "arachidi", "senape", "solfiti", "frutta_guscio", "sesamo"),
       },
       {
         id: "patate-wurstel",
         name: "Patate con wurstel e ketchup",
         price: { kind: "sized", big: 6.5, small: 5.5 },
+        allergens: ix("glutine", "uova", "latte", "soia", "arachidi", "senape", "solfiti", "frutta_guscio", "sesamo"),
       },
       {
         id: "patate-pulled",
         name: "Patate con pulled pork e salsa BBQ",
         price: { kind: "sized", big: 6.5, small: 5.5 },
+        allergens: ix("glutine", "uova", "latte", "soia", "arachidi", "senape", "solfiti", "frutta_guscio", "sesamo"),
       },
       {
         id: "patate-dolci-cacio",
         name: "Patate dolci con salsa cacio e pepe",
         price: { kind: "sized", big: 6.5, small: 5.5 },
+        allergens: ix("glutine", "latte", "uova", "soia", "arachidi", "senape", "solfiti", "frutta_guscio", "sesamo"),
       },
       {
         id: "crocchette-mortadella",
         name: "Crocchette con mortadella e pistacchio (2 pz)",
         price: s(6),
+        allergens: ix("glutine", "uova", "latte", "soia", "arachidi", "senape", "solfiti", "frutta_guscio", "sesamo"),
       },
       {
         id: "crocchette-pulled",
         name: "Crocchette con pulled pork, cheddar e BBQ (2 pz)",
         price: s(6),
+        allergens: ix("glutine", "uova", "latte", "soia", "arachidi", "senape", "solfiti", "frutta_guscio", "sesamo"),
       },
       {
         id: "crocchette-parmigiana",
         name: "Crocchette parmigiana e scamorza (2 pz)",
         price: s(6),
+        allergens: ix("glutine", "uova", "latte", "soia", "arachidi", "senape", "solfiti", "frutta_guscio", "sesamo"),
       },
       {
         id: "crocchette-cardoncelli",
         name: "Crocchette cardoncelli e scaglie di grana (2 pz)",
         price: s(6),
         tags: ["veg"],
+        allergens: ix("glutine", "uova", "latte", "soia", "arachidi", "senape", "solfiti", "frutta_guscio", "sesamo"),
       },
     ],
   },
@@ -284,12 +386,32 @@ export const menu: MenuCategory[] = [
         description:
           "Insalata, misticanza, fiordilatte, pomodori, cotto piastrato e mayo",
         price: s(10),
+        ingredients: [
+          "Pane tostato",
+          "Insalata e misticanza",
+          "Fiordilatte",
+          "Pomodori",
+          "Prosciutto cotto caldo",
+          "Maionese",
+        ],
+        allergens: ix("glutine", "uova", "latte", "senape", "solfiti", "soia", "arachidi", "sesamo"),
+        extras: clubExtras(),
       },
       {
         id: "pollo-pork",
         name: "Pollo Pork",
         description: "Pollo fritto, uovo sodo, mayo, stracchino e pomodoro",
         price: s(10),
+        ingredients: [
+          "Pane tostato",
+          "Pollo fritto in panatura",
+          "Uovo sodo",
+          "Stracchino",
+          "Pomodoro",
+          "Maionese",
+        ],
+        allergens: ix("glutine", "uova", "latte", "senape", "solfiti", "soia", "arachidi", "sesamo"),
+        extras: clubExtras(),
       },
       {
         id: "pulled-pork-sandwich",
@@ -297,6 +419,14 @@ export const menu: MenuCategory[] = [
         description: "Pulled pork, anelli di cipolla e salsa cheddar",
         price: s(10),
         tags: ["firma"],
+        ingredients: [
+          "Pane tostato",
+          "Pulled pork",
+          "Anelli di cipolla fritti",
+          "Salsa cheddar",
+        ],
+        allergens: ix("glutine", "uova", "latte", "senape", "solfiti", "soia", "arachidi", "frutta_guscio", "sesamo"),
+        extras: clubExtras(),
       },
     ],
   },
@@ -310,6 +440,7 @@ export const menu: MenuCategory[] = [
         name: "Polpettosa",
         description: "Terrina di polpette al sugo con fonduta di pecorino",
         price: s(10),
+        allergens: ix("glutine", "uova", "latte", "solfiti", "sedano", "senape", "soia", "arachidi"),
       },
       {
         id: "mexicanpork",
@@ -317,6 +448,7 @@ export const menu: MenuCategory[] = [
         description:
           "Terrina con 6 bombette, salsa messicana, patate al forno con fonduta di pecorino",
         price: s(10),
+        allergens: ix("glutine", "uova", "latte", "solfiti", "soia", "arachidi", "senape", "frutta_guscio", "sesamo"),
       },
       {
         id: "brascio",
@@ -324,6 +456,7 @@ export const menu: MenuCategory[] = [
         description: "Terrina di brasciole al sugo",
         price: s(10),
         tags: ["firma"],
+        allergens: ix("glutine", "uova", "latte", "solfiti", "arachidi", "senape", "soia", "sesamo"),
       },
       {
         id: "caciopolpette",
@@ -332,6 +465,7 @@ export const menu: MenuCategory[] = [
           "Terrina con polpette della nonna fritte con fonduta di formaggio, cacio e pepe",
         price: s(10),
         image: "/photos/bombette-fonduta.png",
+        allergens: ix("glutine", "uova", "latte", "solfiti", "arachidi", "senape", "soia", "sesamo"),
       },
       {
         id: "porkpulled",
@@ -339,6 +473,7 @@ export const menu: MenuCategory[] = [
         description:
           "Terrina con pulled pork, polpette, cheddar fuso e salsa bacon",
         price: s(10),
+        allergens: ix("glutine", "uova", "latte", "solfiti", "arachidi", "senape", "soia", "frutta_guscio", "sesamo"),
       },
       {
         id: "pistacchiosa",
@@ -347,12 +482,24 @@ export const menu: MenuCategory[] = [
           "Terrina con bombette al pistacchio, fonduta di formaggio e tocchetti di mortadella",
         price: s(10),
         tags: ["firma"],
+        allergens: ix("glutine", "uova", "latte", "frutta_guscio", "solfiti", "arachidi", "senape", "soia", "sesamo"),
       },
       {
         id: "misto-terrine",
         name: "Misto Terrine",
         description: "Mix di terrine della casa (3 pz), ideale per 2/4 persone",
         price: s(25),
+        allergens: ix(
+          "glutine",
+          "uova",
+          "latte",
+          "soia",
+          "frutta_guscio",
+          "arachidi",
+          "sesamo",
+          "senape",
+          "solfiti",
+        ),
       },
     ],
   },
@@ -368,6 +515,7 @@ export const menu: MenuCategory[] = [
           "Piatto molto particolare: pasta cotta direttamente in padella con sugo di pomodoro, per un risultato bruciacchiato, croccante e piccante. Spaghetti, sugo di pomodoro, piccante, olio EVO.",
         price: s(10),
         tags: ["firma", "piccante"],
+        allergens: ix("glutine", "solfiti", "uova", "arachidi", "sesamo", "soia", "frutta_guscio"),
       },
       {
         id: "carbonara",
@@ -375,6 +523,7 @@ export const menu: MenuCategory[] = [
         description:
           "Primo piatto tipico della tradizione romana preparato con uova, guanciale, pecorino romano e pepe",
         price: s(10),
+        allergens: ix("glutine", "uova", "latte", "senape", "arachidi", "soia", "sesamo", "solfiti", "frutta_guscio"),
       },
     ],
   },
@@ -390,6 +539,7 @@ export const menu: MenuCategory[] = [
           "Mega grigliata: il meglio della nostra carne. Tagliata di manzo, costata di maiale, bombette, zampina, wurstel, uovo fritto, patate al forno, verdure grigliate. Consigliato per 4 persone.",
         price: s(50),
         tags: ["firma"],
+        allergens: ix("glutine", "uova", "latte", "soia", "arachidi", "senape", "solfiti", "frutta_guscio", "sesamo"),
       },
       {
         id: "tagliata-pork",
@@ -399,6 +549,7 @@ export const menu: MenuCategory[] = [
         price: s(18),
         image: "/photos/tagliata-pork.png",
         tags: ["firma"],
+        allergens: ix("latte", "solfiti", "arachidi", "senape", "soia", "frutta_guscio", "sesamo", "glutine", "uova"),
       },
       {
         id: "stinco-pork",
@@ -406,6 +557,7 @@ export const menu: MenuCategory[] = [
         description: "Stinco di maiale da 200 gr, con patate al forno",
         price: s(12),
         image: "/photos/stinco-pork.png",
+        allergens: ix("arachidi", "senape", "solfiti", "soia", "frutta_guscio", "sesamo", "glutine", "uova", "latte"),
       },
       {
         id: "tagliata-pollo",
@@ -413,6 +565,7 @@ export const menu: MenuCategory[] = [
         description:
           "Tagliata di pollo da 250 gr con verdure grigliate e patate al forno",
         price: s(12),
+        allergens: ix("glutine", "uova", "arachidi", "senape", "solfiti", "soia", "frutta_guscio", "sesamo", "latte"),
       },
       {
         id: "angus-pork",
@@ -421,6 +574,7 @@ export const menu: MenuCategory[] = [
           "Costata di Angus da 300 gr, con patate al forno, stracciatella e pistacchio",
         price: s(20),
         tags: ["firma"],
+        allergens: ix("glutine", "uova", "latte", "arachidi", "senape", "soia", "solfiti", "frutta_guscio", "sesamo"),
       },
     ],
   },
@@ -437,6 +591,17 @@ export const menu: MenuCategory[] = [
         price: s(15),
         tags: ["firma"],
         image: "/photos/burger-esagerato.png",
+        ingredients: [
+          "Bun al sesamo (pane)",
+          "Doppia carne di scottona smashata",
+          "Cheddar fuso (×2)",
+          "Bacon (×2)",
+          "Patate dolci",
+          "Insalata e pomodoro",
+          "Maionese",
+        ],
+        allergens: ix("glutine", "uova", "latte", "senape", "soia", "arachidi", "solfiti", "sesamo"),
+        extras: burgerExtras(),
       },
       {
         id: "porkaccio",
@@ -444,6 +609,16 @@ export const menu: MenuCategory[] = [
         description:
           "Polpette di scottona fritte, pulled, cheddar fuso, crocchè di patate e salsa BBQ",
         price: s(13),
+        ingredients: [
+          "Bun (pane)",
+          "Polpette scottona fritte in panatura",
+          "Pulled pork",
+          "Cheddar fuso",
+          "Crocchetta di patate",
+          "Salsa BBQ",
+        ],
+        allergens: ix("glutine", "uova", "latte", "senape", "soia", "arachidi", "sesamo", "solfiti"),
+        extras: burgerExtras(),
       },
       {
         id: "esagerato-pork",
@@ -453,6 +628,17 @@ export const menu: MenuCategory[] = [
         price: s(15),
         tags: ["firma"],
         image: "/photos/burger-esagerato.png",
+        ingredients: [
+          "Bun (pane)",
+          "Burger scottona",
+          "Pulled pork",
+          "Bacon croccante",
+          "Pepite di pollo fritte",
+          "Salsa agrodolce",
+          "Stracciatella",
+        ],
+        allergens: ix("glutine", "uova", "latte", "soia", "arachidi", "senape", "solfiti", "sesamo"),
+        extras: burgerExtras(),
       },
       {
         id: "affumipork",
@@ -460,6 +646,18 @@ export const menu: MenuCategory[] = [
         description:
           "Burger di scottona, pomodorini confit, misticanza, doppia scamorza affumicata, cipolla caramellata, doppio crudo di Parma, nodini fiordilatte e salsa bacon",
         price: s(13),
+        ingredients: [
+          "Bun (pane)",
+          "Burger scottona",
+          "Pomodorini confit, misticanza",
+          "Scamorza affumicata (doppia)",
+          "Cipolla caramellata",
+          "Prosciutto crudo di Parma (doppio)",
+          "Nodini fiordilatte",
+          "Salsa bacon",
+        ],
+        allergens: ix("glutine", "uova", "latte", "soia", "arachidi", "senape", "solfiti", "sesamo"),
+        extras: burgerExtras(),
       },
       {
         id: "carbonara-pork",
@@ -468,6 +666,15 @@ export const menu: MenuCategory[] = [
           "Burger di scottona, doppio guanciale, uova strapazzate, pecorino e salsa carbonara",
         price: s(13),
         image: "/photos/burger-porkpistacchio.png",
+        ingredients: [
+          "Bun (pane)",
+          "Burger scottona",
+          "Guanciale (doppio)",
+          "Uova strapazzate",
+          "Pecorino e salsa carbonara",
+        ],
+        allergens: ix("glutine", "uova", "latte", "senape", "soia", "arachidi", "sesamo", "solfiti"),
+        extras: burgerExtras(),
       },
       {
         id: "assassina-pork",
@@ -477,6 +684,14 @@ export const menu: MenuCategory[] = [
         price: s(13),
         tags: ["firma", "piccante"],
         image: "/photos/burger-assassina.png",
+        ingredients: [
+          "Bun (pane)",
+          "Hamburger scottona",
+          "Spaghetti all'Assassina (sugo piccante)",
+          "Stracciatella",
+        ],
+        allergens: ix("glutine", "uova", "latte", "soia", "arachidi", "sesamo", "senape", "solfiti", "frutta_guscio"),
+        extras: burgerExtras(),
       },
       {
         id: "godo-pork",
@@ -485,6 +700,16 @@ export const menu: MenuCategory[] = [
           "Burger di scottona, parmigiana di melanzane, provola fusa, crocchè di patate e crema di grana",
         price: s(13),
         image: "/photos/burger-godo.png",
+        ingredients: [
+          "Bun (pane)",
+          "Burger scottona",
+          "Strati di parmigiana (melanzane, pomodoro, formaggi)",
+          "Provola fusa",
+          "Crocchetta di patate",
+          "Crema di grana",
+        ],
+        allergens: ix("glutine", "uova", "latte", "senape", "soia", "arachidi", "sesamo", "solfiti", "frutta_guscio"),
+        extras: burgerExtras(),
       },
       {
         id: "chicken-pork",
@@ -492,6 +717,16 @@ export const menu: MenuCategory[] = [
         description:
           "Burger di pollo fritto, insalata iceberg, pomodoro, doppio bacon, doppio cheddar fuso, maionese",
         price: s(13),
+        ingredients: [
+          "Bun (pane)",
+          "Pollo fritto in panatura (doppio hamburger segnato a menu)",
+          "Insalata iceberg, pomodoro",
+          "Bacon (doppio)",
+          "Cheddar fuso (doppio)",
+          "Maionese",
+        ],
+        allergens: ix("glutine", "uova", "latte", "senape", "soia", "arachidi", "sesamo", "solfiti"),
+        extras: burgerExtras(),
       },
       {
         id: "porkpistacchio",
@@ -501,6 +736,15 @@ export const menu: MenuCategory[] = [
         price: s(13),
         image: "/photos/burger-porkpistacchio.png",
         tags: ["firma"],
+        ingredients: [
+          "Bun (pane)",
+          "Maialino impanato fritto",
+          "Mortadella",
+          "Stracciatella e provolone",
+          "Crema di pistacchio",
+        ],
+        allergens: ix("glutine", "uova", "latte", "soia", "arachidi", "senape", "solfiti", "sesamo", "frutta_guscio"),
+        extras: burgerExtras(),
       },
       {
         id: "crispy-pork",
@@ -508,6 +752,16 @@ export const menu: MenuCategory[] = [
         description:
           "Burger di pollo fritto, patate al forno, pulled, anelli di cipolla, salsa crispy",
         price: s(13),
+        ingredients: [
+          "Bun (pane)",
+          "Pollo fritto in panatura",
+          "Patate al forno",
+          "Pulled pork",
+          "Anelli di cipolla fritti",
+          "Salsa crispy (maionese/condimenti)",
+        ],
+        allergens: ix("glutine", "uova", "latte", "soia", "arachidi", "senape", "solfiti", "sesamo"),
+        extras: burgerExtras(),
       },
       {
         id: "straccia-pork",
@@ -515,6 +769,16 @@ export const menu: MenuCategory[] = [
         description:
           "Burger di scottona, patate al forno, cotto di Praga, stracciatella, crema di pistacchio",
         price: s(13),
+        ingredients: [
+          "Bun (pane)",
+          "Burger scottona",
+          "Patate al forno",
+          "Cotto di Praga",
+          "Stracciatella",
+          "Crema di pistacchio",
+        ],
+        allergens: ix("glutine", "uova", "latte", "soia", "arachidi", "senape", "solfiti", "sesamo", "frutta_guscio"),
+        extras: burgerExtras(),
       },
       {
         id: "american-pork",
@@ -522,12 +786,31 @@ export const menu: MenuCategory[] = [
         description:
           "Burger di scottona, polpette di pulled, patate dolci, cipolla caramellata, cheddar fuso, bacon e salsa cheddar",
         price: s(13),
+        ingredients: [
+          "Bun (pane)",
+          "Burger scottona e polpettine al pulled",
+          "Patate dolci",
+          "Cipolla caramellata",
+          "Bacon, cheddar, salsa cheddar",
+        ],
+        allergens: ix("glutine", "uova", "latte", "soia", "arachidi", "senape", "solfiti", "sesamo", "frutta_guscio"),
+        extras: burgerExtras(),
       },
       {
         id: "baby-pork",
         name: "Baby Pork",
         description: "Hamburger, cheddar, bacon, patatine, ketchup e maionese",
         price: s(10),
+        ingredients: [
+          "Bun (pane)",
+          "Hamburger",
+          "Cheddar",
+          "Bacon",
+          "Patatine fritte in accompagnamento",
+          "Ketchup, maionese",
+        ],
+        allergens: ix("glutine", "uova", "latte", "senape", "soia", "arachidi", "sesamo", "solfiti"),
+        extras: burgerExtras(),
       },
       {
         id: "cheddar-pork",
@@ -535,6 +818,15 @@ export const menu: MenuCategory[] = [
         description:
           "Doppio burger di scottona, doppio cheddar, doppio bacon croccante e salsa BBQ",
         price: s(15),
+        ingredients: [
+          "Bun (pane)",
+          "Doppio hamburger scottona",
+          "Cheddar fuso (doppio)",
+          "Bacon croccante (doppio)",
+          "Salsa BBQ",
+        ],
+        allergens: ix("glutine", "uova", "latte", "soia", "arachidi", "senape", "solfiti", "sesamo", "frutta_guscio"),
+        extras: burgerExtras(),
       },
     ],
   },
@@ -549,18 +841,27 @@ export const menu: MenuCategory[] = [
         description: "Pomodoro, mozzarella, basilico e olio EVO",
         price: s(6),
         tags: ["veg"],
+        ingredients: ["Pomodoro a crudo", "Mozzarella", "Basilico", "Olio EVO", "Impasto a lievitazione lenta"],
+        allergens: ix("glutine", "latte", "solfiti"),
+        extras: pizzaExtras(),
       },
       {
         id: "americana",
         name: "Americana",
         description: "Pomodoro, mozzarella, wurstel e patatine",
         price: s(8),
+        ingredients: ["Pomodoro", "Mozzarella", "Wurstel", "Patatine fritte a cubetti", "Impasto"],
+        allergens: ix("glutine", "latte", "soia", "arachidi", "senape", "solfiti", "uova", "frutta_guscio", "sesamo"),
+        extras: pizzaExtras(),
       },
       {
         id: "romana",
         name: "Romana",
         description: "Pomodoro, mozzarella, acciughe e capperi",
         price: s(7),
+        ingredients: ["Pomodoro", "Mozzarella", "Acciughe", "Capperi", "Impasto"],
+        allergens: ix("glutine", "latte", "pesce", "solfiti"),
+        extras: pizzaExtras(),
       },
       {
         id: "diavola",
@@ -568,6 +869,9 @@ export const menu: MenuCategory[] = [
         description: "Pomodoro, mozzarella, ventricina e olio EVO",
         price: s(8),
         tags: ["piccante"],
+        ingredients: ["Pomodoro", "Mozzarella", "Ventricina (salsiccia piccante calabra)", "Olio EVO", "Impasto"],
+        allergens: ix("glutine", "latte", "soia", "arachidi", "senape", "solfiti", "uova", "frutta_guscio", "sesamo"),
+        extras: pizzaExtras(),
       },
       {
         id: "capricciosa",
@@ -575,6 +879,9 @@ export const menu: MenuCategory[] = [
         description:
           "Pomodoro, mozzarella, prosciutto cotto, funghi, olive e carciofi",
         price: s(10),
+        ingredients: ["Pomodoro", "Mozzarella", "Prosciutto cotto cotto in forno", "Funghi", "Olive nere", "Carciofi sott'olio (o cuori)", "Impasto"],
+        allergens: ix("glutine", "latte", "solfiti", "uova", "senape", "arachidi", "soia", "sesamo", "frutta_guscio"),
+        extras: pizzaExtras(),
       },
       {
         id: "quattro-stagioni",
@@ -582,6 +889,9 @@ export const menu: MenuCategory[] = [
         description:
           "Pomodoro, mozzarella, prosciutto cotto, carciofi, funghi e olive",
         price: s(10),
+        ingredients: ["Pomodoro", "Mozzarella", "Prosciutto cotto", "Carciofi", "Funghi", "Olive", "Impasto"],
+        allergens: ix("glutine", "latte", "solfiti", "senape", "arachidi", "soia", "uova", "sesamo", "frutta_guscio"),
+        extras: pizzaExtras(),
       },
       {
         id: "quattro-formaggi",
@@ -589,12 +899,18 @@ export const menu: MenuCategory[] = [
         description: "Mozzarella, gorgonzola, provola e grana",
         price: s(10),
         tags: ["veg"],
+        ingredients: ["Pomodoro a crudo o bianca", "Mozzarella", "Gorgonzola DOP", "Provola", "Grana a scaglie", "Impasto"],
+        allergens: ix("glutine", "latte", "soia", "uova", "arachidi", "senape", "solfiti", "frutta_guscio", "sesamo"),
+        extras: pizzaExtras(),
       },
       {
         id: "provola-speck",
         name: "Provola e speck",
         description: "Pomodoro, mozzarella, provola affumicata e speck",
         price: s(10),
+        ingredients: ["Pomodoro", "Mozzarella", "Provola affumicata", "Speck", "Impasto"],
+        allergens: ix("glutine", "latte", "soia", "uova", "arachidi", "senape", "solfiti", "frutta_guscio", "sesamo"),
+        extras: pizzaExtras(),
       },
       {
         id: "vegetariana",
@@ -603,6 +919,9 @@ export const menu: MenuCategory[] = [
           "Mozzarella, melanzane grigliate, zucchine grigliate, pomodorini e basilico",
         price: s(8),
         tags: ["veg"],
+        ingredients: ["Pomodoro a crudo o bianca", "Mozzarella", "Melanzane grigliate", "Zucchine grigliate", "Pomodorini, basilico", "Impasto"],
+        allergens: ix("glutine", "latte", "soia", "uova", "arachidi", "senape", "solfiti", "frutta_guscio", "sesamo"),
+        extras: pizzaExtras(),
       },
       {
         id: "bufalina",
@@ -610,24 +929,39 @@ export const menu: MenuCategory[] = [
         description: "Pomodoro, mozzarella di bufala e basilico",
         price: s(7.5),
         tags: ["veg"],
+        ingredients: ["Pomodoro", "Mozzarella di bufala a crudo a fine cottura", "Basilico", "Impasto"],
+        allergens: ix("glutine", "latte", "solfiti"),
+        extras: pizzaExtras(),
       },
       {
         id: "norcia-funghi",
         name: "Norcia e funghi",
         description: "Pomodoro, mozzarella, salsiccia di norcia e funghi",
         price: s(8),
+        ingredients: ["Pomodoro", "Mozzarella", "Salsiccia di norcia a pezzetti", "Funghi", "Impasto"],
+        allergens: ix("glutine", "latte", "soia", "arachidi", "senape", "solfiti", "uova", "frutta_guscio", "sesamo"),
+        extras: pizzaExtras(),
       },
       {
         id: "bufala-norcia",
         name: "Bufala e Norcia",
         description: "Pomodoro, mozzarella di bufala e Norcia",
         price: s(8.5),
+        ingredients: ["Pomodoro", "Stracci o fiordilatte di bufala a fine cottura", "Salsiccia di Norcia", "Impasto"],
+        allergens: ix("glutine", "latte", "soia", "arachidi", "senape", "solfiti", "uova", "frutta_guscio", "sesamo"),
+        extras: pizzaExtras(),
       },
       {
         id: "fa-pizzaiolo",
         name: "La fa il pizzaiolo",
         description: "La specialità del pizzaiolo",
         price: s(8.5),
+        ingredients: [
+          "Impasto a lievitazione lenta",
+          "Gli ingredienti della giornata scelti dallo staff (pomodoro, formaggi, salumi e verdure secondo scorta)",
+        ],
+        allergens: ix("glutine", "latte", "uova", "soia", "arachidi", "senape", "solfiti", "frutta_guscio", "sesamo"),
+        extras: pizzaExtras(),
       },
       {
         id: "multigusto-14",
@@ -637,6 +971,11 @@ export const menu: MenuCategory[] = [
         price: s(14),
         tags: ["firma"],
         image: "/photos/pizza-multigusto.png",
+        ingredients: [
+          "4 quarti: polpettine, salame piccante, pulled, norcia+funghi cardoncelli, quarto in stile all'Assassina (pasta, sugo piccante) — a seconda del taglio",
+        ],
+        allergens: ix("glutine", "uova", "latte", "soia", "arachidi", "senape", "solfiti", "frutta_guscio", "sesamo"),
+        extras: pizzaExtras(),
       },
       {
         id: "multigusto-15",
@@ -646,6 +985,11 @@ export const menu: MenuCategory[] = [
         price: s(15),
         tags: ["firma"],
         image: "/photos/pizza-multigusto.png",
+        ingredients: [
+          "4 varianti: mortadella/pistacchio e stracciatella, funghi/crema tartufo, zucchine poverella, melanzane e scamorza (come in scheda, taglio in 4 sezioni)",
+        ],
+        allergens: ix("glutine", "uova", "latte", "soia", "arachidi", "senape", "solfiti", "frutta_guscio", "sesamo"),
+        extras: pizzaExtras(),
       },
     ],
   },
@@ -659,6 +1003,16 @@ export const menu: MenuCategory[] = [
         name: "Martina",
         description: "Crema al basilico, mozzarella, capocollo e pom. sott'olio",
         price: s(10),
+        ingredients: [
+          "Crema al basilico o pesto leggero",
+          "Pomodoro a crudo o base bianca",
+          "Mozzarella",
+          "Capocollo (coppa)",
+          "Pomodori sott'olio a fine cottura",
+          "Impasto",
+        ],
+        allergens: ix("glutine", "latte", "uova", "arachidi", "senape", "soia", "frutta_guscio", "solfiti", "sesamo"),
+        extras: pizzaExtras(),
       },
       {
         id: "mortazza",
@@ -667,12 +1021,18 @@ export const menu: MenuCategory[] = [
           "Mozzarella, mortadella, granella di pistacchio e grana",
         price: s(9),
         tags: ["firma"],
+        ingredients: ["Pomodoro a crudo o base bianca", "Mozzarella", "Mortadella a crudo a fine cottura", "Granella di pistacchio", "Grana", "Impasto"],
+        allergens: ix("glutine", "latte", "uova", "arachidi", "senape", "soia", "frutta_guscio", "sesamo", "solfiti"),
+        extras: pizzaExtras(),
       },
       {
         id: "padana",
         name: "Padana",
         description: "Crema di grana, mozzarella, zucchine gratinate e bacon",
         price: s(10),
+        ingredients: ["Base bianca, crema di grana", "Mozzarella", "Zucchine gratinate con pangrattato", "Bacon", "Impasto"],
+        allergens: ix("glutine", "uova", "latte", "arachidi", "senape", "soia", "solfiti", "frutta_guscio", "sesamo"),
+        extras: pizzaExtras(),
       },
       {
         id: "allitaliana",
@@ -680,12 +1040,23 @@ export const menu: MenuCategory[] = [
         description:
           "Ciccio, mozzarella, prosciutto crudo, pomodoro, rucola e grana",
         price: s(10),
+        ingredients: ["Ciccio (doppia mozzarella)", "Mozzarella", "Prosciutto crudo a crudo", "Datterino o filetti di pomodoro", "Rucola, grattugiata", "Impasto"],
+        allergens: ix("glutine", "latte", "uova", "arachidi", "senape", "soia", "solfiti", "frutta_guscio", "sesamo"),
+        extras: pizzaExtras(),
       },
       {
         id: "carbonara-pizza",
         name: "Carbonara",
         description: "Mozzarella, uovo, guanciale, pepe e pecorino",
         price: s(9),
+        ingredients: [
+          "Base (bianca o pomodoro leggero a seconda abitudine cucina)",
+          "Mozzarella",
+          "Uovo, guanciale, pepe nero, pecorino romano",
+          "Impasto",
+        ],
+        allergens: ix("glutine", "uova", "latte", "arachidi", "senape", "soia", "solfiti", "frutta_guscio", "sesamo"),
+        extras: pizzaExtras(),
       },
       {
         id: "giu-al-sud",
@@ -693,6 +1064,9 @@ export const menu: MenuCategory[] = [
         description: "Pomodoro, mozzarella, rape e salame piccante",
         price: s(10),
         tags: ["piccante"],
+        ingredients: ["Pomodoro", "Mozzarella", "Cime di rapa (o rape) saltate o crude", "Salame piccante a pezzelli", "Impasto"],
+        allergens: ix("glutine", "latte", "uova", "arachidi", "senape", "soia", "solfiti", "frutta_guscio", "sesamo"),
+        extras: pizzaExtras(),
       },
       {
         id: "la-sarda",
@@ -700,6 +1074,9 @@ export const menu: MenuCategory[] = [
         description:
           "Mozzarella, pecorino sardo, salsiccia sarda, zest di limone e gocce di miele",
         price: s(11),
+        ingredients: ["Pomodoro a crudo o base bianca", "Mozzarella", "Pecorino sardo", "Salsiccia sarda", "Miele, zest di limone", "Impasto"],
+        allergens: ix("glutine", "latte", "uova", "arachidi", "senape", "soia", "solfiti", "frutta_guscio", "sesamo"),
+        extras: pizzaExtras(),
       },
       {
         id: "deliziosa",
@@ -707,6 +1084,9 @@ export const menu: MenuCategory[] = [
         description:
           "Pomodoro, mozzarella, capocollo, stracciatella e pom. sott'olio",
         price: s(9),
+        ingredients: ["Pomodoro", "Mozzarella", "Capocollo a fine cottura", "Stracciatella, pomodori sott'olio e olio EVO a crudo", "Impasto"],
+        allergens: ix("glutine", "latte", "uova", "arachidi", "senape", "soia", "solfiti", "frutta_guscio", "sesamo"),
+        extras: pizzaExtras(),
       },
       {
         id: "pizza-allassassina",
@@ -716,6 +1096,13 @@ export const menu: MenuCategory[] = [
         price: s(10),
         tags: ["firma", "piccante"],
         image: "/photos/pizza-multigusto.png",
+        ingredients: [
+          "Base sottile, pomodoro, mozzarella",
+          "Lamelle di pasta all'Assassina cotta in forno o preparata a parte (sugo, piccante, olio EVO)",
+          "Stracciatella, olio EVO e peperoncino",
+        ],
+        allergens: ix("glutine", "uova", "latte", "arachidi", "senape", "soia", "solfiti", "frutta_guscio", "sesamo"),
+        extras: pizzaExtras(),
       },
       {
         id: "pulled-pizza",
@@ -723,6 +1110,9 @@ export const menu: MenuCategory[] = [
         description: "Provola aff. pulled pork, salsa BBQ e salsa cheddar",
         price: s(10),
         tags: ["firma"],
+        ingredients: ["Pomodoro, mozzarella, provola affumicata", "Pulled pork, salsa BBQ, salsa cheddar", "Impasto"],
+        allergens: ix("glutine", "uova", "latte", "arachidi", "senape", "soia", "solfiti", "frutta_guscio", "sesamo"),
+        extras: pizzaExtras(),
       },
       {
         id: "crock",
@@ -730,6 +1120,9 @@ export const menu: MenuCategory[] = [
         description:
           "Mozzarella, crocchette di patate, prosciutto cotto alla brace, cipolla croccante, gocce di maionese, limone e pepe",
         price: s(10),
+        ingredients: ["Pomodoro, mozzarella", "Crocchette di patate, cotto, cipolla fritta", "Maionese, limone, pepe a crudo", "Impasto"],
+        allergens: ix("glutine", "uova", "latte", "arachidi", "senape", "soia", "solfiti", "frutta_guscio", "sesamo"),
+        extras: pizzaExtras(),
       },
       {
         id: "cheese-pizza",
@@ -737,6 +1130,9 @@ export const menu: MenuCategory[] = [
         description:
           "Mozzarella, pomodori confit, burger sbriciolato, bacon croccante e salsa cheddar",
         price: s(10),
+        ingredients: ["Pomodoro, mozzarella", "Pomodorini confit, macinato cotto a pezzettini", "Bacon, salsa cheddar", "Impasto"],
+        allergens: ix("glutine", "uova", "latte", "arachidi", "senape", "soia", "solfiti", "frutta_guscio", "sesamo"),
+        extras: pizzaExtras(),
       },
       {
         id: "mortadella-pork",
@@ -745,6 +1141,9 @@ export const menu: MenuCategory[] = [
           "Mozzarella, provola affumicata, mortadella alla barese e pesto di pistacchio",
         price: s(10),
         tags: ["firma"],
+        ingredients: ["Pomodoro, mozzarella, provola affumicata", "Mortadella a crudo, pesto al pistacchio a crudo a fine cottura", "Impasto"],
+        allergens: ix("glutine", "uova", "latte", "arachidi", "senape", "soia", "solfiti", "frutta_guscio", "sesamo"),
+        extras: pizzaExtras(),
       },
       {
         id: "nonna-pork",
@@ -752,6 +1151,13 @@ export const menu: MenuCategory[] = [
         description:
           "Fonduta di provolone, polpette con il ragù e pesto di pistacchio",
         price: s(10),
+        ingredients: [
+          "Base, fonduta di provolone",
+          "Polpettine in ragù di manzo/maiale",
+          "Pesto di pistacchio a goccia",
+        ],
+        allergens: ix("glutine", "uova", "latte", "arachidi", "senape", "soia", "solfiti", "frutta_guscio", "sesamo"),
+        extras: pizzaExtras(),
       },
       {
         id: "parmiggiana-pizza",
@@ -760,6 +1166,9 @@ export const menu: MenuCategory[] = [
           "Scamorza affumicata, mozzarella, melanzane fritte e scaglie di grana",
         price: s(10),
         tags: ["veg"],
+        ingredients: ["Pomodoro o bianca, mozzarella, scamorza", "Fette di melanzane fritte, grana a scaglie", "Impasto"],
+        allergens: ix("glutine", "uova", "latte", "arachidi", "senape", "soia", "solfiti", "frutta_guscio", "sesamo"),
+        extras: pizzaExtras(),
       },
       {
         id: "bacon-pizza",
@@ -767,6 +1176,13 @@ export const menu: MenuCategory[] = [
         description:
           "Scam. affumicata, bacon in due consistenze, salsa cheddar, cipolla croccante e salsa BBQ",
         price: s(10),
+        ingredients: [
+          "Pomodoro, mozzarella, scamorza affumicata",
+          "Bacon, cipolla fritta, salse bbq e cheddar",
+          "Impasto",
+        ],
+        allergens: ix("glutine", "uova", "latte", "arachidi", "senape", "soia", "solfiti", "frutta_guscio", "sesamo"),
+        extras: pizzaExtras(),
       },
       {
         id: "porka-brascio",
@@ -774,6 +1190,9 @@ export const menu: MenuCategory[] = [
         description: "Salsa cacio e pepe, braciola con il ragù",
         price: s(10),
         tags: ["firma"],
+        ingredients: ["Base bianca o pomodoro leggero, crema cacio e pepe", "Braciola cotta nel ragù a pezzettoni, fondo di cottura", "Impasto"],
+        allergens: ix("glutine", "uova", "latte", "arachidi", "senape", "soia", "solfiti", "frutta_guscio", "sesamo"),
+        extras: pizzaExtras(),
       },
     ],
   },
@@ -788,6 +1207,7 @@ export const menu: MenuCategory[] = [
         description:
           "Bruschette, olive, pizza a scelta (solo tra le classiche) e bevanda inclusa",
         price: s(15),
+        allergens: ix("glutine", "uova", "latte", "arachidi", "senape", "soia", "solfiti", "frutta_guscio", "sesamo"),
         bundleSlots: [
           {
             id: "pizza",
@@ -809,6 +1229,7 @@ export const menu: MenuCategory[] = [
           "3 antipasti della casa, panino a scelta o primo a scelta (solo i classici, per le pizze solo tra le classiche), bevanda inclusa",
         price: s(20),
         tags: ["firma"],
+        allergens: ix("glutine", "uova", "latte", "arachidi", "senape", "soia", "solfiti", "frutta_guscio", "sesamo"),
         bundleSlots: [
           {
             id: "portata",
@@ -830,6 +1251,7 @@ export const menu: MenuCategory[] = [
           "5 antipasti della casa, panino a scelta o pizza a scelta o primo a scelta (solo i classici, per le pizze solo tra le classiche), bevanda inclusa",
         price: s(30),
         tags: ["firma"],
+        allergens: ix("glutine", "uova", "latte", "arachidi", "senape", "soia", "solfiti", "frutta_guscio", "sesamo"),
         bundleSlots: [
           {
             id: "portata",
@@ -862,6 +1284,7 @@ export const menu: MenuCategory[] = [
           small: { label: "0,2 L", price: 3.5 },
           large: { label: "0,4 L", price: 5.5 },
         },
+        allergens: ix("glutine", "solfiti"),
       },
       {
         id: "krombacher-weizen",
@@ -874,6 +1297,7 @@ export const menu: MenuCategory[] = [
           small: { label: "0,3 L", price: 4 },
           large: { label: "0,5 L", price: 6.5 },
         },
+        allergens: ix("glutine", "solfiti"),
       },
       {
         id: "rhenania-alt",
@@ -886,6 +1310,7 @@ export const menu: MenuCategory[] = [
           small: { label: "0,3 L", price: 4.5 },
           large: { label: "0,5 L", price: 6 },
         },
+        allergens: ix("glutine", "solfiti"),
       },
       {
         id: "krombacher-non-filtrata",
@@ -898,6 +1323,7 @@ export const menu: MenuCategory[] = [
           small: { label: "0,3 L", price: 3.5 },
           large: { label: "0,5 L", price: 7 },
         },
+        allergens: ix("glutine", "solfiti"),
       },
       {
         id: "tennents-super",
@@ -910,6 +1336,7 @@ export const menu: MenuCategory[] = [
           small: { label: "0,25 L", price: 4.5 },
           large: { label: "0,5 L", price: 7 },
         },
+        allergens: ix("glutine", "solfiti"),
       },
       {
         id: "laguna-beach-ipa",
@@ -922,6 +1349,7 @@ export const menu: MenuCategory[] = [
           small: { label: "0,30 L", price: 4 },
           large: { label: "0,30 L", price: 4 },
         },
+        allergens: ix("glutine", "solfiti"),
       },
     ],
   },
@@ -930,11 +1358,11 @@ export const menu: MenuCategory[] = [
     title: "Drink & Cocktail",
     subtitle: "Il giro giusto per accompagnare",
     items: [
-      { id: "spritz", name: "Aperol / Campari Spritz", price: s(6) },
-      { id: "gin-tonic", name: "Gin Tonic", price: s(6) },
-      { id: "gin-lemon", name: "Gin Lemon", price: s(6) },
-      { id: "negroni", name: "Negroni / Negroni Sbagliato", price: s(6) },
-      { id: "americano", name: "Americano", price: s(6) },
+      { id: "spritz", name: "Aperol / Campari Spritz", price: s(6), allergens: ix("solfiti") },
+      { id: "gin-tonic", name: "Gin Tonic", price: s(6), allergens: ix("solfiti") },
+      { id: "gin-lemon", name: "Gin Lemon", price: s(6), allergens: ix("solfiti") },
+      { id: "negroni", name: "Negroni / Negroni Sbagliato", price: s(6), allergens: ix("solfiti") },
+      { id: "americano", name: "Americano", price: s(6), allergens: ix("solfiti") },
     ],
   },
   {
@@ -942,16 +1370,16 @@ export const menu: MenuCategory[] = [
     title: "Amari & Distillati",
     subtitle: "Il digestivo è d'obbligo",
     items: [
-      { id: "mirto-sardo", name: "Mirto sardo", price: s(3.5) },
-      { id: "limoncello", name: "Limoncello", price: s(3.5) },
-      { id: "amaro-del-capo", name: "Amaro del Capo", price: s(3.5) },
-      { id: "montenegro", name: "Montenegro", price: s(3.5) },
-      { id: "jagermeister", name: "Jägermeister", price: s(3.5) },
-      { id: "jack-daniels", name: "Jack Daniel's", price: s(4.5) },
-      { id: "bep", name: "BEP", price: s(4.5) },
-      { id: "red-label", name: "Red Label", price: s(4.5) },
-      { id: "grappa-nonnino", name: "Grappa Nonnino", price: s(4.5) },
-      { id: "rum", name: "Rum", price: s(4.5) },
+      { id: "mirto-sardo", name: "Mirto sardo", price: s(3.5), allergens: ix("solfiti", "lupini") },
+      { id: "limoncello", name: "Limoncello", price: s(3.5), allergens: ix("solfiti", "lupini") },
+      { id: "amaro-del-capo", name: "Amaro del Capo", price: s(3.5), allergens: ix("solfiti", "lupini") },
+      { id: "montenegro", name: "Montenegro", price: s(3.5), allergens: ix("solfiti", "lupini") },
+      { id: "jagermeister", name: "Jägermeister", price: s(3.5), allergens: ix("lupini", "solfiti") },
+      { id: "jack-daniels", name: "Jack Daniel's", price: s(4.5), allergens: ix("solfiti") },
+      { id: "bep", name: "BEP", price: s(4.5), allergens: ix("solfiti") },
+      { id: "red-label", name: "Red Label", price: s(4.5), allergens: ix("solfiti") },
+      { id: "grappa-nonnino", name: "Grappa Nonnino", price: s(4.5), allergens: ix("solfiti") },
+      { id: "rum", name: "Rum", price: s(4.5), allergens: ix("solfiti") },
     ],
   },
   {
@@ -959,9 +1387,9 @@ export const menu: MenuCategory[] = [
     title: "Dolci",
     subtitle: "Finire bene è un dovere",
     items: [
-      { id: "tartufo-bianco", name: "Tartufo bianco", price: s(5) },
-      { id: "tartufo-nero", name: "Tartufo nero", price: s(5) },
-      { id: "souffle", name: "Soufflé al cioccolato", price: s(5) },
+      { id: "tartufo-bianco", name: "Tartufo bianco", price: s(5), allergens: ix("latte", "uova", "frutta_guscio", "soia", "glutine", "arachidi") },
+      { id: "tartufo-nero", name: "Tartufo nero", price: s(5), allergens: ix("latte", "uova", "frutta_guscio", "soia", "glutine", "arachidi") },
+      { id: "souffle", name: "Soufflé al cioccolato", price: s(5), allergens: ix("uova", "latte", "soia", "frutta_guscio", "glutine", "arachidi") },
       { id: "sorbetto", name: "Sorbetto al limone", price: s(3) },
     ],
   },
@@ -971,11 +1399,11 @@ export const menu: MenuCategory[] = [
     items: [
       { id: "acqua-naturale", name: "Acqua naturale", price: s(1.2) },
       { id: "acqua-frizzante", name: "Acqua frizzante", price: s(1.2) },
-      { id: "coca-cola", name: "Coca Cola", price: s(3) },
-      { id: "coca-cola-zero", name: "Coca Cola Zero", price: s(3) },
-      { id: "fanta", name: "Fanta", price: s(3) },
-      { id: "sprite", name: "Sprite", price: s(3) },
-      { id: "chino", name: "Chinò", price: s(3) },
+      { id: "coca-cola", name: "Coca Cola", price: s(3), allergens: ix("solfiti") },
+      { id: "coca-cola-zero", name: "Coca Cola Zero", price: s(3), allergens: ix("solfiti") },
+      { id: "fanta", name: "Fanta", price: s(3), allergens: ix("solfiti") },
+      { id: "sprite", name: "Sprite", price: s(3), allergens: ix("solfiti") },
+      { id: "chino", name: "Chinò", price: s(3), allergens: ix("solfiti") },
     ],
   },
 ];

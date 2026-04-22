@@ -12,12 +12,17 @@ import { bodyScrollLock, bodyScrollUnlock } from "@/lib/body-scroll-lock";
 import { AllergenBadges } from "./allergen-badges";
 import { SpicyLevelBadge } from "./spicy-level-badge";
 import { getResolvedPiccanteLevel } from "@/lib/piccante";
+import {
+  categoryOffersSenzaLattosio,
+  SENZA_LATTOSIO_EXTRA,
+} from "@/lib/menu-service-notes";
 
 export function needsCustomization(item: AdminMenuItem): boolean {
   const variantsCount = priceVariants(item.price).length;
   const hasIngredients = (item.ingredients?.length ?? 0) > 0;
   const hasExtras = (item.extras?.length ?? 0) > 0;
-  return variantsCount > 1 || hasIngredients || hasExtras;
+  const lactose = categoryOffersSenzaLattosio(item.categoryId);
+  return variantsCount > 1 || hasIngredients || hasExtras || lactose;
 }
 
 export function ItemCustomizer({
@@ -33,6 +38,16 @@ export function ItemCustomizer({
   initialLine?: CartLine;
 }) {
   const variants = priceVariants(item.price);
+  const mergedExtras = useMemo(() => {
+    const real = [...(item.extras ?? [])];
+    if (
+      categoryOffersSenzaLattosio(item.categoryId) &&
+      !real.some((e) => e.id === SENZA_LATTOSIO_EXTRA.id)
+    ) {
+      return [SENZA_LATTOSIO_EXTRA, ...real];
+    }
+    return real;
+  }, [item.extras, item.categoryId]);
   const addLine = useCartStore((s) => s.addLine);
   const replaceLine = useCartStore((s) => s.replaceLine);
   const addBtnRef = useRef<HTMLButtonElement>(null);
@@ -68,8 +83,8 @@ export function ItemCustomizer({
 
   const activeVariant = variants.find((v) => v.key === variantKey) ?? variants[0];
   const selectedExtras = useMemo(
-    () => (item.extras ?? []).filter((e) => extras.includes(e.id)),
-    [item.extras, extras],
+    () => mergedExtras.filter((e) => extras.includes(e.id)),
+    [mergedExtras, extras],
   );
   const extrasTotal = selectedExtras.reduce((a, e) => a + e.price, 0);
   const unitPrice = activeVariant.price + extrasTotal;
@@ -239,10 +254,10 @@ export function ItemCustomizer({
             </Section>
           )}
 
-          {item.extras && item.extras.length > 0 && (
+          {mergedExtras.length > 0 && (
             <Section title="Aggiunte" subtitle="Sovrapprezzo per ognuna">
               <ul className="space-y-2">
-                {item.extras.map((extra) => {
+                {mergedExtras.map((extra) => {
                   const isAdded = extras.includes(extra.id);
                   return (
                     <li key={extra.id}>

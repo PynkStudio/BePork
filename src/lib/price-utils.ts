@@ -1,4 +1,5 @@
 import type { PriceFormat } from "./menu-data";
+import { categoryOffersSenzaLattosio } from "./menu-service-notes";
 import type { AdminMenuItem } from "./types";
 
 export type PriceVariant = {
@@ -13,7 +14,9 @@ export function hasOnlyPriceVariants(item: AdminMenuItem): boolean {
   if (v.length <= 1) return false;
   const hasIng = (item.ingredients?.length ?? 0) > 0;
   const hasEx = (item.extras?.length ?? 0) > 0;
-  return !hasIng && !hasEx;
+  if (hasIng || hasEx) return false;
+  if (categoryOffersSenzaLattosio(item.categoryId)) return false;
+  return true;
 }
 
 export function priceVariants(price: PriceFormat): PriceVariant[] {

@@ -16,7 +16,7 @@ import type {
   TableSession,
 } from "@/lib/types";
 
-const STORAGE_KEY = "bepork-menu-v1";
+const STORAGE_KEY = "bepork-menu-v2";
 
 function seedCategories(): AdminMenuCategory[] {
   return seedMenu.map((c, order) => ({

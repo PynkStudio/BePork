@@ -4,22 +4,11 @@ import Image from "next/image";
 import type { MouseEvent } from "react";
 import { useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import {
-  ChevronDown,
-  ChevronUp,
-  Flame,
-  Heart,
-  Leaf,
-  Minus,
-  Plus,
-  Star,
-  XCircle,
-} from "lucide-react";
+import { Flame, Heart, Leaf, Minus, Plus, Star, XCircle } from "lucide-react";
 import type { AdminMenuItem } from "@/lib/types";
 import {
   priceVariants,
   formatEuro,
-  minPrice,
   hasOnlyPriceVariants,
 } from "@/lib/price-utils";
 import { PriceSticker } from "./price-sticker";
@@ -80,10 +69,14 @@ export function MenuCardInteractive({ item }: { item: AdminMenuItem }) {
 
   const variants = priceVariants(item.price);
   const serviceNotes = getMenuServiceNotes(item.categoryId, item);
+  const cardServiceNotes = useMemo(
+    () =>
+      serviceNotes.filter((k) => k !== "aggiunte" && k !== "senzaLattosio"),
+    [serviceNotes],
+  );
   const [customizerOpen, setCustomizerOpen] = useState(false);
   const [bundleOpen, setBundleOpen] = useState(false);
   const [formatoOpen, setFormatoOpen] = useState(false);
-  const [pricesExpanded, setPricesExpanded] = useState(false);
 
   const lines = useCartStore((s) => s.lines);
   const addLine = useCartStore((s) => s.addLine);
@@ -236,7 +229,7 @@ export function MenuCardInteractive({ item }: { item: AdminMenuItem }) {
 
         <div className="mt-auto flex flex-col gap-2 pt-2">
           <div className="flex items-end justify-between gap-3">
-            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+            <div className="flex min-w-0 shrink-0 flex-col items-start gap-1.5">
               {!multiPrice ? (
                 <PriceSticker variant="mustard" rotate={-3}>
                   {formatEuro(variants[0]?.price ?? 0)}
@@ -247,47 +240,22 @@ export function MenuCardInteractive({ item }: { item: AdminMenuItem }) {
                   )}
                 </PriceSticker>
               ) : (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => setPricesExpanded((e) => !e)}
-                    className="flex max-w-full flex-wrap items-center gap-2 rounded-xl bg-pork-ink/5 px-3 py-2 text-left ring-1 ring-pork-ink/10 transition-colors hover:bg-pork-ink/10"
-                    aria-expanded={pricesExpanded}
-                  >
-                    <span className="font-impact text-lg text-pork-red">
-                      {formatEuro(minPrice(item.price))}
-                    </span>
-                    <span className="text-[10px] font-black uppercase tracking-wide text-pork-ink/50">
-                      da
-                    </span>
-                    <span className="ml-auto inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-pork-ink/60">
-                      Prezzi
-                      {pricesExpanded ? (
-                        <ChevronUp size={14} aria-hidden />
-                      ) : (
-                        <ChevronDown size={14} aria-hidden />
+                <div className="flex flex-wrap items-end gap-1.5">
+                  {variants.map((v, i) => (
+                    <PriceSticker
+                      key={v.key}
+                      variant={priceVariantColors[i % 2]}
+                      rotate={i % 2 === 0 ? -3 : 3}
+                    >
+                      {formatEuro(v.price)}
+                      {v.label && (
+                        <span className="ml-1 text-xs font-normal opacity-80">
+                          {v.label}
+                        </span>
                       )}
-                    </span>
-                  </button>
-                  {pricesExpanded && (
-                    <div className="flex flex-wrap items-end gap-1.5 pl-0.5">
-                      {variants.map((v, i) => (
-                        <PriceSticker
-                          key={v.key}
-                          variant={priceVariantColors[i % 2]}
-                          rotate={i % 2 === 0 ? -3 : 3}
-                        >
-                          {formatEuro(v.price)}
-                          {v.label && (
-                            <span className="ml-1 text-xs font-normal opacity-80">
-                              {v.label}
-                            </span>
-                          )}
-                        </PriceSticker>
-                      ))}
-                    </div>
-                  )}
-                </>
+                    </PriceSticker>
+                  ))}
+                </div>
               )}
             </div>
 
@@ -305,11 +273,6 @@ export function MenuCardInteractive({ item }: { item: AdminMenuItem }) {
                     Personalizza
                   </span>
                 )}
-              {hasOnlyPriceVariants(item) && showAdd && (
-                <span className="hidden rounded-full bg-pork-mustard/40 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-pork-ink sm:block">
-                  Più formati
-                </span>
-              )}
               {showAdd && (
                 <div className="inline-flex items-center gap-1">
                   {qtyInCart > 0 && (
@@ -341,9 +304,9 @@ export function MenuCardInteractive({ item }: { item: AdminMenuItem }) {
             </div>
           </div>
 
-          {serviceNotes.length > 0 && (
+          {cardServiceNotes.length > 0 && (
             <ul className="space-y-0.5 text-[11px] leading-snug text-pork-ink/55">
-              {serviceNotes.map((k) => (
+              {cardServiceNotes.map((k) => (
                 <li key={k}>{menuServiceNoteText(k)}</li>
               ))}
             </ul>
