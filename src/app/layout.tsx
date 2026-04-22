@@ -2,9 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Bagel_Fat_One, Bebas_Neue, Manrope } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
-import { Navbar } from "@/components/navbar";
-import { Footer } from "@/components/footer";
-import { WhatsappFloat } from "@/components/whatsapp-float";
+import { Providers } from "@/components/providers";
+import { SiteChrome, SiteFooterGate } from "@/components/site-chrome";
 import { siteConfig } from "@/lib/site-config";
 import { googleRating, reviews } from "@/lib/reviews-data";
 import { menu, priceFromNumber } from "@/lib/menu-data";
@@ -149,10 +148,11 @@ export default function RootLayout({
           strategy="afterInteractive"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(restaurantSchema) }}
         />
-        <Navbar />
-        <main>{children}</main>
-        <Footer />
-        <WhatsappFloat />
+        <Providers>
+          <SiteChrome />
+          <main>{children}</main>
+          <SiteFooterGate />
+        </Providers>
       </body>
     </html>
   );

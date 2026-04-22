@@ -9,6 +9,8 @@ import { whatsappUrl } from "@/lib/site-config";
 
 const nav = [
   { label: "Menu", href: "/menu" },
+  { label: "Ordina", href: "/ordina" },
+  { label: "Preferiti", href: "/preferiti" },
   { label: "Chi siamo", href: "/chi-siamo" },
   { label: "Galleria", href: "/galleria" },
   { label: "Recensioni", href: "/recensioni" },
@@ -39,7 +41,7 @@ export function Navbar() {
         className={cn(
           "fixed inset-x-0 top-0 z-50 transition-all duration-300",
           scrolled
-            ? "bg-pork-cream/95 backdrop-blur-lg shadow-md"
+            ? "bg-pork-cream shadow-md"
             : "bg-transparent"
         )}
       >

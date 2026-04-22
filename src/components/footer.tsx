@@ -1,5 +1,6 @@
 import Image from "next/image";
-import { Instagram, Facebook, Phone, MapPin } from "lucide-react";
+import Link from "next/link";
+import { Instagram, Facebook, Phone, MapPin, Lock } from "lucide-react";
 import { siteConfig, whatsappUrl } from "@/lib/site-config";
 
 export function Footer() {
@@ -96,8 +97,17 @@ export function Footer() {
 
       <div className="border-t border-pork-cream/10">
         <div className="container-wide flex flex-col gap-4 py-6 text-xs text-pork-cream/50 md:flex-row md:items-center md:justify-between">
-          <p>
-            © {new Date().getFullYear()} Be Pork — {siteConfig.address.full}
+          <p className="flex flex-wrap items-center gap-2">
+            <span>
+              © {new Date().getFullYear()} Be Pork — {siteConfig.address.full}
+            </span>
+            <Link
+              href="/admin/login"
+              className="inline-flex items-center gap-1 text-pork-cream/30 hover:text-pork-mustard"
+              aria-label="Area riservata"
+            >
+              <Lock size={10} /> Staff
+            </Link>
           </p>
           <div className="flex flex-wrap gap-x-4 gap-y-1">
             <span>{siteConfig.disclaimers.coperto}</span>

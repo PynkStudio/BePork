@@ -1,0 +1,240 @@
+"use client";
+
+import Image from "next/image";
+import { useState } from "react";
+import { Flame, Heart, Leaf, Plus, Star, XCircle } from "lucide-react";
+import type { AdminMenuItem } from "@/lib/types";
+import { priceVariants, formatEuro } from "@/lib/price-utils";
+import { PriceSticker } from "./price-sticker";
+import { cn } from "@/lib/utils";
+import { useCartStore } from "@/store/cart-store";
+import { useFavoritesStore } from "@/store/favorites-store";
+
+const tagMeta: Record<
+  NonNullable<AdminMenuItem["tags"]>[number],
+  { label: string; icon: React.ReactNode; className: string }
+> = {
+  firma: {
+    label: "Firma",
+    icon: <Star size={12} />,
+    className: "bg-pork-red text-white",
+  },
+  piccante: {
+    label: "Piccante",
+    icon: <Flame size={12} />,
+    className: "bg-pork-mustard text-pork-ink",
+  },
+  veg: {
+    label: "Veg",
+    icon: <Leaf size={12} />,
+    className: "bg-pork-green text-white",
+  },
+  novita: {
+    label: "Novità",
+    icon: <Star size={12} />,
+    className: "bg-pork-pink text-white",
+  },
+};
+
+const priceVariantColors: Array<"mustard" | "red"> = ["mustard", "red"];
+
+export function MenuCardInteractive({ item }: { item: AdminMenuItem }) {
+  const variants = priceVariants(item.price);
+  const [chooserOpen, setChooserOpen] = useState(false);
+
+  const addLine = useCartStore((s) => s.addLine);
+  const setOpen = useCartStore((s) => s.setOpen);
+  const favIds = useFavoritesStore((s) => s.ids);
+  const toggleFav = useFavoritesStore((s) => s.toggle);
+  const isFav = favIds.includes(item.id);
+
+  const unavailable = !item.available;
+
+  function handleAdd(variantKey?: string) {
+    const variant = variants.find((v) => v.key === variantKey) ?? variants[0];
+    addLine({
+      itemId: item.id,
+      name: item.name,
+      qty: 1,
+      variantKey: variant.key === "default" ? undefined : variant.key,
+      variantLabel: variant.label,
+      unitPrice: variant.price,
+    });
+    setChooserOpen(false);
+    setOpen(true);
+  }
+
+  function handleAddClick() {
+    if (unavailable) return;
+    if (variants.length > 1) {
+      setChooserOpen(true);
+    } else {
+      handleAdd();
+    }
+  }
+
+  return (
+    <article
+      className={cn(
+        "group relative flex flex-col overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-pork-ink/5 transition-all",
+        unavailable
+          ? "opacity-70"
+          : "hover:-translate-y-1 hover:shadow-xl",
+      )}
+    >
+      {unavailable && (
+        <div className="absolute left-3 top-3 z-10 inline-flex items-center gap-1 rounded-full bg-pork-ink px-3 py-1 text-[10px] font-black uppercase tracking-wide text-pork-cream">
+          <XCircle size={12} /> Esaurito
+        </div>
+      )}
+
+      <button
+        type="button"
+        aria-label={isFav ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti"}
+        aria-pressed={isFav}
+        onClick={() => toggleFav(item.id)}
+        className={cn(
+          "absolute right-3 top-3 z-10 inline-flex h-10 w-10 items-center justify-center rounded-full shadow-md transition-all active:scale-90",
+          isFav
+            ? "bg-pork-red text-white"
+            : "bg-white/90 text-pork-ink hover:bg-pork-red hover:text-white",
+        )}
+      >
+        <Heart size={18} fill={isFav ? "currentColor" : "none"} />
+      </button>
+
+      {item.image ? (
+        <div className="relative aspect-[4/3] overflow-hidden bg-pork-ink/5">
+          <Image
+            src={item.image}
+            alt={item.name}
+            fill
+            sizes="(max-width: 768px) 100vw, 400px"
+            className={cn(
+              "object-cover transition-transform duration-700",
+              unavailable ? "grayscale" : "group-hover:scale-105",
+            )}
+          />
+        </div>
+      ) : null}
+
+      <div className="flex flex-1 flex-col gap-3 p-5">
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="impact-title text-2xl leading-tight text-pork-ink">
+            {item.name}
+          </h3>
+        </div>
+
+        {item.description && (
+          <p className="text-sm leading-relaxed text-pork-ink/70">
+            {item.description}
+          </p>
+        )}
+
+        {item.ingredients && item.ingredients.length > 0 && (
+          <p className="text-xs italic text-pork-ink/50">
+            {item.ingredients.join(" · ")}
+          </p>
+        )}
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          {item.abv && (
+            <span className="chip bg-pork-ink text-pork-cream">
+              {item.abv} vol.
+            </span>
+          )}
+          {item.tags?.map((t) => {
+            const meta = tagMeta[t];
+            return (
+              <span
+                key={t}
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide",
+                  meta.className,
+                )}
+              >
+                {meta.icon}
+                {meta.label}
+              </span>
+            );
+          })}
+        </div>
+
+        <div className="mt-auto flex items-end justify-between gap-3 pt-2">
+          <div className="flex flex-wrap items-end gap-1.5">
+            {variants.map((v, i) => (
+              <PriceSticker
+                key={v.key}
+                variant={priceVariantColors[i % 2]}
+                rotate={i % 2 === 0 ? -3 : 3}
+              >
+                {formatEuro(v.price)}
+                {v.label && (
+                  <span className="ml-1 text-xs font-normal opacity-80">
+                    {v.label}
+                  </span>
+                )}
+              </PriceSticker>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={handleAddClick}
+            disabled={unavailable}
+            className={cn(
+              "inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full shadow-lg transition-all active:scale-90",
+              unavailable
+                ? "cursor-not-allowed bg-pork-ink/10 text-pork-ink/30"
+                : "bg-pork-ink text-pork-cream hover:bg-pork-red",
+            )}
+            aria-label={
+              unavailable ? "Non disponibile" : `Aggiungi ${item.name} al carrello`
+            }
+          >
+            <Plus size={20} />
+          </button>
+        </div>
+      </div>
+
+      {chooserOpen && (
+        <div
+          className="absolute inset-0 z-20 flex items-center justify-center bg-pork-ink/80 backdrop-blur-sm p-5"
+          onClick={() => setChooserOpen(false)}
+        >
+          <div
+            className="w-full rounded-2xl bg-pork-cream p-5 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="impact-title text-xs text-pork-red">Scegli il formato</p>
+            <h4 className="headline text-2xl leading-tight">{item.name}</h4>
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              {variants.map((v) => (
+                <button
+                  key={v.key}
+                  type="button"
+                  onClick={() => handleAdd(v.key)}
+                  className="flex flex-col items-center gap-1 rounded-xl border-2 border-pork-ink/10 bg-white p-3 transition-all hover:-translate-y-0.5 hover:border-pork-red"
+                >
+                  <span className="impact-title text-sm text-pork-ink/70">
+                    {v.label ?? "Standard"}
+                  </span>
+                  <span className="headline text-2xl text-pork-red">
+                    {formatEuro(v.price)}
+                  </span>
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => setChooserOpen(false)}
+              className="mt-3 w-full rounded-full border-2 border-pork-ink/20 py-2 text-sm font-semibold text-pork-ink/70"
+            >
+              Annulla
+            </button>
+          </div>
+        </div>
+      )}
+    </article>
+  );
+}
