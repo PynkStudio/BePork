@@ -68,8 +68,8 @@ export function Hero() {
             <div className="relative mx-auto aspect-square w-full max-w-md">
               <div className="absolute inset-0 rounded-full bg-pork-mustard/20 blur-3xl" />
               <Image
-                src="/logo.png"
-                alt="Be Pork logo"
+                src="/logo-payoff.png"
+                alt="Be Pork — Mordi e Godi"
                 fill
                 priority
                 sizes="(max-width: 1024px) 0vw, 400px"

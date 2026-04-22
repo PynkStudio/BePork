@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { Navbar } from "./navbar";
 import { Footer } from "./footer";
 import { WhatsappFloat } from "./whatsapp-float";
-import { CartFab } from "./cart-fab";
+import { ShopFabs } from "./shop-fabs";
 import { CartDrawer } from "./cart-drawer";
 
 function isInternal(pathname: string | null): boolean {
@@ -19,7 +19,7 @@ export function SiteChrome() {
     <>
       <Navbar />
       <WhatsappFloat />
-      <CartFab />
+      <ShopFabs />
       <CartDrawer />
     </>
   );

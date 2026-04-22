@@ -53,11 +53,13 @@ export const metadata: Metadata = {
     siteName: siteConfig.name,
     locale: "it_IT",
     type: "website",
+    images: [{ url: "/logo-payoff.png", alt: "Be Pork — Mordi e Godi" }],
   },
   twitter: {
     card: "summary_large_image",
     title: siteConfig.name,
     description: siteConfig.description,
+    images: ["/logo-payoff.png"],
   },
   alternates: {
     canonical: siteConfig.url,
@@ -78,7 +80,7 @@ const restaurantSchema = {
   "@context": "https://schema.org",
   "@type": "Restaurant",
   name: siteConfig.name,
-  image: `${siteConfig.url}/logo.png`,
+  image: `${siteConfig.url}/logo-payoff.png`,
   url: siteConfig.url,
   telephone: siteConfig.contact.phone,
   priceRange: "€€",
@@ -150,7 +152,7 @@ export default function RootLayout({
         />
         <Providers>
           <SiteChrome />
-          <main>{children}</main>
+          <main className="min-w-0 overflow-x-hidden">{children}</main>
           <SiteFooterGate />
         </Providers>
       </body>

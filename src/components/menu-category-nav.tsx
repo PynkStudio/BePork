@@ -27,7 +27,7 @@ export function MenuCategoryNav({ categories }: { categories: MenuCategory[] }) 
   }, [categories]);
 
   return (
-    <div className="sticky top-[76px] z-30 -mx-5 border-y border-pork-ink/10 bg-pork-cream/95 backdrop-blur-lg sm:-mx-8 md:top-[88px] lg:-mx-12">
+    <div className="sticky top-[76px] z-30 -mx-5 overflow-x-hidden border-y border-pork-ink/10 bg-pork-cream/95 backdrop-blur-lg sm:-mx-8 md:top-[88px] lg:-mx-12">
       <div className="container-wide">
         <nav
           aria-label="Categorie del menu"
