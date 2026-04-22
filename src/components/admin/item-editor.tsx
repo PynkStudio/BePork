@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { Save, X } from "lucide-react";
-import type { AdminMenuItem, MenuTag } from "@/lib/types";
+import type { AdminMenuItem, Extra, MenuTag } from "@/lib/types";
 import { PriceEditor } from "./price-editor";
 import { ImageUpload } from "./image-upload";
 import { useMenuStore } from "@/store/menu-store";
+import { formatEuro } from "@/lib/price-utils";
 
 const TAGS: { key: MenuTag; label: string }[] = [
   { key: "firma", label: "Firma" },
@@ -26,6 +27,8 @@ export function ItemEditor({
 
   const [draft, setDraft] = useState<AdminMenuItem>(item);
   const [ingInput, setIngInput] = useState("");
+  const [extraName, setExtraName] = useState("");
+  const [extraPrice, setExtraPrice] = useState("");
 
   function save() {
     updateItem(draft.id, draft);
@@ -46,6 +49,27 @@ export function ItemEditor({
     setDraft((d) => ({
       ...d,
       ingredients: (d.ingredients ?? []).filter((_, idx) => idx !== i),
+    }));
+  }
+
+  function addExtra() {
+    const name = extraName.trim();
+    const price = parseFloat(extraPrice.replace(",", "."));
+    if (!name || !Number.isFinite(price) || price < 0) return;
+    const id = `ex-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 5)}`;
+    const newExtra: Extra = { id, name, price };
+    setDraft((d) => ({
+      ...d,
+      extras: [...(d.extras ?? []), newExtra],
+    }));
+    setExtraName("");
+    setExtraPrice("");
+  }
+
+  function removeExtra(id: string) {
+    setDraft((d) => ({
+      ...d,
+      extras: (d.extras ?? []).filter((e) => e.id !== id),
     }));
   }
 
@@ -151,6 +175,64 @@ export function ItemEditor({
                         >
                           ×
                         </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Field>
+
+              <Field label="Aggiunte (sovrapprezzo)">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={extraName}
+                    onChange={(e) => setExtraName(e.target.value)}
+                    placeholder="Nome (es. Extra bacon)"
+                    className="flex-1 rounded-xl border-2 border-pork-ink/10 bg-white px-3 py-2 outline-none focus:border-pork-red"
+                  />
+                  <input
+                    type="text"
+                    value={extraPrice}
+                    onChange={(e) => setExtraPrice(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addExtra();
+                      }
+                    }}
+                    placeholder="€"
+                    inputMode="decimal"
+                    className="w-20 rounded-xl border-2 border-pork-ink/10 bg-white px-3 py-2 outline-none focus:border-pork-red"
+                  />
+                  <button
+                    type="button"
+                    onClick={addExtra}
+                    className="rounded-xl bg-pork-ink px-4 text-sm font-bold text-pork-cream"
+                  >
+                    +
+                  </button>
+                </div>
+                {draft.extras && draft.extras.length > 0 && (
+                  <ul className="mt-2 space-y-1.5">
+                    {draft.extras.map((ex) => (
+                      <li
+                        key={ex.id}
+                        className="flex items-center justify-between gap-2 rounded-lg bg-white px-3 py-2 text-sm ring-1 ring-pork-ink/10"
+                      >
+                        <span className="font-semibold">{ex.name}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-impact text-pork-red">
+                            +{formatEuro(ex.price)}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => removeExtra(ex.id)}
+                            className="text-pork-ink/40 hover:text-pork-red"
+                            aria-label="Rimuovi"
+                          >
+                            ×
+                          </button>
+                        </div>
                       </li>
                     ))}
                   </ul>

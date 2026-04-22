@@ -83,6 +83,23 @@ export function CartDrawer() {
                           {l.variantLabel}
                         </p>
                       )}
+                      {l.removedIngredients && l.removedIngredients.length > 0 && (
+                        <p className="mt-1 text-[11px] font-semibold text-pork-red">
+                          – senza {l.removedIngredients.join(", ")}
+                        </p>
+                      )}
+                      {l.addedExtras && l.addedExtras.length > 0 && (
+                        <ul className="mt-1 text-[11px] text-pork-green">
+                          {l.addedExtras.map((x) => (
+                            <li key={x.id}>
+                              + {x.name}{" "}
+                              <span className="text-pork-ink/50">
+                                ({formatEuro(x.price)})
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                       {l.note && (
                         <p className="mt-1 text-xs italic text-pork-ink/60">
                           &ldquo;{l.note}&rdquo;

@@ -9,6 +9,7 @@ import { PriceSticker } from "./price-sticker";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/store/cart-store";
 import { useFavoritesStore } from "@/store/favorites-store";
+import { ItemCustomizer, needsCustomization } from "./item-customizer";
 
 const tagMeta: Record<
   NonNullable<AdminMenuItem["tags"]>[number],
@@ -40,7 +41,7 @@ const priceVariantColors: Array<"mustard" | "red"> = ["mustard", "red"];
 
 export function MenuCardInteractive({ item }: { item: AdminMenuItem }) {
   const variants = priceVariants(item.price);
-  const [chooserOpen, setChooserOpen] = useState(false);
+  const [customizerOpen, setCustomizerOpen] = useState(false);
 
   const addLine = useCartStore((s) => s.addLine);
   const setOpen = useCartStore((s) => s.setOpen);
@@ -49,27 +50,25 @@ export function MenuCardInteractive({ item }: { item: AdminMenuItem }) {
   const isFav = favIds.includes(item.id);
 
   const unavailable = !item.available;
-
-  function handleAdd(variantKey?: string) {
-    const variant = variants.find((v) => v.key === variantKey) ?? variants[0];
-    addLine({
-      itemId: item.id,
-      name: item.name,
-      qty: 1,
-      variantKey: variant.key === "default" ? undefined : variant.key,
-      variantLabel: variant.label,
-      unitPrice: variant.price,
-    });
-    setChooserOpen(false);
-    setOpen(true);
-  }
+  const canCustomize = needsCustomization(item);
 
   function handleAddClick() {
     if (unavailable) return;
-    if (variants.length > 1) {
-      setChooserOpen(true);
+    if (canCustomize) {
+      setCustomizerOpen(true);
     } else {
-      handleAdd();
+      const variant = variants[0];
+      addLine({
+        itemId: item.id,
+        name: item.name,
+        qty: 1,
+        variantKey:
+          variant.key === "default" ? undefined : variant.key,
+        variantLabel: variant.label,
+        basePrice: variant.price,
+        unitPrice: variant.price,
+      });
+      setOpen(true);
     }
   }
 
@@ -197,43 +196,8 @@ export function MenuCardInteractive({ item }: { item: AdminMenuItem }) {
         </div>
       </div>
 
-      {chooserOpen && (
-        <div
-          className="absolute inset-0 z-20 flex items-center justify-center bg-pork-ink/80 backdrop-blur-sm p-5"
-          onClick={() => setChooserOpen(false)}
-        >
-          <div
-            className="w-full rounded-2xl bg-pork-cream p-5 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <p className="impact-title text-xs text-pork-red">Scegli il formato</p>
-            <h4 className="headline text-2xl leading-tight">{item.name}</h4>
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              {variants.map((v) => (
-                <button
-                  key={v.key}
-                  type="button"
-                  onClick={() => handleAdd(v.key)}
-                  className="flex flex-col items-center gap-1 rounded-xl border-2 border-pork-ink/10 bg-white p-3 transition-all hover:-translate-y-0.5 hover:border-pork-red"
-                >
-                  <span className="impact-title text-sm text-pork-ink/70">
-                    {v.label ?? "Standard"}
-                  </span>
-                  <span className="headline text-2xl text-pork-red">
-                    {formatEuro(v.price)}
-                  </span>
-                </button>
-              ))}
-            </div>
-            <button
-              type="button"
-              onClick={() => setChooserOpen(false)}
-              className="mt-3 w-full rounded-full border-2 border-pork-ink/20 py-2 text-sm font-semibold text-pork-ink/70"
-            >
-              Annulla
-            </button>
-          </div>
-        </div>
+      {customizerOpen && (
+        <ItemCustomizer item={item} onClose={() => setCustomizerOpen(false)} />
       )}
     </article>
   );

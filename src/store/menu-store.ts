@@ -6,6 +6,7 @@ import { menu as seedMenu } from "@/lib/menu-data";
 import type {
   AdminMenuCategory,
   AdminMenuItem,
+  Extra,
   Order,
   OrderStatus,
   PriceFormat,
@@ -49,6 +50,7 @@ export interface MenuState {
   setAvailable: (id: string, available: boolean) => void;
   updatePrice: (id: string, price: PriceFormat) => void;
   updateIngredients: (id: string, ingredients: string[]) => void;
+  updateExtras: (id: string, extras: Extra[]) => void;
   updateImage: (id: string, image: string | undefined) => void;
   updateTags: (id: string, tags: MenuTag[]) => void;
   addItem: (categoryId: string, draft: Partial<AdminMenuItem>) => string;
@@ -97,6 +99,13 @@ export const useMenuStore = create<MenuState>()(
         set((s) => ({
           items: s.items.map((it) =>
             it.id === id ? { ...it, ingredients } : it,
+          ),
+        })),
+
+      updateExtras: (id, extras) =>
+        set((s) => ({
+          items: s.items.map((it) =>
+            it.id === id ? { ...it, extras } : it,
           ),
         })),
 

@@ -8,6 +8,7 @@ import { useCartStore, cartTotal } from "@/store/cart-store";
 import { useMenuStore } from "@/store/menu-store";
 import { formatEuro } from "@/lib/price-utils";
 import { useHydrated } from "@/components/providers";
+import { LineMods } from "@/components/line-mods";
 
 function nextSlots(count = 8, stepMin = 15): string[] {
   const out: string[] = [];
@@ -65,6 +66,8 @@ export default function OrdinaPage() {
         variantLabel: l.variantLabel,
         unitPrice: l.unitPrice,
         lineTotal: l.unitPrice * l.qty,
+        removedIngredients: l.removedIngredients,
+        addedExtras: l.addedExtras,
         note: l.note,
       })),
       total,
@@ -172,6 +175,12 @@ export default function OrdinaPage() {
                             {l.variantLabel}
                           </p>
                         )}
+                        <LineMods
+                          removed={l.removedIngredients}
+                          extras={l.addedExtras}
+                          note={l.note}
+                          tone="light"
+                        />
                       </div>
                       <span className="shrink-0 font-impact text-lg">
                         {formatEuro(l.unitPrice * l.qty)}

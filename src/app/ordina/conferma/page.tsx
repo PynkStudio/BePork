@@ -7,6 +7,7 @@ import { CheckCircle2, Clock, Package } from "lucide-react";
 import { useMenuStore } from "@/store/menu-store";
 import { formatEuro } from "@/lib/price-utils";
 import { useHydrated } from "@/components/providers";
+import { LineMods } from "@/components/line-mods";
 
 function ConfermaContent() {
   const hydrated = useHydrated();
@@ -88,11 +89,11 @@ function ConfermaContent() {
                     <p className="font-semibold">
                       {l.qty} × {l.name}
                     </p>
-                    {l.note && (
-                      <p className="text-xs italic text-pork-ink/60">
-                        &ldquo;{l.note}&rdquo;
-                      </p>
-                    )}
+                    <LineMods
+                      removed={l.removedIngredients}
+                      extras={l.addedExtras}
+                      note={l.note}
+                    />
                   </div>
                   <span className="font-impact text-lg text-pork-red">
                     {formatEuro(l.lineTotal)}

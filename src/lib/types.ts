@@ -2,11 +2,18 @@ import type { MenuItem, MenuCategory, PriceFormat, MenuTag } from "./menu-data";
 
 export type { MenuItem, MenuCategory, PriceFormat, MenuTag };
 
+export type Extra = {
+  id: string;
+  name: string;
+  price: number;
+};
+
 export type AdminMenuItem = MenuItem & {
   categoryId: string;
   order: number;
   available: boolean;
   ingredients?: string[];
+  extras?: Extra[];
 };
 
 export type AdminMenuCategory = Omit<MenuCategory, "items"> & {
@@ -29,6 +36,8 @@ export type OrderLine = {
   variantLabel?: string;
   unitPrice: number;
   lineTotal: number;
+  removedIngredients?: string[];
+  addedExtras?: Array<{ id: string; name: string; price: number }>;
   note?: string;
 };
 
@@ -53,6 +62,9 @@ export type CartLine = {
   qty: number;
   variantKey?: string;
   variantLabel?: string;
+  basePrice: number;
   unitPrice: number;
+  removedIngredients?: string[];
+  addedExtras?: Array<{ id: string; name: string; price: number }>;
   note?: string;
 };

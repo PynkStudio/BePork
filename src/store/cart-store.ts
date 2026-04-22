@@ -35,12 +35,7 @@ export const useCartStore = create<CartState>()(
 
       addLine: (line) =>
         set((s) => {
-          const existing = s.lines.find(
-            (l) =>
-              l.itemId === line.itemId &&
-              l.variantKey === line.variantKey &&
-              (l.note ?? "") === (line.note ?? ""),
-          );
+          const existing = s.lines.find((l) => sameCustomization(l, line));
           if (existing) {
             return {
               lines: s.lines.map((l) =>
@@ -88,4 +83,32 @@ export function cartTotal(lines: CartLine[]): number {
 
 export function cartCount(lines: CartLine[]): number {
   return lines.reduce((acc, l) => acc + l.qty, 0);
+}
+
+function sameSet(a?: string[], b?: string[]): boolean {
+  const aa = [...(a ?? [])].sort().join("|");
+  const bb = [...(b ?? [])].sort().join("|");
+  return aa === bb;
+}
+
+function sameExtras(
+  a?: Array<{ id: string }>,
+  b?: Array<{ id: string }>,
+): boolean {
+  const aa = [...(a ?? [])].map((x) => x.id).sort().join("|");
+  const bb = [...(b ?? [])].map((x) => x.id).sort().join("|");
+  return aa === bb;
+}
+
+function sameCustomization(
+  a: CartLine,
+  b: Omit<CartLine, "lineId">,
+): boolean {
+  return (
+    a.itemId === b.itemId &&
+    a.variantKey === b.variantKey &&
+    (a.note ?? "") === (b.note ?? "") &&
+    sameSet(a.removedIngredients, b.removedIngredients) &&
+    sameExtras(a.addedExtras, b.addedExtras)
+  );
 }
