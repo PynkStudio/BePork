@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { InteractiveMenu } from "@/components/interactive-menu";
 import { DeliveryStrip } from "@/components/delivery-strip";
+import { MenuIntroParagraph } from "@/components/menu-intro-paragraph";
 
 export const metadata: Metadata = {
   title: "Menu",
@@ -22,11 +23,7 @@ export default function MenuPage() {
               con la forchetta e con le mani.
             </span>
           </h1>
-          <p className="mt-6 max-w-2xl text-lg text-pork-cream/70">
-            Tocca il <span className="text-pork-mustard">+</span> per aggiungere al
-            carrello, il cuore per tenerti un piatto sotto mano. Puoi ordinare da
-            qui, per asporto o direttamente dal tavolo.
-          </p>
+          <MenuIntroParagraph />
         </div>
       </section>
 
