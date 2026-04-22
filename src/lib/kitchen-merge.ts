@@ -1,4 +1,13 @@
-import type { Order, OrderLine, OrderStatus } from "@/lib/types";
+import { COPERTO_ITEM_ID, COPERTO_CATEGORY_ID } from "@/lib/coperto";
+import type {
+  AdminMenuCategory,
+  AdminMenuItem,
+  Order,
+  OrderLine,
+  OrderStatus,
+} from "@/lib/types";
+
+const ALTRO_CATEGORY_ID = "__bepork_kitchen_altro__";
 
 function lineKey(l: OrderLine): string {
   const ex = (l.addedExtras ?? [])
@@ -10,7 +19,15 @@ function lineKey(l: OrderLine): string {
     .map((p) => `${p.slotId}:${p.choiceItemId}`)
     .sort()
     .join(",");
-  return [l.itemId, l.variantLabel ?? "", l.note ?? "", rm, ex, bp].join("::");
+  return [
+    l.itemId,
+    l.categoryId ?? "",
+    l.variantLabel ?? "",
+    l.note ?? "",
+    rm,
+    ex,
+    bp,
+  ].join("::");
 }
 
 function mergeLines(lines: OrderLine[]): OrderLine[] {
@@ -62,13 +79,29 @@ function mergeOrderList(list: Order[]): Order {
   };
 }
 
+function sortKitchenColumnGroups(
+  groups: Array<{ ids: string[]; display: Order }>,
+): Array<{ ids: string[]; display: Order }> {
+  return [...groups].sort((a, b) => {
+    const asportoA = a.display.type === "asporto" ? 1 : 0;
+    const asportoB = b.display.type === "asporto" ? 1 : 0;
+    if (asportoA !== asportoB) return asportoA - asportoB;
+    return (
+      new Date(a.display.createdAt).getTime() -
+      new Date(b.display.createdAt).getTime()
+    );
+  });
+}
+
 /** Raggruppa ordini tavolo con stesso sessionId in un’unica card (solo UI). */
 export function kitchenGroupsForColumn(
   orders: Order[],
   dinerSeparation: boolean,
 ): Array<{ ids: string[]; display: Order }> {
   if (dinerSeparation) {
-    return orders.map((o) => ({ ids: [o.id], display: o }));
+    return sortKitchenColumnGroups(
+      orders.map((o) => ({ ids: [o.id], display: o })),
+    );
   }
 
   const nonGrouped: Order[] = [];
@@ -93,7 +126,52 @@ export function kitchenGroupsForColumn(
     if (list.length === 1) out.push({ ids, display: list[0] });
     else out.push({ ids, display: mergeOrderList(list) });
   }
-  return out;
+  return sortKitchenColumnGroups(out);
+}
+
+/** Sezioni righe per tipologia (ordine come in menu admin). */
+export type KitchenLineSection = { title: string; lines: OrderLine[] };
+
+export function groupKitchenOrderLines(
+  lines: OrderLine[],
+  categories: AdminMenuCategory[],
+  items: AdminMenuItem[],
+): KitchenLineSection[] {
+  const byItem = new Map(items.map((i) => [i.id, i.categoryId]));
+  const sortedCats = [...categories].sort((a, b) => a.order - b.order);
+  const orderIndex = new Map(sortedCats.map((c, i) => [c.id, i]));
+  const titleById = new Map(categories.map((c) => [c.id, c.title]));
+
+  function resolveCategoryId(line: OrderLine): string {
+    if (line.itemId === COPERTO_ITEM_ID) return COPERTO_CATEGORY_ID;
+    return line.categoryId ?? byItem.get(line.itemId) ?? ALTRO_CATEGORY_ID;
+  }
+
+  function sortKey(catId: string): number {
+    if (catId === COPERTO_CATEGORY_ID) return 1_000_000;
+    if (catId === ALTRO_CATEGORY_ID) return 999_000;
+    return orderIndex.get(catId) ?? 999_500;
+  }
+
+  const byCat = new Map<string, OrderLine[]>();
+  for (const l of lines) {
+    const cid = resolveCategoryId(l);
+    const arr = byCat.get(cid) ?? [];
+    arr.push(l);
+    byCat.set(cid, arr);
+  }
+
+  const unique = [...byCat.keys()].sort((a, b) => sortKey(a) - sortKey(b));
+
+  return unique.map((cid) => {
+    const title =
+      cid === COPERTO_CATEGORY_ID
+        ? "Coperto"
+        : cid === ALTRO_CATEGORY_ID
+          ? "Altro"
+          : titleById.get(cid) ?? "Altro";
+    return { title, lines: byCat.get(cid)! };
+  });
 }
 
 export function advanceKitchenGroup(

@@ -3,6 +3,14 @@
 import type { ReactNode } from "react";
 import { siteConfig } from "@/lib/site-config";
 import { useSettingsStore } from "@/store/settings-store";
+import type { DaySchedule } from "@/lib/venue-hours";
+import { defaultHoursWeek } from "@/lib/venue-hours";
+
+function usePublicHours(): DaySchedule[] {
+  const hw = useSettingsStore((s) => s.hoursWeek);
+  if (hw && hw.length === 7) return hw;
+  return defaultHoursWeek();
+}
 
 /** Telefono effettivo (override admin o default) + link tel: e wa.me. */
 export function useVenueContactPhone() {
@@ -22,40 +30,19 @@ export function VenueHoursList({
 }: {
   variant?: "footer" | "contatti" | "find-us";
 }) {
-  const text = useSettingsStore((s) => s.hoursOverrideText?.trim() ?? "");
-
-  if (text) {
-    if (variant === "find-us") {
-      return (
-        <dd className="mt-0.5 text-sm text-pork-ink/90">
-          <p className="whitespace-pre-wrap text-pretty">{text}</p>
-        </dd>
-      );
-    }
-    return (
-      <div
-        className={
-          variant === "footer"
-            ? "mt-4 space-y-1.5 text-sm text-pork-cream/90"
-            : "mt-3 space-y-1 text-pork-ink/90"
-        }
-      >
-        <p className="whitespace-pre-wrap text-pretty">{text}</p>
-      </div>
-    );
-  }
+  const hours = usePublicHours();
 
   if (variant === "find-us") {
     return (
       <dd className="mt-0.5 grid gap-x-6 gap-y-1 sm:grid-cols-2">
-        {siteConfig.hours.map((h) => (
-          <div key={h.day} className="flex justify-between gap-3 text-sm">
-            <span className="font-semibold">{h.day}</span>
+        {hours.map((h) => (
+          <div key={h.label} className="flex justify-between gap-3 text-sm">
+            <span className="font-semibold">{h.label}</span>
             <span className="text-pork-ink/70">
               {h.closed ? (
                 <span className="text-pork-red">Chiuso</span>
               ) : (
-                h.slots.join(" / ")
+                h.slots.filter(Boolean).join(" / ") || "—"
               )}
             </span>
           </div>
@@ -67,14 +54,14 @@ export function VenueHoursList({
   if (variant === "contatti") {
     return (
       <ul className="mt-3 divide-y divide-pork-ink/10">
-        {siteConfig.hours.map((h) => (
-          <li key={h.day} className="flex justify-between py-2">
-            <span className="font-semibold">{h.day}</span>
+        {hours.map((h) => (
+          <li key={h.label} className="flex justify-between py-2">
+            <span className="font-semibold">{h.label}</span>
             <span className="text-pork-ink/70">
               {h.closed ? (
                 <span className="font-semibold text-pork-red">Chiuso</span>
               ) : (
-                h.slots.join(" / ")
+                h.slots.filter(Boolean).join(" / ") || "—"
               )}
             </span>
           </li>
@@ -85,14 +72,16 @@ export function VenueHoursList({
 
   return (
     <ul className="mt-4 space-y-1.5 text-sm">
-      {siteConfig.hours.map((h) => (
-        <li key={h.day} className="flex justify-between gap-4">
-          <span className="font-semibold text-pork-cream/90">{h.day}</span>
+      {hours.map((h) => (
+        <li key={h.label} className="flex justify-between gap-4">
+          <span className="font-semibold text-pork-cream/90">{h.label}</span>
           <span className="text-right text-pork-cream/70">
             {h.closed ? (
               <span className="text-pork-red">Chiuso</span>
+            ) : h.slots.filter(Boolean).length ? (
+              h.slots.filter(Boolean).map((s) => <div key={s}>{s}</div>)
             ) : (
-              h.slots.map((s) => <div key={s}>{s}</div>)
+              <span className="text-pork-red">Chiuso</span>
             )}
           </span>
         </li>

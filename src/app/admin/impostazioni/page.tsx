@@ -6,6 +6,14 @@ import { useMenuStore } from "@/store/menu-store";
 import { useSettingsStore } from "@/store/settings-store";
 import { useHydrated } from "@/components/providers";
 import { siteConfig } from "@/lib/site-config";
+import { HoursWeekEditor } from "@/components/admin/hours-week-editor";
+import type { DaySchedule } from "@/lib/venue-hours";
+import {
+  cloneHoursWeek,
+  defaultHoursWeek,
+  hoursWeekEquals,
+  sanitizeHoursWeek,
+} from "@/lib/venue-hours";
 
 function Toggle({
   label,
@@ -41,43 +49,42 @@ export default function AdminImpostazioniPage() {
   const setSettings = useSettingsStore((s) => s.set);
   const resetSettingsDefaults = useSettingsStore((s) => s.resetDefaults);
 
-  const [hoursDraft, setHoursDraft] = useState(settings.hoursOverrideText);
+  const [hoursDraft, setHoursDraft] = useState<DaySchedule[]>(defaultHoursWeek);
   const [phoneDraft, setPhoneDraft] = useState(settings.phoneOverride);
   const [addrDraft, setAddrDraft] = useState(settings.addressOverride);
 
   useEffect(() => {
     if (!hydrated) return;
-    setHoursDraft(settings.hoursOverrideText);
+    setHoursDraft(cloneHoursWeek(settings.hoursWeek));
     setPhoneDraft(settings.phoneOverride);
     setAddrDraft(settings.addressOverride);
-  }, [
-    hydrated,
-    settings.hoursOverrideText,
-    settings.phoneOverride,
-    settings.addressOverride,
-  ]);
+  }, [hydrated, settings.hoursWeek, settings.phoneOverride, settings.addressOverride]);
 
   const dirtyVenue = useMemo(
     () =>
-      hoursDraft !== settings.hoursOverrideText ||
+      !hoursWeekEquals(hoursDraft, settings.hoursWeek) ||
       phoneDraft !== settings.phoneOverride ||
       addrDraft !== settings.addressOverride,
     [
       hoursDraft,
       phoneDraft,
       addrDraft,
-      settings.hoursOverrideText,
+      settings.hoursWeek,
       settings.phoneOverride,
       settings.addressOverride,
     ],
   );
 
   function saveVenue() {
+    const nextHours = sanitizeHoursWeek(hoursDraft);
     setSettings({
-      hoursOverrideText: hoursDraft,
+      hoursWeek: nextHours,
       phoneOverride: phoneDraft,
       addressOverride: addrDraft,
     });
+    setHoursDraft(cloneHoursWeek(nextHours));
+    setPhoneDraft(phoneDraft);
+    setAddrDraft(addrDraft);
   }
 
   if (!hydrated) return <p className="text-pork-ink/50">Caricamento…</p>;
@@ -90,10 +97,20 @@ export default function AdminImpostazioniPage() {
         <p className="mt-1 text-pork-ink/60">
           Controlli del mockup: flussi, cucina e informazioni mostrate al pubblico.
         </p>
+        <p className="mt-3 rounded-xl bg-pork-mustard/25 px-4 py-3 text-sm text-pork-ink/80 ring-1 ring-pork-mustard/40">
+          <strong>Demo persistente:</strong> i quattro interruttori sotto si salvano subito nel
+          browser (localStorage <code className="rounded bg-white/60 px-1">bepork-settings-v1</code>
+          ). Telefono, indirizzo e orari si confermano con &quot;Salva info locale&quot;. Il menu
+          e gli ordini restano su{" "}
+          <code className="rounded bg-white/60 px-1">bepork-menu-v1</code>.
+        </p>
       </header>
 
       <section className="space-y-4">
         <h2 className="impact-title text-sm text-pork-ink/70">Funzionalità</h2>
+        <p className="text-xs text-pork-ink/50">
+          Attiva/disattiva: il cambiamento è immediato sulle pagine pubbliche (stesso browser).
+        </p>
         <Toggle
           label="Ordini da asporto"
           description="Se disattivo, il carrello e l’invio ordine sono possibili solo dalla pagina tavolo (QR / codice)."
@@ -125,21 +142,15 @@ export default function AdminImpostazioniPage() {
           Informazioni al pubblico
         </h2>
         <p className="text-sm text-pork-ink/60">
-          Se lasci vuoto un campo, si usa il valore predefinito del sito (
-          {siteConfig.name}).
+          Telefono e indirizzo vuoti → valori predefiniti del sito ({siteConfig.name}). Gli orari
+          sono sempre definiti per giorno; modifica le fasce e poi salva.
         </p>
 
         <div>
-          <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-pork-ink/60">
-            Orari (testo libero)
+          <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-pork-ink/60">
+            Orari (per giorno, più fasce)
           </label>
-          <textarea
-            rows={8}
-            value={hoursDraft}
-            onChange={(e) => setHoursDraft(e.target.value)}
-            placeholder={`Esempio:\nLunedì — chiuso\nMartedì — 19:00–00:00\n…`}
-            className="w-full rounded-xl border-2 border-pork-ink/10 bg-white px-3 py-2 font-mono text-sm outline-none focus:border-pork-red"
-          />
+          <HoursWeekEditor value={hoursDraft} onChange={setHoursDraft} />
         </div>
 
         <div>
@@ -206,9 +217,9 @@ export default function AdminImpostazioniPage() {
           <button
             type="button"
             onClick={() => {
-              if (confirm("Ripristinare tutti i toggle e i campi testo qui sopra?")) {
+              if (confirm("Ripristinare tutti i toggle e i dati qui sopra?")) {
                 resetSettingsDefaults();
-                setHoursDraft("");
+                setHoursDraft(defaultHoursWeek());
                 setPhoneDraft("");
                 setAddrDraft("");
               }

@@ -13,8 +13,10 @@ import {
   formatTime,
 } from "@/lib/orders-ui";
 import { cn } from "@/lib/utils";
+import { COPERTO_ITEM_ID } from "@/lib/coperto";
 import {
   advanceKitchenGroup,
+  groupKitchenOrderLines,
   kitchenGroupsForColumn,
 } from "@/lib/kitchen-merge";
 
@@ -167,6 +169,18 @@ function KitchenCard({
   order: Order;
   onAdvance: (s: OrderStatus) => void;
 }) {
+  const categories = useMenuStore((s) => s.categories);
+  const items = useMenuStore((s) => s.items);
+  const lineSections = useMemo(
+    () =>
+      groupKitchenOrderLines(
+        order.lines.filter((l) => l.itemId !== COPERTO_ITEM_ID),
+        categories,
+        items,
+      ),
+    [order.lines, categories, items],
+  );
+
   const minutes = elapsedMinutes(order.createdAt);
   const hot = minutes >= 15;
 
@@ -228,31 +242,43 @@ function KitchenCard({
         </p>
       )}
 
-      <ul className="mt-3 space-y-2 text-sm">
-        {order.lines.map((l, i) => (
-          <li key={i} className="rounded-lg bg-pork-cream/60 px-2 py-1.5">
-            <div className="flex items-start justify-between gap-2">
-              <span className="flex-1 text-base">
-                <span className="font-bold">{l.qty}×</span> {l.name}
-              </span>
-            </div>
-            {l.removedIngredients && l.removedIngredients.length > 0 && (
-              <p className="mt-0.5 text-[13px] font-bold uppercase tracking-wide text-pork-red">
-                – senza {l.removedIngredients.join(", ")}
-              </p>
-            )}
-            {l.addedExtras && l.addedExtras.length > 0 && (
-              <ul className="text-[13px] font-bold uppercase tracking-wide text-pork-green">
-                {l.addedExtras.map((x) => (
-                  <li key={x.id}>+ {x.name}</li>
-                ))}
-              </ul>
-            )}
-            {l.note && (
-              <p className="mt-0.5 text-[12px] italic text-pork-ink/70">
-                &ldquo;{l.note}&rdquo;
-              </p>
-            )}
+      <ul className="mt-3 space-y-4 text-sm">
+        {lineSections.map((sec) => (
+          <li key={sec.title} className="list-none">
+            <p className="text-[11px] font-black uppercase tracking-widest text-pork-ink/45">
+              {sec.title}
+            </p>
+            <ul className="mt-1.5 space-y-2">
+              {sec.lines.map((l, i) => (
+                <li
+                  key={`${sec.title}-${i}-${l.name}`}
+                  className="rounded-lg bg-pork-cream/60 px-2 py-1.5"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="flex-1 text-base">
+                      <span className="font-bold">{l.qty}×</span> {l.name}
+                    </span>
+                  </div>
+                  {l.removedIngredients && l.removedIngredients.length > 0 && (
+                    <p className="mt-0.5 text-[13px] font-bold uppercase tracking-wide text-pork-red">
+                      – senza {l.removedIngredients.join(", ")}
+                    </p>
+                  )}
+                  {l.addedExtras && l.addedExtras.length > 0 && (
+                    <ul className="text-[13px] font-bold uppercase tracking-wide text-pork-green">
+                      {l.addedExtras.map((x) => (
+                        <li key={x.id}>+ {x.name}</li>
+                      ))}
+                    </ul>
+                  )}
+                  {l.note && (
+                    <p className="mt-0.5 text-[12px] italic text-pork-ink/70">
+                      &ldquo;{l.note}&rdquo;
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ul>
           </li>
         ))}
       </ul>

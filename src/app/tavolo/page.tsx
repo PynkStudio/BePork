@@ -16,6 +16,7 @@ import { useHydrated } from "@/components/providers";
 import { formatEuro } from "@/lib/price-utils";
 import { getClientId } from "@/lib/client-id";
 import type { TableSession, Table } from "@/lib/types";
+import { TableOrderJoinFlow } from "@/components/table-order-join-flow";
 
 function sameTavoloSessionBinding(
   a: CartContext,
@@ -197,8 +198,19 @@ function TavoloBody() {
         <p className="impact-title text-pork-red">Benvenuto.</p>
         <h1 className="headline mt-2 text-4xl">Unisciti al tuo tavolo.</h1>
         <p className="mt-2 text-pork-ink/60">
-          Scansiona il QR code sul tavolo oppure inserisci qui il codice a 4 cifre
-          condiviso da chi &egrave; arrivato prima.
+          Scansiona il QR sul tavolo (arrivi gi&agrave; col tavolo impostato), oppure
+          inserisci il <strong>numero tavolo</strong> qui sotto. Se la sessione &egrave;
+          gi&agrave; aperta, ti chiederemo il <strong>codice a 4 cifre</strong>. In
+          alternativa puoi entrare solo con il codice.
+        </p>
+
+        <div className="mx-auto mt-8 max-w-sm rounded-2xl bg-white p-5 text-left ring-1 ring-pork-ink/10">
+          <p className="impact-title text-xs text-pork-red">Numero tavolo</p>
+          <TableOrderJoinFlow />
+        </div>
+
+        <p className="mt-8 text-sm font-semibold text-pork-ink/50">
+          Solo codice (senza numero tavolo)
         </p>
         <form
           onSubmit={(e) => {
@@ -207,7 +219,7 @@ function TavoloBody() {
             if (c.length < 3) return;
             router.replace(`/tavolo?code=${c}`);
           }}
-          className="mx-auto mt-6 flex max-w-xs gap-2"
+          className="mx-auto mt-3 flex max-w-xs gap-2"
         >
           <input
             type="tel"

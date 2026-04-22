@@ -44,6 +44,8 @@ export type OrderStatus =
 
 export type OrderLine = {
   itemId: string;
+  /** Categoria menu (ordine su display cucina). */
+  categoryId?: string;
   name: string;
   qty: number;
   variantLabel?: string;
@@ -102,6 +104,8 @@ export type TableSession = {
 export type CartLine = {
   lineId: string;
   itemId: string;
+  /** Allineato alla categoria prodotto in menu. */
+  categoryId?: string;
   name: string;
   qty: number;
   variantKey?: string;

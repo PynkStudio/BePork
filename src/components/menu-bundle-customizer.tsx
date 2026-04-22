@@ -107,6 +107,7 @@ export function MenuBundleCustomizer({
     if (!complete || !bundlePicks || !activeVariant) return;
     addLine({
       itemId: item.id,
+      categoryId: item.categoryId,
       name: item.name,
       qty,
       variantKey: activeVariant.key === "default" ? undefined : activeVariant.key,

@@ -2,6 +2,8 @@
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import type { DaySchedule } from "@/lib/venue-hours";
+import { defaultHoursWeek } from "@/lib/venue-hours";
 
 const STORAGE_KEY = "bepork-settings-v1";
 
@@ -10,8 +12,8 @@ export type SiteSettingsState = {
   allowTakeaway: boolean;
   allowTableOrders: boolean;
   kitchenDisplayEnabled: boolean;
-  /** Testo libero; se vuoto si usano gli orari predefiniti del sito */
-  hoursOverrideText: string;
+  /** Orari mostrati al pubblico (7 giorni, ordine fisso come in sede). */
+  hoursWeek: DaySchedule[];
   phoneOverride: string;
   addressOverride: string;
 };
@@ -26,7 +28,7 @@ const defaults: SiteSettingsState = {
   allowTakeaway: true,
   allowTableOrders: true,
   kitchenDisplayEnabled: true,
-  hoursOverrideText: "",
+  hoursWeek: defaultHoursWeek(),
   phoneOverride: "",
   addressOverride: "",
 };
@@ -36,12 +38,34 @@ export const useSettingsStore = create<SettingsStore>()(
     (set) => ({
       ...defaults,
       set: (patch) => set((s) => ({ ...s, ...patch })),
-      resetDefaults: () => set(defaults),
+      resetDefaults: () =>
+        set((prev) => ({
+          ...prev,
+          ...defaults,
+          hoursWeek: defaultHoursWeek(),
+        })),
     }),
     {
       name: STORAGE_KEY,
       skipHydration: true,
       storage: createJSONStorage(() => localStorage),
+      partialize: (s) => ({
+        dinerSeparationAtTables: s.dinerSeparationAtTables,
+        allowTakeaway: s.allowTakeaway,
+        allowTableOrders: s.allowTableOrders,
+        kitchenDisplayEnabled: s.kitchenDisplayEnabled,
+        hoursWeek: s.hoursWeek,
+        phoneOverride: s.phoneOverride,
+        addressOverride: s.addressOverride,
+      }),
+      merge: (persisted, current) => {
+        const p = (persisted ?? {}) as Partial<SiteSettingsState>;
+        const merged = { ...current, ...p };
+        if (!merged.hoursWeek || merged.hoursWeek.length !== 7) {
+          merged.hoursWeek = defaultHoursWeek();
+        }
+        return merged as SettingsStore;
+      },
     },
   ),
 );

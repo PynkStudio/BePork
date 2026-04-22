@@ -1,5 +1,7 @@
 import type { Order, OrderLine } from "./types";
 
+export const COPERTO_CATEGORY_ID = "__bepork_coperto_cat__";
+
 /** Riga sintetica: non è un piatto del menu. Prezzo allineato a siteConfig.disclaimers.coperto */
 export const COPERTO_ITEM_ID = "__bepork_coperto__";
 export const COPERTO_UNIT_PRICE_EUR = 2;
@@ -8,6 +10,7 @@ export const COPERTO_DISPLAY_NAME = "Coperto";
 export function createCopertoOrderLine(): OrderLine {
   return {
     itemId: COPERTO_ITEM_ID,
+    categoryId: COPERTO_CATEGORY_ID,
     name: COPERTO_DISPLAY_NAME,
     qty: 1,
     unitPrice: COPERTO_UNIT_PRICE_EUR,

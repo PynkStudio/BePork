@@ -61,6 +61,7 @@ function CheckoutTavoloBody() {
     setSubmitting(true);
     const menuLines = lines.map((l) => ({
       itemId: l.itemId,
+      categoryId: l.categoryId,
       name: l.name + (l.variantLabel ? ` (${l.variantLabel})` : ""),
       qty: l.qty,
       variantLabel: l.variantLabel,

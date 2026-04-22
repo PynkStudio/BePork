@@ -239,6 +239,7 @@ export function CartDrawer() {
                             const v = priceVariants(it.price)[0];
                             addLine({
                               itemId: it.id,
+                              categoryId: it.categoryId,
                               name: it.name,
                               qty: 1,
                               variantKey:

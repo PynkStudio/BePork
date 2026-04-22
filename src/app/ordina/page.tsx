@@ -75,6 +75,7 @@ export default function OrdinaPage() {
       notes: notes.trim() || undefined,
       lines: lines.map((l) => ({
         itemId: l.itemId,
+        categoryId: l.categoryId,
         name: l.name + (l.variantLabel ? ` (${l.variantLabel})` : ""),
         qty: l.qty,
         variantLabel: l.variantLabel,

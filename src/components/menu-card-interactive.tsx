@@ -78,6 +78,7 @@ export function MenuCardInteractive({ item }: { item: AdminMenuItem }) {
       const variant = variants[0];
       addLine({
         itemId: item.id,
+        categoryId: item.categoryId,
         name: item.name,
         qty: 1,
         variantKey:
