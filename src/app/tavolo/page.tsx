@@ -11,9 +11,32 @@ import {
   selectActiveSession,
   selectSessionByCode,
 } from "@/store/menu-store";
+import { useSettingsStore } from "@/store/settings-store";
 import { useHydrated } from "@/components/providers";
+import { formatEuro } from "@/lib/price-utils";
 import { getClientId } from "@/lib/client-id";
 import type { TableSession, Table } from "@/lib/types";
+
+function SessionRunningTotal({ sessionId }: { sessionId: string }) {
+  const orders = useMenuStore((s) => s.orders);
+  const list = useMemo(
+    () =>
+      orders.filter((o) => o.sessionId === sessionId && o.status !== "annullato"),
+    [orders, sessionId],
+  );
+  const total = list.reduce((a, o) => a + o.total, 0);
+  if (list.length === 0) return null;
+  return (
+    <div className="border-b border-pork-ink/10 bg-pork-mustard/15 py-3 text-pork-ink">
+      <div className="container-wide flex flex-wrap items-baseline justify-between gap-2">
+        <p className="text-sm font-semibold">
+          Totale al tavolo ({list.length} invi{list.length === 1 ? "o" : "i"})
+        </p>
+        <p className="font-impact text-2xl text-pork-red">{formatEuro(total)}</p>
+      </div>
+    </div>
+  );
+}
 
 function TavoloBody() {
   const hydrated = useHydrated();
@@ -33,6 +56,9 @@ function TavoloBody() {
 
   const [joinCode, setJoinCode] = useState("");
   const [nickname, setNickname] = useState("");
+
+  const allowTableOrders = useSettingsStore((s) => s.allowTableOrders);
+  const dinerSeparation = useSettingsStore((s) => s.dinerSeparationAtTables);
 
   const resolvedTable: Table | undefined = useMemo(() => {
     if (!tParam) return undefined;
@@ -59,7 +85,7 @@ function TavoloBody() {
     if (!hydrated) return;
     if (!resolvedTable && !activeSession) return;
     if (resolvedTable && !activeSession) {
-      openSession(resolvedTable.id);
+      openSession(resolvedTable.id, resolvedTable.seats ?? 4);
     }
   }, [hydrated, resolvedTable, activeSession, openSession]);
 
@@ -84,9 +110,13 @@ function TavoloBody() {
         sessionId: activeSession.id,
         sessionCode: activeSession.code,
         clientId,
-        nickname: currentNick || undefined,
+        nickname:
+          dinerSeparation && currentNick ? currentNick : undefined,
       });
-    } else if ((cartContext.nickname ?? "") !== currentNick) {
+    } else if (
+      dinerSeparation &&
+      (cartContext.nickname ?? "") !== currentNick
+    ) {
       setContext({
         ...cartContext,
         nickname: currentNick || undefined,
@@ -99,9 +129,25 @@ function TavoloBody() {
     cartContext,
     setContext,
     clearCart,
+    dinerSeparation,
   ]);
 
   if (!hydrated) return null;
+
+  if (!allowTableOrders) {
+    return (
+      <EmptyCentered>
+        <p className="impact-title text-pork-red">Ordini al tavolo disattivati</p>
+        <p className="mt-2 text-pork-ink/60">
+          Il servizio QR tavolo &egrave; spento. Puoi comunque sfogliare il menu e
+          usare i preferiti.
+        </p>
+        <Link href="/menu" className="btn-primary mt-6 inline-flex">
+          Vai al menu
+        </Link>
+      </EmptyCentered>
+    );
+  }
 
   if (codeParam && !activeSession) {
     return (
@@ -163,7 +209,9 @@ function TavoloBody() {
   if (!activeSession || !sessionTable) return null;
 
   const needsNickname =
-    !cartContext.nickname && cartContext.sessionId === activeSession.id;
+    dinerSeparation &&
+    !cartContext.nickname &&
+    cartContext.sessionId === activeSession.id;
 
   return (
     <>
@@ -189,7 +237,18 @@ function TavoloBody() {
         />
       )}
 
-      <SessionBadge session={activeSession} table={sessionTable} nickname={nickname || cartContext.nickname} />
+      <SessionBadge
+        session={activeSession}
+        table={sessionTable}
+        nickname={
+          dinerSeparation ? nickname || cartContext.nickname : undefined
+        }
+        dinerSeparation={dinerSeparation}
+      />
+
+      {!dinerSeparation && (
+        <SessionRunningTotal sessionId={activeSession.id} />
+      )}
 
       <InteractiveMenu />
     </>
@@ -200,10 +259,12 @@ function SessionBadge({
   session,
   table,
   nickname,
+  dinerSeparation,
 }: {
   session: TableSession;
   table: Table;
   nickname?: string;
+  dinerSeparation: boolean;
 }) {
   const shareUrl = useMemo(() => {
     if (typeof window === "undefined") return `/tavolo?code=${session.code}`;
@@ -261,8 +322,9 @@ function SessionBadge({
             </p>
           </div>
           <p className="text-sm text-pork-cream/80">
-            Condividi il codice con gli altri commensali: ognuno ordina dal
-            proprio telefono e tutto finisce in un unico conto.
+            {dinerSeparation
+              ? "Condividi il codice con gli altri commensali: ognuno ordina dal proprio telefono e tutto finisce in un unico conto."
+              : "Condividi il codice per far entrare gli altri dispositivi: tutto si somma in un unico conto al tavolo, senza divisione per nome."}
           </p>
           <div className="flex flex-wrap gap-2">
             <button
@@ -276,7 +338,7 @@ function SessionBadge({
           </div>
         </div>
 
-        {session.diners.length > 1 && (
+        {dinerSeparation && session.diners.length > 1 && (
           <p className="mt-3 text-xs text-pork-cream/60">
             Al tavolo:{" "}
             {session.diners.map((d, i) => (

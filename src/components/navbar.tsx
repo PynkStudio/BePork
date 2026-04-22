@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Menu, X, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { whatsappUrl } from "@/lib/site-config";
+import { useSettingsStore } from "@/store/settings-store";
 
-const nav = [
+const navBase = [
   { label: "Menu", href: "/menu" },
   { label: "Ordina", href: "/ordina" },
   { label: "Preferiti", href: "/preferiti" },
@@ -20,6 +21,11 @@ const nav = [
 export function Navbar() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const allowTakeaway = useSettingsStore((s) => s.allowTakeaway);
+  const nav = useMemo(
+    () => navBase.filter((i) => i.href !== "/ordina" || allowTakeaway),
+    [allowTakeaway],
+  );
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);

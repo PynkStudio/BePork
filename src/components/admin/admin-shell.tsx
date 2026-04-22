@@ -9,11 +9,12 @@ import {
   LogOut,
   Menu as MenuIcon,
   QrCode,
+  Settings,
   UtensilsCrossed,
   X,
 } from "lucide-react";
 import { useState } from "react";
-import { ADMIN_SESSION_KEY } from "@/lib/admin-auth";
+import { clearAdminSession } from "@/lib/admin-auth";
 import { cn } from "@/lib/utils";
 
 const items = [
@@ -21,6 +22,7 @@ const items = [
   { href: "/admin/menu", label: "Menu", icon: UtensilsCrossed },
   { href: "/admin/ordini", label: "Ordini", icon: ClipboardList },
   { href: "/admin/tavoli", label: "Tavoli & QR", icon: QrCode },
+  { href: "/admin/impostazioni", label: "Impostazioni", icon: Settings },
   { href: "/cucina", label: "Kitchen display", icon: ChefHat, external: true },
 ];
 
@@ -30,9 +32,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
 
   function logout() {
-    try {
-      sessionStorage.removeItem(ADMIN_SESSION_KEY);
-    } catch {}
+    clearAdminSession();
     router.replace("/admin/login");
   }
 

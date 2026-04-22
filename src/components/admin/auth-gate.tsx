@@ -1,29 +1,36 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ADMIN_SESSION_KEY } from "@/lib/admin-auth";
-
-function readSession(): boolean {
-  if (typeof window === "undefined") return false;
-  try {
-    return sessionStorage.getItem(ADMIN_SESSION_KEY) === "1";
-  } catch {
-    return false;
-  }
-}
+import { ADMIN_SESSION_KEY, readAdminSession } from "@/lib/admin-auth";
 
 export function AuthGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [ok, setOk] = useState(false);
 
   useEffect(() => {
-    if (readSession()) {
+    if (readAdminSession()) {
       setOk(true);
     } else {
-      router.replace("/admin/login");
+      const next = encodeURIComponent(pathname || "/admin");
+      router.replace(`/admin/login?next=${next}`);
     }
-  }, [router]);
+  }, [router, pathname]);
+
+  useEffect(() => {
+    function onStorage(e: StorageEvent) {
+      if (e.key !== ADMIN_SESSION_KEY) return;
+      const valid = e.newValue === "1";
+      setOk(valid);
+      if (!valid && pathname && !pathname.startsWith("/admin/login")) {
+        const next = encodeURIComponent(pathname);
+        router.replace(`/admin/login?next=${next}`);
+      }
+    }
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [router, pathname]);
 
   if (!ok) return null;
   return <>{children}</>;

@@ -1,5 +1,13 @@
+"use client";
+
 import { MapPin, Phone, Clock, MessageCircle } from "lucide-react";
-import { siteConfig, whatsappUrl } from "@/lib/site-config";
+import { siteConfig } from "@/lib/site-config";
+import {
+  VenueAddressBlock,
+  VenueHoursList,
+  VenuePhoneDisplay,
+  VenueWhatsappLink,
+} from "@/components/venue-display";
 
 export function FindUs() {
   return (
@@ -34,7 +42,7 @@ export function FindUs() {
                       rel="noopener noreferrer"
                       className="font-semibold hover:underline"
                     >
-                      {siteConfig.address.full}
+                      <VenueAddressBlock multiline={false} />
                     </a>
                   </dd>
                 </div>
@@ -49,9 +57,7 @@ export function FindUs() {
                     Chiama
                   </dt>
                   <dd className="mt-0.5 text-pork-ink">
-                    <a href={`tel:${siteConfig.contact.phone.replace(/\s/g, "")}`} className="font-semibold hover:underline">
-                      {siteConfig.contact.phone}
-                    </a>
+                    <VenuePhoneDisplay className="font-semibold hover:underline" />
                   </dd>
                 </div>
               </div>
@@ -64,34 +70,16 @@ export function FindUs() {
                   <dt className="text-xs font-black uppercase tracking-widest text-pork-ink/60">
                     Orari
                   </dt>
-                  <dd className="mt-0.5 grid gap-x-6 gap-y-1 sm:grid-cols-2">
-                    {siteConfig.hours.map((h) => (
-                      <div key={h.day} className="flex justify-between gap-3 text-sm">
-                        <span className="font-semibold">{h.day}</span>
-                        <span className="text-pork-ink/70">
-                          {h.closed ? (
-                            <span className="text-pork-red">Chiuso</span>
-                          ) : (
-                            h.slots.join(" / ")
-                          )}
-                        </span>
-                      </div>
-                    ))}
-                  </dd>
+                  <VenueHoursList variant="find-us" />
                 </div>
               </div>
             </dl>
 
             <div className="mt-8 flex flex-wrap gap-3">
-              <a
-                href={whatsappUrl()}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-primary text-base"
-              >
+              <VenueWhatsappLink className="btn-primary text-base">
                 <MessageCircle size={20} />
                 Prenota un tavolo
-              </a>
+              </VenueWhatsappLink>
               <a
                 href={siteConfig.maps.searchUrl}
                 target="_blank"

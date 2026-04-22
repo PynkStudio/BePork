@@ -3,7 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Lock } from "lucide-react";
-import { ADMIN_SESSION_KEY, getAdminPassword } from "@/lib/admin-auth";
+import {
+  getAdminPassword,
+  getSafeAdminPostLoginPath,
+  setAdminSession,
+} from "@/lib/admin-auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -13,8 +17,12 @@ export default function LoginPage() {
   function submit(e: React.FormEvent) {
     e.preventDefault();
     if (pw === getAdminPassword()) {
-      sessionStorage.setItem(ADMIN_SESSION_KEY, "1");
-      router.replace("/admin");
+      setAdminSession();
+      const nextRaw =
+        typeof window !== "undefined"
+          ? new URLSearchParams(window.location.search).get("next")
+          : null;
+      router.replace(getSafeAdminPostLoginPath(nextRaw));
     } else {
       setErr("Password errata. Riprova.");
     }

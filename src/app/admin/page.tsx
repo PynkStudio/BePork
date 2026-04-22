@@ -6,10 +6,11 @@ import {
   ChefHat,
   ClipboardList,
   QrCode,
-  RefreshCw,
+  Settings,
   UtensilsCrossed,
 } from "lucide-react";
 import { useMenuStore } from "@/store/menu-store";
+import { useSettingsStore } from "@/store/settings-store";
 import { formatEuro } from "@/lib/price-utils";
 import { useHydrated } from "@/components/providers";
 
@@ -18,7 +19,7 @@ export default function AdminHome() {
   const items = useMenuStore((s) => s.items);
   const orders = useMenuStore((s) => s.orders);
   const sessions = useMenuStore((s) => s.sessions);
-  const resetToSeed = useMenuStore((s) => s.resetToSeed);
+  const kitchenOn = useSettingsStore((s) => s.kitchenDisplayEnabled);
 
   const stats = useMemo(() => {
     const total = items.length;
@@ -101,30 +102,22 @@ export default function AdminHome() {
           icon={<QrCode size={22} />}
         />
         <Quick
+          href="/admin/impostazioni"
+          title="Impostazioni"
+          desc="Funzionalità, orari, reset dati e mock"
+          icon={<Settings size={22} />}
+        />
+        <Quick
           href="/cucina"
           title="Kitchen display"
-          desc="Pagina dedicata per il monitor in cucina"
+          desc={
+            kitchenOn
+              ? "Pagina dedicata per il monitor in cucina"
+              : "Disattivato — riattivalo da Impostazioni"
+          }
           icon={<ChefHat size={22} />}
           external
         />
-      </div>
-
-      <div className="rounded-3xl border-2 border-dashed border-pork-ink/20 p-5">
-        <h3 className="impact-title text-pork-red">Zona pericolosa</h3>
-        <p className="mt-1 text-sm text-pork-ink/60">
-          Riporta menu, prezzi e disponibilità ai valori iniziali. Cancella anche
-          gli ordini.
-        </p>
-        <button
-          onClick={() => {
-            if (confirm("Sicuro? Ripristina tutto al menu originale.")) {
-              resetToSeed();
-            }
-          }}
-          className="mt-3 inline-flex items-center gap-2 rounded-full bg-pork-ink px-4 py-2 text-sm font-semibold text-pork-cream hover:bg-pork-red"
-        >
-          <RefreshCw size={14} /> Ripristina dati iniziali
-        </button>
       </div>
     </div>
   );

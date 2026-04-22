@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Plus,
   QrCode,
@@ -21,6 +21,8 @@ import { useHydrated } from "@/components/providers";
 import { formatEuro } from "@/lib/price-utils";
 import type { Table, TableSession } from "@/lib/types";
 import { LineMods } from "@/components/line-mods";
+import { useSettingsStore } from "@/store/settings-store";
+import { aggregateOrderLinesForSession } from "@/lib/kitchen-merge";
 
 export default function AdminTavoliPage() {
   const hydrated = useHydrated();
@@ -38,6 +40,7 @@ export default function AdminTavoliPage() {
   const [newSeats, setNewSeats] = useState<string>("4");
   const [qrFor, setQrFor] = useState<Table | null>(null);
   const [closeFor, setCloseFor] = useState<TableSession | null>(null);
+  const [openSessionFor, setOpenSessionFor] = useState<Table | null>(null);
 
   const tablesWithData = useMemo(() => {
     return [...tables]
@@ -122,7 +125,7 @@ export default function AdminTavoliPage() {
               total={total}
               ordersCount={sessionOrders.length}
               onLabel={(label) => updateTable(table.id, { label })}
-              onOpen={() => openSession(table.id)}
+              onOpen={() => setOpenSessionFor(table)}
               onShowQR={() => setQrFor(table)}
               onClose={() => session && setCloseFor(session)}
               onDelete={() => {
@@ -139,6 +142,16 @@ export default function AdminTavoliPage() {
       )}
 
       {qrFor && <QrModal table={qrFor} onClose={() => setQrFor(null)} />}
+      {openSessionFor && (
+        <OpenSessionModal
+          table={openSessionFor}
+          onClose={() => setOpenSessionFor(null)}
+          onConfirm={(covers) => {
+            openSession(openSessionFor.id, covers);
+            setOpenSessionFor(null);
+          }}
+        />
+      )}
       {closeFor && (
         <CloseSessionModal
           session={closeFor}
@@ -253,6 +266,11 @@ function TableCard({
             </div>
           </div>
           <p className="mt-1 text-[11px] text-pork-ink/60">
+            {session.declaredCovers != null && (
+              <>
+                {session.declaredCovers} coperti dichiarati ·{" "}
+              </>
+            )}
             {session.diners.length} commensale{session.diners.length !== 1 && "i"} ·{" "}
             {ordersCount} ordin{ordersCount !== 1 ? "i" : "e"}
           </p>
@@ -295,6 +313,84 @@ function TableCard({
         </button>
       </div>
     </li>
+  );
+}
+
+function OpenSessionModal({
+  table,
+  onClose,
+  onConfirm,
+}: {
+  table: Table;
+  onClose: () => void;
+  onConfirm: (declaredCovers: number) => void;
+}) {
+  const defaultCovers = table.seats && table.seats > 0 ? table.seats : 2;
+  const [covers, setCovers] = useState(String(defaultCovers));
+
+  useEffect(() => {
+    setCovers(String(defaultCovers));
+  }, [table.id, defaultCovers]);
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    const n = parseInt(covers.replace(/\D/g, ""), 10);
+    const v = Number.isFinite(n) && n >= 1 ? n : defaultCovers;
+    onConfirm(v);
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-pork-ink/70 backdrop-blur-sm p-5"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md overflow-hidden rounded-3xl bg-pork-cream shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <header className="flex items-center justify-between border-b border-pork-ink/10 px-5 py-4">
+          <div>
+            <p className="impact-title text-xs text-pork-red">Apri sessione</p>
+            <h2 className="headline text-2xl">{table.label}</h2>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full p-2 hover:bg-pork-ink/10"
+          >
+            <X size={20} />
+          </button>
+        </header>
+        <form onSubmit={submit} className="space-y-4 p-5">
+          <p className="text-sm text-pork-ink/70">
+            Quanti coperti per questa seduta? Serve per il conto e per allineare
+            il servizio.
+          </p>
+          <label className="block">
+            <span className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-pork-ink/60">
+              Numero coperti
+            </span>
+            <input
+              type="number"
+              min={1}
+              max={99}
+              value={covers}
+              onChange={(e) => setCovers(e.target.value)}
+              className="w-full rounded-xl border-2 border-pork-ink/10 bg-white px-4 py-3 font-impact text-2xl outline-none focus:border-pork-red"
+              autoFocus
+            />
+          </label>
+          <div className="flex gap-2 pt-2">
+            <button type="button" onClick={onClose} className="btn-ghost flex-1 text-sm">
+              Annulla
+            </button>
+            <button type="submit" className="btn-primary flex-1 text-sm">
+              Apri tavolo
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }
 
@@ -413,7 +509,12 @@ function CloseSessionModal({
   onClose: () => void;
   onConfirm: () => void;
 }) {
+  const dinerSeparation = useSettingsStore((s) => s.dinerSeparationAtTables);
   const total = orders.reduce((a, o) => a + o.total, 0);
+  const aggregated =
+    !dinerSeparation && orders.length > 0
+      ? aggregateOrderLinesForSession(orders)
+      : null;
 
   return (
     <div
@@ -443,6 +544,32 @@ function CloseSessionModal({
           {orders.length === 0 ? (
             <div className="rounded-xl bg-white p-6 text-center text-pork-ink/60 ring-1 ring-pork-ink/5">
               Nessun ordine registrato su questa sessione.
+            </div>
+          ) : aggregated ? (
+            <div className="rounded-xl bg-white p-4 ring-1 ring-pork-ink/5">
+              <p className="text-xs font-bold uppercase tracking-wide text-pork-ink/50">
+                Riepilogo unico tavolo
+              </p>
+              <ul className="mt-2 space-y-1 text-sm text-pork-ink/80">
+                {aggregated.lines.map((l, i) => (
+                  <li key={i}>
+                    <div className="flex justify-between gap-2">
+                      <span>
+                        {l.qty}× {l.name}
+                      </span>
+                      <span className="font-impact text-pork-red">
+                        {formatEuro(l.lineTotal)}
+                      </span>
+                    </div>
+                    <LineMods
+                      removed={l.removedIngredients}
+                      extras={l.addedExtras}
+                      note={l.note}
+                      bundlePicks={l.bundlePicks}
+                    />
+                  </li>
+                ))}
+              </ul>
             </div>
           ) : (
             <ul className="space-y-3">
@@ -479,6 +606,7 @@ function CloseSessionModal({
                           removed={l.removedIngredients}
                           extras={l.addedExtras}
                           note={l.note}
+                          bundlePicks={l.bundlePicks}
                         />
                       </li>
                     ))}

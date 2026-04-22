@@ -10,6 +10,15 @@ export type PriceFormat =
 
 export type MenuTag = "firma" | "piccante" | "veg" | "novita";
 
+/** Scelte obbligatorie per menu fissi (es. pizza classica + bibita). */
+export type MenuBundleSlot = {
+  id: string;
+  label: string;
+  hint?: string;
+  /** Categorie da cui attingere le opzioni (nell’ordine mostrato). */
+  sourceCategoryIds: string[];
+};
+
 export type MenuItem = {
   id: string;
   name: string;
@@ -18,6 +27,7 @@ export type MenuItem = {
   tags?: MenuTag[];
   abv?: string;
   image?: string;
+  bundleSlots?: MenuBundleSlot[];
 };
 
 export type MenuCategory = {
@@ -755,6 +765,19 @@ export const menu: MenuCategory[] = [
         description:
           "Bruschette, olive, pizza a scelta (solo tra le classiche) e bevanda inclusa",
         price: s(15),
+        bundleSlots: [
+          {
+            id: "pizza",
+            label: "Pizza classica",
+            hint: "Solo tra le classiche",
+            sourceCategoryIds: ["pizze-classiche"],
+          },
+          {
+            id: "bevanda",
+            label: "Bevanda inclusa",
+            sourceCategoryIds: ["bevande"],
+          },
+        ],
       },
       {
         id: "menu-20",
@@ -763,6 +786,19 @@ export const menu: MenuCategory[] = [
           "3 antipasti della casa, panino a scelta o primo a scelta (solo i classici, per le pizze solo tra le classiche), bevanda inclusa",
         price: s(20),
         tags: ["firma"],
+        bundleSlots: [
+          {
+            id: "portata",
+            label: "Panino o primo",
+            hint: "Club sandwich o primi del menu",
+            sourceCategoryIds: ["club-sandwich", "primi"],
+          },
+          {
+            id: "bevanda",
+            label: "Bevanda inclusa",
+            sourceCategoryIds: ["bevande"],
+          },
+        ],
       },
       {
         id: "menu-30",
@@ -771,6 +807,19 @@ export const menu: MenuCategory[] = [
           "5 antipasti della casa, panino a scelta o pizza a scelta o primo a scelta (solo i classici, per le pizze solo tra le classiche), bevanda inclusa",
         price: s(30),
         tags: ["firma"],
+        bundleSlots: [
+          {
+            id: "portata",
+            label: "Panino, pizza o primo",
+            hint: "Club sandwich, primi o pizza classica",
+            sourceCategoryIds: ["club-sandwich", "primi", "pizze-classiche"],
+          },
+          {
+            id: "bevanda",
+            label: "Bevanda inclusa",
+            sourceCategoryIds: ["bevande"],
+          },
+        ],
       },
     ],
   },

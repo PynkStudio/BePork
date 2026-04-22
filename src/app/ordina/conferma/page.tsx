@@ -93,6 +93,7 @@ function ConfermaContent() {
                       removed={l.removedIngredients}
                       extras={l.addedExtras}
                       note={l.note}
+                      bundlePicks={l.bundlePicks}
                     />
                   </div>
                   <span className="font-impact text-lg text-pork-red">

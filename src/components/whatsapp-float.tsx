@@ -1,12 +1,13 @@
 "use client";
 
 import { MessageCircle } from "lucide-react";
-import { whatsappUrl } from "@/lib/site-config";
+import { useVenueContactPhone } from "@/components/venue-display";
 
 export function WhatsappFloat() {
+  const { waHref } = useVenueContactPhone();
   return (
     <a
-      href={whatsappUrl()}
+      href={waHref()}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Prenota su WhatsApp"

@@ -21,10 +21,10 @@ export function InteractiveMenu({
   const hydrated = useHydrated();
   const searchParams = useSearchParams();
   const tableParam = searchParams.get("t");
+  const setContext = useCartStore((s) => s.setContext);
 
   const categoriesRaw = useMenuStore((s) => s.categories);
   const items = useMenuStore((s) => s.items);
-  const setContext = useCartStore((s) => s.setContext);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -51,6 +51,8 @@ export function InteractiveMenu({
         .filter((c) => c.items.length > 0),
     [categories, items, showOnlyAvailable],
   );
+
+  if (!hydrated) return null;
 
   return (
     <>

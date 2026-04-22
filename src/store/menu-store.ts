@@ -70,7 +70,7 @@ export interface MenuState {
   updateTable: (id: string, patch: Partial<Table>) => void;
   removeTable: (id: string) => void;
 
-  openSession: (tableId: string) => TableSession;
+  openSession: (tableId: string, declaredCovers?: number) => TableSession;
   addDiner: (sessionId: string, clientId: string, nickname: string) => void;
   updateDinerNickname: (
     sessionId: string,
@@ -172,6 +172,7 @@ export const useMenuStore = create<MenuState>()(
           abv: draft.abv,
           image: draft.image,
           ingredients: draft.ingredients,
+          bundleSlots: draft.bundleSlots,
         };
         set((s) => ({ items: [...s.items, newItem] }));
         return id;
@@ -234,7 +235,7 @@ export const useMenuStore = create<MenuState>()(
           sessions: s.sessions.filter((ss) => ss.tableId !== id),
         })),
 
-      openSession: (tableId) => {
+      openSession: (tableId, declaredCovers) => {
         let session!: TableSession;
         set((s) => {
           const existing = s.sessions.find(
@@ -250,6 +251,7 @@ export const useMenuStore = create<MenuState>()(
             code: genCode(),
             status: "aperta",
             openedAt: Date.now(),
+            declaredCovers,
             diners: [],
           };
           return { sessions: [session, ...s.sessions] };

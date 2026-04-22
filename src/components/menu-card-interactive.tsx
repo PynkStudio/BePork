@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { Flame, Heart, Leaf, Plus, Star, XCircle } from "lucide-react";
 import type { AdminMenuItem } from "@/lib/types";
 import { priceVariants, formatEuro } from "@/lib/price-utils";
@@ -10,6 +11,10 @@ import { cn } from "@/lib/utils";
 import { useCartStore } from "@/store/cart-store";
 import { useFavoritesStore } from "@/store/favorites-store";
 import { ItemCustomizer, needsCustomization } from "./item-customizer";
+import { MenuBundleCustomizer } from "./menu-bundle-customizer";
+import { hasMenuBundle } from "@/lib/menu-bundle";
+import { useSettingsStore } from "@/store/settings-store";
+import { canAddToCart } from "@/lib/ordering-rules";
 
 const tagMeta: Record<
   NonNullable<AdminMenuItem["tags"]>[number],
@@ -40,8 +45,16 @@ const tagMeta: Record<
 const priceVariantColors: Array<"mustard" | "red"> = ["mustard", "red"];
 
 export function MenuCardInteractive({ item }: { item: AdminMenuItem }) {
+  const pathname = usePathname();
+  const flags = useSettingsStore((s) => ({
+    allowTakeaway: s.allowTakeaway,
+    allowTableOrders: s.allowTableOrders,
+  }));
+  const orderingAllowed = canAddToCart(pathname, flags);
+
   const variants = priceVariants(item.price);
   const [customizerOpen, setCustomizerOpen] = useState(false);
+  const [bundleOpen, setBundleOpen] = useState(false);
 
   const addLine = useCartStore((s) => s.addLine);
   const setOpen = useCartStore((s) => s.setOpen);
@@ -53,7 +66,11 @@ export function MenuCardInteractive({ item }: { item: AdminMenuItem }) {
   const canCustomize = needsCustomization(item);
 
   function handleAddClick() {
-    if (unavailable) return;
+    if (unavailable || !orderingAllowed) return;
+    if (hasMenuBundle(item)) {
+      setBundleOpen(true);
+      return;
+    }
     if (canCustomize) {
       setCustomizerOpen(true);
     } else {
@@ -178,7 +195,12 @@ export function MenuCardInteractive({ item }: { item: AdminMenuItem }) {
           </div>
 
           <div className="flex shrink-0 flex-col items-end gap-1">
-            {canCustomize && !unavailable && (
+            {hasMenuBundle(item) && !unavailable && orderingAllowed && (
+              <span className="hidden rounded-full bg-pork-mustard/40 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-pork-ink sm:block">
+                Scegli nel menu
+              </span>
+            )}
+            {canCustomize && !hasMenuBundle(item) && !unavailable && orderingAllowed && (
               <span className="hidden rounded-full bg-pork-mustard/40 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-pork-ink sm:block">
                 Personalizza
               </span>
@@ -186,17 +208,24 @@ export function MenuCardInteractive({ item }: { item: AdminMenuItem }) {
             <button
               type="button"
               onClick={handleAddClick}
-              disabled={unavailable}
+              disabled={unavailable || !orderingAllowed}
+              title={
+                !orderingAllowed
+                  ? "Ordine non disponibile da questa pagina"
+                  : undefined
+              }
               className={cn(
                 "inline-flex h-11 w-11 items-center justify-center rounded-full shadow-lg transition-all active:scale-90",
-                unavailable
+                unavailable || !orderingAllowed
                   ? "cursor-not-allowed bg-pork-ink/10 text-pork-ink/30"
                   : "bg-pork-ink text-pork-cream hover:bg-pork-red",
               )}
               aria-label={
                 unavailable
                   ? "Non disponibile"
-                  : `Aggiungi ${item.name} al carrello`
+                  : !orderingAllowed
+                    ? "Aggiunta al carrello non disponibile"
+                    : `Aggiungi ${item.name} al carrello`
               }
             >
               <Plus size={20} />
@@ -207,6 +236,9 @@ export function MenuCardInteractive({ item }: { item: AdminMenuItem }) {
 
       {customizerOpen && (
         <ItemCustomizer item={item} onClose={() => setCustomizerOpen(false)} />
+      )}
+      {bundleOpen && (
+        <MenuBundleCustomizer item={item} onClose={() => setBundleOpen(false)} />
       )}
     </article>
   );

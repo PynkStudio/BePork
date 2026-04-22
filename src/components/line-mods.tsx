@@ -2,10 +2,13 @@ import { formatEuro } from "@/lib/price-utils";
 
 type Extra = { id: string; name: string; price: number };
 
+type BundlePickLine = { slotLabel: string; choiceName: string };
+
 type Props = {
   removed?: string[];
   extras?: Extra[];
   note?: string;
+  bundlePicks?: BundlePickLine[];
   tone?: "dark" | "light";
   withPrices?: boolean;
 };
@@ -14,13 +17,15 @@ export function LineMods({
   removed,
   extras,
   note,
+  bundlePicks,
   tone = "dark",
   withPrices = false,
 }: Props) {
   const hasRemoved = (removed?.length ?? 0) > 0;
   const hasExtras = (extras?.length ?? 0) > 0;
   const hasNote = !!note;
-  if (!hasRemoved && !hasExtras && !hasNote) return null;
+  const hasBundle = (bundlePicks?.length ?? 0) > 0;
+  if (!hasRemoved && !hasExtras && !hasNote && !hasBundle) return null;
 
   const muted = tone === "light" ? "text-pork-cream/60" : "text-pork-ink/60";
   const removedColor =
@@ -30,6 +35,15 @@ export function LineMods({
 
   return (
     <div className="mt-1 space-y-0.5 text-[11px] leading-tight">
+      {hasBundle && (
+        <ul className={tone === "light" ? "text-pork-cream/90" : "text-pork-ink/80"}>
+          {bundlePicks!.map((b) => (
+            <li key={b.slotLabel}>
+              <span className="font-semibold">{b.slotLabel}:</span> {b.choiceName}
+            </li>
+          ))}
+        </ul>
+      )}
       {hasRemoved && (
         <p className={`${removedColor} font-semibold`}>
           – senza {removed!.join(", ")}

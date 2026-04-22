@@ -1,7 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Instagram, Facebook, Phone, MapPin, Lock } from "lucide-react";
-import { siteConfig, whatsappUrl } from "@/lib/site-config";
+import { siteConfig } from "@/lib/site-config";
+import {
+  VenueAddressBlock,
+  VenueCopyrightAddress,
+  VenueHoursList,
+  VenuePhoneDisplay,
+  VenueWhatsappLink,
+} from "@/components/venue-display";
 
 export function Footer() {
   return (
@@ -53,45 +60,20 @@ export function Footer() {
           <p className="impact-title text-xl text-pork-mustard">Dove siamo</p>
           <address className="mt-4 flex items-start gap-3 not-italic text-pork-cream/80">
             <MapPin size={18} className="mt-1 shrink-0" />
-            <span>
-              {siteConfig.address.street}
-              <br />
-              {siteConfig.address.zip} {siteConfig.address.city} ({siteConfig.address.province})
-            </span>
+            <VenueAddressBlock />
           </address>
-          <a
-            href={`tel:${siteConfig.contact.phone.replace(/\s/g, "")}`}
-            className="mt-4 flex items-center gap-3 text-pork-cream/80 hover:text-pork-mustard"
-          >
-            <Phone size={18} />
-            {siteConfig.contact.phone}
-          </a>
-          <a
-            href={whatsappUrl()}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-pork-mustard hover:underline"
-          >
+          <div className="mt-4 flex items-center gap-3">
+            <Phone size={18} className="shrink-0 text-pork-cream/80" />
+            <VenuePhoneDisplay className="text-pork-cream/80 transition-colors hover:text-pork-mustard" />
+          </div>
+          <VenueWhatsappLink className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-pork-mustard hover:underline">
             Scrivici su WhatsApp →
-          </a>
+          </VenueWhatsappLink>
         </div>
 
         <div>
           <p className="impact-title text-xl text-pork-mustard">Orari</p>
-          <ul className="mt-4 space-y-1.5 text-sm">
-            {siteConfig.hours.map((h) => (
-              <li key={h.day} className="flex justify-between gap-4">
-                <span className="font-semibold text-pork-cream/90">{h.day}</span>
-                <span className="text-right text-pork-cream/70">
-                  {h.closed ? (
-                    <span className="text-pork-red">Chiuso</span>
-                  ) : (
-                    h.slots.map((s) => <div key={s}>{s}</div>)
-                  )}
-                </span>
-              </li>
-            ))}
-          </ul>
+          <VenueHoursList variant="footer" />
         </div>
       </div>
 
@@ -99,7 +81,7 @@ export function Footer() {
         <div className="container-wide flex flex-col gap-4 py-6 text-xs text-pork-cream/50 md:flex-row md:items-center md:justify-between">
           <p className="flex flex-wrap items-center gap-2">
             <span>
-              © {new Date().getFullYear()} Be Pork — {siteConfig.address.full}
+              © {new Date().getFullYear()} Be Pork — <VenueCopyrightAddress />
             </span>
             <Link
               href="/admin/login"

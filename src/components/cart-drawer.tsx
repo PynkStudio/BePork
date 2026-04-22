@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
 import { X, Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import { useCartStore, cartTotal } from "@/store/cart-store";
@@ -10,9 +11,14 @@ import { formatEuro, minPrice, priceVariants } from "@/lib/price-utils";
 import { cn } from "@/lib/utils";
 import { useHydrated } from "./providers";
 import { ItemCustomizer, needsCustomization } from "./item-customizer";
+import { MenuBundleCustomizer } from "./menu-bundle-customizer";
+import { hasMenuBundle } from "@/lib/menu-bundle";
 import type { AdminMenuItem } from "@/lib/types";
+import { useSettingsStore } from "@/store/settings-store";
+import { canAddToCart } from "@/lib/ordering-rules";
 
 export function CartDrawer() {
+  const pathname = usePathname();
   const hydrated = useHydrated();
   const open = useCartStore((s) => s.openDrawer);
   const setOpen = useCartStore((s) => s.setOpen);
@@ -25,6 +31,15 @@ export function CartDrawer() {
   const items = useMenuStore((s) => s.items);
 
   const [customizeItem, setCustomizeItem] = useState<AdminMenuItem | null>(null);
+  const [bundleItem, setBundleItem] = useState<AdminMenuItem | null>(null);
+
+  const flags = useSettingsStore((s) => ({
+    allowTakeaway: s.allowTakeaway,
+    allowTableOrders: s.allowTableOrders,
+  }));
+  const orderingHere = canAddToCart(pathname, flags);
+  const checkoutAllowed =
+    context.type === "tavolo" ? flags.allowTableOrders : flags.allowTakeaway;
 
   const favoriteItems = useMemo(() => {
     return favIds
@@ -122,6 +137,16 @@ export function CartDrawer() {
                             ))}
                           </ul>
                         )}
+                        {l.bundlePicks && l.bundlePicks.length > 0 && (
+                          <ul className="mt-1 text-[11px] text-pork-ink/75">
+                            {l.bundlePicks.map((b) => (
+                              <li key={b.slotId}>
+                                <span className="font-semibold">{b.slotLabel}:</span>{" "}
+                                {b.choiceName}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
                         {l.note && (
                           <p className="mt-1 text-xs italic text-pork-ink/60">
                             &ldquo;{l.note}&rdquo;
@@ -199,9 +224,13 @@ export function CartDrawer() {
                         </div>
                         <button
                           type="button"
-                          disabled={!it.available}
+                          disabled={!it.available || !orderingHere}
                           onClick={() => {
-                            if (!it.available) return;
+                            if (!it.available || !orderingHere) return;
+                            if (hasMenuBundle(it)) {
+                              setBundleItem(it);
+                              return;
+                            }
                             if (needsCustomization(it)) {
                               setCustomizeItem(it);
                               return;
@@ -220,7 +249,7 @@ export function CartDrawer() {
                           }}
                           className={cn(
                             "inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-2 text-xs font-bold uppercase tracking-wide transition-colors",
-                            it.available
+                            it.available && orderingHere
                               ? "bg-pork-ink text-pork-cream hover:bg-pork-red"
                               : "cursor-not-allowed bg-pork-ink/15 text-pork-ink/40",
                           )}
@@ -244,6 +273,12 @@ export function CartDrawer() {
             onClose={() => setCustomizeItem(null)}
           />
         )}
+        {bundleItem && (
+          <MenuBundleCustomizer
+            item={bundleItem}
+            onClose={() => setBundleItem(null)}
+          />
+        )}
 
         {lines.length > 0 && (
           <footer className="border-t border-pork-ink/10 bg-white px-5 py-4">
@@ -253,13 +288,21 @@ export function CartDrawer() {
                 {formatEuro(total)}
               </span>
             </div>
-            <Link
-              href={checkoutHref}
-              onClick={() => setOpen(false)}
-              className="btn-primary w-full text-lg"
-            >
-              Vai all&apos;ordine
-            </Link>
+            {checkoutAllowed ? (
+              <Link
+                href={checkoutHref}
+                onClick={() => setOpen(false)}
+                className="btn-primary w-full text-lg"
+              >
+                Vai all&apos;ordine
+              </Link>
+            ) : (
+              <p className="rounded-2xl bg-pork-mustard/30 px-4 py-3 text-center text-sm font-semibold text-pork-ink">
+                {context.type === "tavolo"
+                  ? "Ordini al tavolo disattivati. Riattivali da Impostazioni staff."
+                  : "Ordini da asporto disattivati. Usa il QR del tavolo o chiedi al bancone."}
+              </p>
+            )}
             <p className="mt-2 text-center text-[11px] text-pork-ink/50">
               Ordine {context.type === "tavolo" ? "al tavolo" : "da asporto"}, nessun
               pagamento online. Paghi al ritiro / in cassa.

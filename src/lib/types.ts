@@ -1,6 +1,19 @@
-import type { MenuItem, MenuCategory, PriceFormat, MenuTag } from "./menu-data";
+import type {
+  MenuItem,
+  MenuCategory,
+  PriceFormat,
+  MenuTag,
+  MenuBundleSlot,
+} from "./menu-data";
 
-export type { MenuItem, MenuCategory, PriceFormat, MenuTag };
+export type { MenuItem, MenuCategory, PriceFormat, MenuTag, MenuBundleSlot };
+
+export type BundlePick = {
+  slotId: string;
+  slotLabel: string;
+  choiceItemId: string;
+  choiceName: string;
+};
 
 export type Extra = {
   id: string;
@@ -39,6 +52,7 @@ export type OrderLine = {
   removedIngredients?: string[];
   addedExtras?: Array<{ id: string; name: string; price: number }>;
   note?: string;
+  bundlePicks?: BundlePick[];
 };
 
 export type Order = {
@@ -50,6 +64,7 @@ export type Order = {
   tableLabel?: string;
   sessionId?: string;
   sessionCode?: string;
+  dinerClientId?: string;
   dinerNickname?: string;
   customerName?: string;
   pickupTime?: string;
@@ -79,6 +94,8 @@ export type TableSession = {
   status: "aperta" | "chiusa";
   openedAt: number;
   closedAt?: number;
+  /** Coperti dichiarati allo staff in apertura sessione (QR usa posti tavolo). */
+  declaredCovers?: number;
   diners: SessionDiner[];
 };
 
@@ -94,4 +111,5 @@ export type CartLine = {
   removedIngredients?: string[];
   addedExtras?: Array<{ id: string; name: string; price: number }>;
   note?: string;
+  bundlePicks?: BundlePick[];
 };

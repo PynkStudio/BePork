@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import type { CartLine, OrderType } from "@/lib/types";
+import type { BundlePick, CartLine, OrderType } from "@/lib/types";
 
 const CART_KEY = "bepork-cart-v1";
 
@@ -106,6 +106,14 @@ function sameExtras(
   return aa === bb;
 }
 
+function bundleSig(p?: BundlePick[]): string {
+  return [...(p ?? [])]
+    .slice()
+    .sort((x, y) => x.slotId.localeCompare(y.slotId))
+    .map((x) => `${x.slotId}:${x.choiceItemId}`)
+    .join("|");
+}
+
 function sameCustomization(
   a: CartLine,
   b: Omit<CartLine, "lineId">,
@@ -115,6 +123,7 @@ function sameCustomization(
     a.variantKey === b.variantKey &&
     (a.note ?? "") === (b.note ?? "") &&
     sameSet(a.removedIngredients, b.removedIngredients) &&
-    sameExtras(a.addedExtras, b.addedExtras)
+    sameExtras(a.addedExtras, b.addedExtras) &&
+    bundleSig(a.bundlePicks) === bundleSig(b.bundlePicks)
   );
 }

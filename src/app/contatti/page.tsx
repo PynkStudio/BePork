@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
-import { MessageCircle, Phone, MapPin, Instagram, Facebook } from "lucide-react";
-import { siteConfig, whatsappUrl } from "@/lib/site-config";
+import { MapPin, Instagram, Facebook } from "lucide-react";
+import { siteConfig } from "@/lib/site-config";
+import { ContattiReserveCards } from "@/components/contatti-reserve-cards";
+import {
+  VenueAddressBlock,
+  VenueHoursList,
+} from "@/components/venue-display";
 
 export const metadata: Metadata = {
   title: "Contatti & Prenotazioni",
@@ -27,35 +32,7 @@ export default function ContattiPage() {
 
       <section className="bg-pork-cream py-16 md:py-20">
         <div className="container-wide grid gap-6 md:grid-cols-2">
-          <a
-            href={whatsappUrl()}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group flex flex-col gap-3 rounded-3xl bg-pork-red p-8 text-white shadow-xl transition-transform hover:-translate-y-1"
-          >
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-pork-red">
-              <MessageCircle size={24} />
-            </div>
-            <p className="impact-title text-3xl">Prenota su WhatsApp</p>
-            <p className="text-white/85">
-              Risposta veloce, messaggio già pronto da modificare con giorno, orario e numero di persone.
-            </p>
-            <span className="mt-auto font-bold">{siteConfig.contact.phone}</span>
-          </a>
-
-          <a
-            href={`tel:${siteConfig.contact.phone.replace(/\s/g, "")}`}
-            className="group flex flex-col gap-3 rounded-3xl bg-pork-mustard p-8 text-pork-ink shadow-xl transition-transform hover:-translate-y-1"
-          >
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-pork-ink text-pork-mustard">
-              <Phone size={24} />
-            </div>
-            <p className="impact-title text-3xl">Chiamaci</p>
-            <p className="text-pork-ink/80">
-              Preferisci sentire una voce? Siamo qui negli orari di apertura.
-            </p>
-            <span className="mt-auto font-bold">{siteConfig.contact.phone}</span>
-          </a>
+          <ContattiReserveCards />
         </div>
       </section>
 
@@ -66,7 +43,7 @@ export default function ContattiPage() {
               <p className="impact-title text-2xl text-pork-red">Dove siamo</p>
               <address className="mt-2 flex items-start gap-3 not-italic">
                 <MapPin size={20} className="mt-1 shrink-0 text-pork-ink/60" />
-                <span className="text-pork-ink/80">{siteConfig.address.full}</span>
+                <VenueAddressBlock className="text-pork-ink/80" />
               </address>
               <a
                 href={siteConfig.maps.searchUrl}
@@ -80,20 +57,7 @@ export default function ContattiPage() {
 
             <div>
               <p className="impact-title text-2xl text-pork-red">Orari</p>
-              <ul className="mt-3 divide-y divide-pork-ink/10">
-                {siteConfig.hours.map((h) => (
-                  <li key={h.day} className="flex justify-between py-2">
-                    <span className="font-semibold">{h.day}</span>
-                    <span className="text-pork-ink/70">
-                      {h.closed ? (
-                        <span className="font-semibold text-pork-red">Chiuso</span>
-                      ) : (
-                        h.slots.join(" / ")
-                      )}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+              <VenueHoursList variant="contatti" />
             </div>
 
             <div>

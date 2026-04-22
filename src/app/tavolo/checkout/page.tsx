@@ -1,14 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { StickyNote, Send } from "lucide-react";
 import { useCartStore, cartTotal } from "@/store/cart-store";
 import { useMenuStore } from "@/store/menu-store";
 import { formatEuro } from "@/lib/price-utils";
+import {
+  COPERTO_DISPLAY_NAME,
+  COPERTO_UNIT_PRICE_EUR,
+  createCopertoOrderLine,
+  dinerAlreadyHasCopertoOrder,
+} from "@/lib/coperto";
 import { useHydrated } from "@/components/providers";
 import { LineMods } from "@/components/line-mods";
+import { useSettingsStore } from "@/store/settings-store";
 
 function CheckoutTavoloBody() {
   const hydrated = useHydrated();
@@ -19,6 +26,9 @@ function CheckoutTavoloBody() {
   const context = useCartStore((s) => s.context);
   const addOrder = useMenuStore((s) => s.addOrder);
   const sessions = useMenuStore((s) => s.sessions);
+  const orders = useMenuStore((s) => s.orders);
+  const dinerSeparation = useSettingsStore((s) => s.dinerSeparationAtTables);
+  const oneBill = !dinerSeparation;
 
   const sessionStillOpen = context.sessionId
     ? sessions.some(
@@ -29,32 +39,60 @@ function CheckoutTavoloBody() {
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const total = cartTotal(lines);
+  const addCopertoThisSubmit = useMemo(() => {
+    if (!context.sessionId) return false;
+    return !dinerAlreadyHasCopertoOrder(
+      orders,
+      context.sessionId,
+      context.clientId,
+      context.nickname,
+      { oneBillPerSession: oneBill },
+    );
+  }, [orders, context.sessionId, context.clientId, context.nickname, oneBill]);
+
+  const foodTotal = cartTotal(lines);
+  const copertoExtra = addCopertoThisSubmit ? COPERTO_UNIT_PRICE_EUR : 0;
+  const total = foodTotal + copertoExtra;
   const empty = hydrated && lines.length === 0;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!context.tableId || lines.length === 0 || !sessionStillOpen) return;
     setSubmitting(true);
+    const menuLines = lines.map((l) => ({
+      itemId: l.itemId,
+      name: l.name + (l.variantLabel ? ` (${l.variantLabel})` : ""),
+      qty: l.qty,
+      variantLabel: l.variantLabel,
+      unitPrice: l.unitPrice,
+      lineTotal: l.unitPrice * l.qty,
+      removedIngredients: l.removedIngredients,
+      addedExtras: l.addedExtras,
+      note: l.note,
+      bundlePicks: l.bundlePicks,
+    }));
+    const withCoperto =
+      context.sessionId &&
+      !dinerAlreadyHasCopertoOrder(
+        orders,
+        context.sessionId,
+        context.clientId,
+        context.nickname,
+        { oneBillPerSession: oneBill },
+      )
+        ? [createCopertoOrderLine(), ...menuLines]
+        : menuLines;
+    const orderTotal = withCoperto.reduce((a, l) => a + l.lineTotal, 0);
     const created = addOrder({
       type: "tavolo",
       tableLabel: context.tableLabel,
       sessionId: context.sessionId,
       sessionCode: context.sessionCode,
-      dinerNickname: context.nickname,
+      dinerClientId: dinerSeparation ? context.clientId : undefined,
+      dinerNickname: dinerSeparation ? context.nickname : undefined,
       notes: notes.trim() || undefined,
-      lines: lines.map((l) => ({
-        itemId: l.itemId,
-        name: l.name + (l.variantLabel ? ` (${l.variantLabel})` : ""),
-        qty: l.qty,
-        variantLabel: l.variantLabel,
-        unitPrice: l.unitPrice,
-        lineTotal: l.unitPrice * l.qty,
-        removedIngredients: l.removedIngredients,
-        addedExtras: l.addedExtras,
-        note: l.note,
-      })),
-      total,
+      lines: withCoperto,
+      total: orderTotal,
     });
     clear();
     router.replace(`/ordina/conferma?id=${created.id}`);
@@ -183,6 +221,21 @@ function CheckoutTavoloBody() {
                   </p>
                 )}
                 <ul className="mt-4 space-y-3">
+                  {addCopertoThisSubmit && (
+                    <li className="flex items-start justify-between gap-3 border-b border-pork-cream/10 pb-3">
+                      <div className="min-w-0">
+                        <p className="font-semibold leading-tight">
+                          1 × {COPERTO_DISPLAY_NAME}
+                        </p>
+                        <p className="text-[11px] text-pork-cream/50">
+                          Una tantum per commensale, primo invio in cucina
+                        </p>
+                      </div>
+                      <span className="shrink-0 font-impact text-lg">
+                        {formatEuro(COPERTO_UNIT_PRICE_EUR)}
+                      </span>
+                    </li>
+                  )}
                   {lines.map((l) => (
                     <li
                       key={l.lineId}
@@ -201,6 +254,7 @@ function CheckoutTavoloBody() {
                           removed={l.removedIngredients}
                           extras={l.addedExtras}
                           note={l.note}
+                          bundlePicks={l.bundlePicks}
                           tone="light"
                         />
                       </div>

@@ -14,6 +14,7 @@ import {
 } from "@/lib/orders-ui";
 import { formatEuro } from "@/lib/price-utils";
 import { LineMods } from "@/components/line-mods";
+import { useSettingsStore } from "@/store/settings-store";
 
 const FILTERS: Array<{ value: "open" | "all" | OrderStatus; label: string }> = [
   { value: "open", label: "Aperti" },
@@ -27,6 +28,7 @@ const FILTERS: Array<{ value: "open" | "all" | OrderStatus; label: string }> = [
 
 export default function AdminOrdersPage() {
   const hydrated = useHydrated();
+  const dinerSeparation = useSettingsStore((s) => s.dinerSeparationAtTables);
   const orders = useMenuStore((s) => s.orders);
   const updateStatus = useMenuStore((s) => s.updateOrderStatus);
   const removeOrder = useMenuStore((s) => s.removeOrder);
@@ -127,7 +129,7 @@ export default function AdminOrdersPage() {
                               {o.sessionCode && (
                                 <span> · cod. {o.sessionCode}</span>
                               )}
-                              {o.dinerNickname && (
+                              {dinerSeparation && o.dinerNickname && (
                                 <span> · {o.dinerNickname}</span>
                               )}
                             </>
@@ -152,6 +154,7 @@ export default function AdminOrdersPage() {
                               removed={l.removedIngredients}
                               extras={l.addedExtras}
                               note={l.note}
+                              bundlePicks={l.bundlePicks}
                               withPrices
                             />
                           </div>

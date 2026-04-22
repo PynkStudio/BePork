@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Flame, CheckCircle2, Clock, Utensils } from "lucide-react";
 import { useMenuStore } from "@/store/menu-store";
+import { useSettingsStore } from "@/store/settings-store";
 import { useHydrated } from "@/components/providers";
 import type { Order, OrderStatus } from "@/lib/types";
 import {
@@ -12,6 +13,10 @@ import {
   formatTime,
 } from "@/lib/orders-ui";
 import { cn } from "@/lib/utils";
+import {
+  advanceKitchenGroup,
+  kitchenGroupsForColumn,
+} from "@/lib/kitchen-merge";
 
 const COLUMNS: Array<{ key: OrderStatus; title: string; accent: string }> = [
   { key: "nuovo", title: "Nuovi", accent: "bg-pork-red text-white" },
@@ -27,6 +32,8 @@ export default function KitchenDisplay() {
   const hydrated = useHydrated();
   const orders = useMenuStore((s) => s.orders);
   const updateStatus = useMenuStore((s) => s.updateOrderStatus);
+  const kitchenOn = useSettingsStore((s) => s.kitchenDisplayEnabled);
+  const dinerSeparation = useSettingsStore((s) => s.dinerSeparationAtTables);
 
   const [, setTick] = useState(0);
   useEffect(() => {
@@ -46,7 +53,43 @@ export default function KitchenDisplay() {
     return g;
   }, [orders]);
 
-  const activeCount = grouped.nuovo.length + grouped.in_preparazione.length;
+  const columnGroups = useMemo(() => {
+    const out: Record<OrderStatus, Array<{ ids: string[]; display: Order }>> = {
+      nuovo: [],
+      in_preparazione: [],
+      pronto: [],
+      consegnato: [],
+      annullato: [],
+    };
+    for (const col of COLUMNS) {
+      out[col.key] = kitchenGroupsForColumn(
+        grouped[col.key],
+        dinerSeparation,
+      );
+    }
+    return out;
+  }, [grouped, dinerSeparation]);
+
+  const activeCount = useMemo(() => {
+    let n = 0;
+    (["nuovo", "in_preparazione"] as const).forEach((st) => {
+      n += columnGroups[st].length;
+    });
+    return n;
+  }, [columnGroups]);
+
+  if (!kitchenOn) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-pork-ink px-6 text-center text-pork-cream">
+        <Flame size={40} className="text-pork-mustard" />
+        <h1 className="headline mt-4 text-4xl">Kitchen display disattivato</h1>
+        <p className="mt-3 max-w-md text-pork-cream/70">
+          Riattiva la funzione da Admin → Impostazioni per mostrare di nuovo la
+          coda ordini in cucina.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-pork-ink text-pork-cream">
@@ -87,21 +130,23 @@ export default function KitchenDisplay() {
                   {col.title}
                 </span>
                 <span className="impact-title text-pork-cream/70">
-                  {grouped[col.key].length}
+                  {columnGroups[col.key].length}
                 </span>
               </header>
               <div className="flex-1 overflow-y-auto p-3">
-                {grouped[col.key].length === 0 ? (
+                {columnGroups[col.key].length === 0 ? (
                   <p className="py-8 text-center text-sm text-pork-cream/40">
                     Tutto calmo.
                   </p>
                 ) : (
                   <ul className="space-y-3">
-                    {grouped[col.key].map((o) => (
+                    {columnGroups[col.key].map((g) => (
                       <KitchenCard
-                        key={o.id}
-                        order={o}
-                        onAdvance={(next) => updateStatus(o.id, next)}
+                        key={g.ids.join("-")}
+                        order={g.display}
+                        onAdvance={(next) =>
+                          advanceKitchenGroup(g.ids, next, updateStatus)
+                        }
                       />
                     ))}
                   </ul>
@@ -151,13 +196,16 @@ function KitchenCard({
               : order.customerName ?? "Asporto"}
           </p>
           {order.type === "tavolo" &&
-            (order.sessionCode || order.dinerNickname) && (
+            order.sessionCode &&
+            order.dinerNickname && (
               <p className="text-[11px] text-pork-ink/60">
-                {order.sessionCode && <span>cod. {order.sessionCode}</span>}
-                {order.sessionCode && order.dinerNickname && " · "}
-                {order.dinerNickname && <span>{order.dinerNickname}</span>}
+                <span>cod. {order.sessionCode}</span>
+                <span> · {order.dinerNickname}</span>
               </p>
             )}
+          {order.type === "tavolo" && order.sessionCode && !order.dinerNickname && (
+            <p className="text-[11px] text-pork-ink/60">cod. {order.sessionCode}</p>
+          )}
         </div>
         <div className="text-right">
           <p className="inline-flex items-center gap-1 text-xs text-pork-ink/60">

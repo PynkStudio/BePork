@@ -9,6 +9,7 @@ import { useMenuStore } from "@/store/menu-store";
 import { formatEuro } from "@/lib/price-utils";
 import { useHydrated } from "@/components/providers";
 import { LineMods } from "@/components/line-mods";
+import { useSettingsStore } from "@/store/settings-store";
 
 function nextSlots(count = 8, stepMin = 15): string[] {
   const out: string[] = [];
@@ -31,6 +32,7 @@ function nextSlots(count = 8, stepMin = 15): string[] {
 export default function OrdinaPage() {
   const hydrated = useHydrated();
   const router = useRouter();
+  const takeawayOk = useSettingsStore((s) => s.allowTakeaway);
 
   const lines = useCartStore((s) => s.lines);
   const clear = useCartStore((s) => s.clear);
@@ -52,7 +54,7 @@ export default function OrdinaPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim() || !pickupTime || lines.length === 0) return;
+    if (!takeawayOk || !name.trim() || !pickupTime || lines.length === 0) return;
     setSubmitting(true);
     const created = addOrder({
       type: "asporto",
@@ -69,11 +71,28 @@ export default function OrdinaPage() {
         removedIngredients: l.removedIngredients,
         addedExtras: l.addedExtras,
         note: l.note,
+        bundlePicks: l.bundlePicks,
       })),
       total,
     });
     clear();
     router.replace(`/ordina/conferma?id=${created.id}`);
+  }
+
+  if (hydrated && !takeawayOk) {
+    return (
+      <div className="container-wide py-32 text-center">
+        <p className="impact-title text-pork-red">Asporto non disponibile</p>
+        <h1 className="headline mt-2 text-4xl">Ordina dal tavolo</h1>
+        <p className="mx-auto mt-3 max-w-md text-pork-ink/65">
+          Gli ordini da asporto sono stati disattivati. Scansiona il QR sul tavolo
+          oppure chiedi al bancone.
+        </p>
+        <Link href="/menu" className="btn-primary mt-8 inline-flex">
+          Vai al menu
+        </Link>
+      </div>
+    );
   }
 
   return (
@@ -179,6 +198,7 @@ export default function OrdinaPage() {
                           removed={l.removedIngredients}
                           extras={l.addedExtras}
                           note={l.note}
+                          bundlePicks={l.bundlePicks}
                           tone="light"
                         />
                       </div>

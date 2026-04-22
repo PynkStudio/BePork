@@ -4,14 +4,56 @@ import { motion } from "framer-motion";
 import { MessageCircle } from "lucide-react";
 import { whatsappUrl } from "@/lib/site-config";
 
-const menus = [
+/** Estratto da `menu-data` (pizze-classiche / bevande / …) per evitare dipendenze pesanti sul client. */
+const classicPizzaNames = [
+  "Margherita",
+  "Americana",
+  "Romana",
+  "Diavola",
+  "Capricciosa",
+  "4 Stagioni",
+  "4 Formaggi",
+  "Provola e speck",
+  "Vegetariana",
+  "Bufalina",
+  "Norcia e funghi",
+  "Bufala e Norcia",
+  "La fa il pizzaiolo",
+  "Multigusto",
+  "Multigusto Pistacchio",
+];
+const drinkNames = [
+  "Acqua naturale",
+  "Acqua frizzante",
+  "Coca Cola",
+  "Coca Cola Zero",
+  "Fanta",
+  "Sprite",
+  "Chinò",
+];
+const clubSandwichNames = ["Cotto Pork", "Pollo Pork", "Pulled Pork"];
+const primiNames = ["Spaghetti all'Assassina", "Carbonara"];
+
+type FixedMenuCard = {
+  price: string;
+  title: string;
+  items: string[];
+  detailSections: Array<{ title: string; list: string[] }>;
+  highlight: boolean;
+};
+
+const menus: FixedMenuCard[] = [
   {
     price: "15",
     title: "Sfizio",
     items: [
       "Bruschette e olive",
-      "Pizza a scelta (tra le classiche)",
+      "Pizza a scelta tra le classiche",
       "Bevanda inclusa",
+    ],
+    detailSections: [
+      { title: "Pizze classiche", list: classicPizzaNames },
+      { title: "Bevande incluse", list: drinkNames },
     ],
     highlight: false,
   },
@@ -20,8 +62,13 @@ const menus = [
     title: "Pieno",
     items: [
       "3 antipasti della casa",
-      "Panino o primo a scelta",
+      "Panino o primo a scelta (club sandwich o primi)",
       "Bevanda inclusa",
+    ],
+    detailSections: [
+      { title: "Panini (club)", list: clubSandwichNames },
+      { title: "Primi", list: primiNames },
+      { title: "Bevande incluse", list: drinkNames },
     ],
     highlight: true,
   },
@@ -30,8 +77,14 @@ const menus = [
     title: "Strafogato",
     items: [
       "5 antipasti della casa",
-      "Panino, pizza o primo a scelta",
+      "Panino, pizza classica o primo a scelta",
       "Bevanda inclusa",
+    ],
+    detailSections: [
+      { title: "Panini (club)", list: clubSandwichNames },
+      { title: "Primi", list: primiNames },
+      { title: "Pizze classiche", list: classicPizzaNames },
+      { title: "Bevande incluse", list: drinkNames },
     ],
     highlight: false,
   },
@@ -102,6 +155,36 @@ export function FixedMenus() {
                   </li>
                 ))}
               </ul>
+              {m.detailSections.length > 0 && (
+                <div className="mt-5 space-y-3 border-t border-current/15 pt-4 text-left text-sm opacity-90">
+                  {m.detailSections.map((sec) => (
+                    <details
+                      key={sec.title}
+                      className="group rounded-xl bg-black/10 px-3 py-2 open:bg-black/15"
+                    >
+                      <summary className="cursor-pointer list-none font-bold outline-none [&::-webkit-details-marker]:hidden">
+                        <span className="flex items-center justify-between gap-2">
+                          {sec.title}
+                          <span className="text-[10px] font-black uppercase tracking-wider opacity-60 group-open:hidden">
+                            Mostra
+                          </span>
+                          <span className="hidden text-[10px] font-black uppercase tracking-wider opacity-60 group-open:inline">
+                            Chiudi
+                          </span>
+                        </span>
+                      </summary>
+                      <ul className="mt-2 max-h-40 space-y-1 overflow-y-auto pr-1 text-[13px] leading-snug opacity-95">
+                        {sec.list.map((row) => (
+                          <li key={row} className="flex gap-2">
+                            <span className="opacity-50">·</span>
+                            <span>{row}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
+                  ))}
+                </div>
+              )}
             </motion.div>
           ))}
         </div>
