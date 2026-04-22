@@ -34,7 +34,7 @@ const souls = [
 
 export function ThreeSouls() {
   return (
-    <section className="relative bg-pork-cream py-20 md:py-28">
+    <section id="tre-anime" className="relative scroll-mt-24 bg-pork-cream py-20 md:py-28">
       <div className="container-wide">
         <div className="mb-12 flex flex-col items-center text-center">
           <span className="chip-red">Tre anime, una casa</span>

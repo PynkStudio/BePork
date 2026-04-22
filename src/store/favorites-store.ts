@@ -1,7 +1,8 @@
 "use client";
 
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
+import { persist } from "zustand/middleware";
+import { createBrowserLocalJSONStorage } from "@/lib/zustand-json-storage";
 
 const FAV_KEY = "bepork-favorites-v1";
 
@@ -26,7 +27,7 @@ export const useFavoritesStore = create<FavoritesState>()(
     {
       name: FAV_KEY,
       skipHydration: true,
-      storage: createJSONStorage(() => localStorage),
+      storage: createBrowserLocalJSONStorage(),
     },
   ),
 );

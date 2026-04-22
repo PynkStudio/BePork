@@ -1,7 +1,8 @@
 "use client";
 
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
+import { persist } from "zustand/middleware";
+import { createBrowserLocalJSONStorage } from "@/lib/zustand-json-storage";
 import type { BundlePick, CartLine, OrderType } from "@/lib/types";
 
 const CART_KEY = "bepork-cart-v1";
@@ -110,7 +111,7 @@ export const useCartStore = create<CartState>()(
     {
       name: CART_KEY,
       skipHydration: true,
-      storage: createJSONStorage(() => localStorage),
+      storage: createBrowserLocalJSONStorage(),
       partialize: (s) => ({ lines: s.lines, context: s.context }),
     },
   ),

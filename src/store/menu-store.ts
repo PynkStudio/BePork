@@ -1,7 +1,8 @@
 "use client";
 
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
+import { persist } from "zustand/middleware";
+import { createBrowserLocalJSONStorage } from "@/lib/zustand-json-storage";
 import { menu as seedMenu } from "@/lib/menu-data";
 import type {
   AdminMenuCategory,
@@ -305,7 +306,7 @@ export const useMenuStore = create<MenuState>()(
     {
       name: STORAGE_KEY,
       skipHydration: true,
-      storage: createJSONStorage(() => localStorage),
+      storage: createBrowserLocalJSONStorage(),
       partialize: (s) => ({
         categories: s.categories,
         items: s.items,

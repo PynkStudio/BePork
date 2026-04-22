@@ -3,11 +3,19 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
-import { MessageCircle, UtensilsCrossed } from "lucide-react";
+import { ChevronDown, MessageCircle, UtensilsCrossed } from "lucide-react";
 import { whatsappUrl } from "@/lib/site-config";
 
 export function Hero() {
   const reduceMotion = useReducedMotion();
+
+  const scrollToNext = () => {
+    document.getElementById("tre-anime")?.scrollIntoView({
+      behavior: reduceMotion ? "auto" : "smooth",
+      block: "start",
+    });
+  };
+
   return (
     <section className="relative isolate overflow-hidden bg-pork-ink pb-20 pt-[calc(7rem+env(safe-area-inset-top))] text-pork-cream md:pb-28 md:pt-[calc(9rem+env(safe-area-inset-top))]">
       <div className="absolute inset-0 -z-10">
@@ -85,6 +93,33 @@ export function Hero() {
             </div>
           </motion.div>
         </div>
+      </div>
+
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex justify-center pb-6 md:pb-10">
+        <motion.button
+          type="button"
+          onClick={scrollToNext}
+          className="pointer-events-auto flex flex-col items-center gap-1 text-pork-cream/55 transition-colors hover:text-pork-mustard focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-pork-mustard"
+          aria-label="Scorri alla sezione successiva"
+          initial={reduceMotion ? false : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={reduceMotion ? { duration: 0 } : { delay: 1, duration: 0.5 }}
+        >
+          <span className="text-[10px] font-black uppercase tracking-[0.35em]">
+            Scorri
+          </span>
+          <motion.span
+            aria-hidden
+            animate={reduceMotion ? undefined : { y: [0, 5, 0] }}
+            transition={
+              reduceMotion
+                ? undefined
+                : { repeat: Infinity, duration: 1.4, ease: "easeInOut" }
+            }
+          >
+            <ChevronDown className="size-7" strokeWidth={2.25} />
+          </motion.span>
+        </motion.button>
       </div>
 
       <div className="pointer-events-none absolute inset-x-0 -bottom-1 h-16 bg-gradient-to-b from-transparent to-pork-cream" />

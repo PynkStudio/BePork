@@ -1,7 +1,8 @@
 "use client";
 
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
+import { persist } from "zustand/middleware";
+import { createBrowserLocalJSONStorage } from "@/lib/zustand-json-storage";
 import type { DaySchedule } from "@/lib/venue-hours";
 import { defaultHoursWeek } from "@/lib/venue-hours";
 
@@ -49,7 +50,7 @@ export const useSettingsStore = create<SettingsStore>()(
     {
       name: STORAGE_KEY,
       skipHydration: true,
-      storage: createJSONStorage(() => localStorage),
+      storage: createBrowserLocalJSONStorage(),
       partialize: (s) => ({
         dinerSeparationAtTables: s.dinerSeparationAtTables,
         allowTakeaway: s.allowTakeaway,
