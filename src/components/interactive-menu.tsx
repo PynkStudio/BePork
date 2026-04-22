@@ -52,19 +52,23 @@ export function InteractiveMenu({
     [categories, items, showOnlyAvailable],
   );
 
+  const categoryNavCategories = useMemo(
+    () =>
+      populatedCategories.map((c) => ({
+        id: c.id,
+        title: c.title,
+        subtitle: c.subtitle,
+        description: c.description,
+        items: [],
+      })),
+    [populatedCategories],
+  );
+
   if (!hydrated) return null;
 
   return (
     <>
-      <MenuCategoryNav
-        categories={populatedCategories.map((c) => ({
-          id: c.id,
-          title: c.title,
-          subtitle: c.subtitle,
-          description: c.description,
-          items: [],
-        }))}
-      />
+      <MenuCategoryNav categories={categoryNavCategories} />
 
       <div className="bg-pork-cream pb-32 pt-10">
         <div className="container-wide space-y-20">

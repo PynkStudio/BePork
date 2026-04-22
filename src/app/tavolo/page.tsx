@@ -93,14 +93,15 @@ function TavoloBody() {
     if (!hydrated || !activeSession || !sessionTable) return;
 
     const clientId = getClientId();
+    const ctx = useCartStore.getState().context;
     const existing = activeSession.diners.find((d) => d.clientId === clientId);
     const currentNick = existing?.nickname ?? "";
 
     if (
-      cartContext.sessionId !== activeSession.id ||
-      cartContext.clientId !== clientId
+      ctx.sessionId !== activeSession.id ||
+      ctx.clientId !== clientId
     ) {
-      if (cartContext.sessionId && cartContext.sessionId !== activeSession.id) {
+      if (ctx.sessionId && ctx.sessionId !== activeSession.id) {
         clearCart();
       }
       setContext({
@@ -115,10 +116,10 @@ function TavoloBody() {
       });
     } else if (
       dinerSeparation &&
-      (cartContext.nickname ?? "") !== currentNick
+      (ctx.nickname ?? "") !== currentNick
     ) {
       setContext({
-        ...cartContext,
+        ...ctx,
         nickname: currentNick || undefined,
       });
     }
@@ -126,7 +127,6 @@ function TavoloBody() {
     hydrated,
     activeSession,
     sessionTable,
-    cartContext,
     setContext,
     clearCart,
     dinerSeparation,
