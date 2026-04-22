@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Copy, Users, KeyRound } from "lucide-react";
 import { InteractiveMenu } from "@/components/interactive-menu";
-import { useCartStore } from "@/store/cart-store";
+import { useCartStore, type CartContext } from "@/store/cart-store";
 import {
   useMenuStore,
   selectActiveSession,
@@ -16,6 +16,29 @@ import { useHydrated } from "@/components/providers";
 import { formatEuro } from "@/lib/price-utils";
 import { getClientId } from "@/lib/client-id";
 import type { TableSession, Table } from "@/lib/types";
+
+function sameTavoloSessionBinding(
+  a: CartContext,
+  b: {
+    type: "tavolo";
+    tableId: string;
+    tableLabel: string;
+    sessionId: string;
+    sessionCode: string;
+    clientId: string;
+    nickname?: string;
+  },
+): boolean {
+  return (
+    a.type === "tavolo" &&
+    a.tableId === b.tableId &&
+    (a.tableLabel ?? "") === (b.tableLabel ?? "") &&
+    a.sessionId === b.sessionId &&
+    (a.sessionCode ?? "") === (b.sessionCode ?? "") &&
+    a.clientId === b.clientId &&
+    (a.nickname ?? "") === (b.nickname ?? "")
+  );
+}
 
 function SessionRunningTotal({ sessionId }: { sessionId: string }) {
   const orders = useMenuStore((s) => s.orders);
@@ -104,8 +127,8 @@ function TavoloBody() {
       if (ctx.sessionId && ctx.sessionId !== activeSession.id) {
         clearCart();
       }
-      setContext({
-        type: "tavolo",
+      const nextBinding = {
+        type: "tavolo" as const,
         tableId: sessionTable.id,
         tableLabel: sessionTable.label,
         sessionId: activeSession.id,
@@ -113,14 +136,18 @@ function TavoloBody() {
         clientId,
         nickname:
           dinerSeparation && currentNick ? currentNick : undefined,
-      });
+      };
+      if (sameTavoloSessionBinding(ctx, nextBinding)) return;
+      setContext(nextBinding);
     } else if (
       dinerSeparation &&
       (ctx.nickname ?? "") !== currentNick
     ) {
+      const nextNick = currentNick || undefined;
+      if ((ctx.nickname ?? "") === (nextNick ?? "")) return;
       setContext({
         ...ctx,
-        nickname: currentNick || undefined,
+        nickname: nextNick,
       });
     }
   }, [

@@ -46,11 +46,12 @@ const priceVariantColors: Array<"mustard" | "red"> = ["mustard", "red"];
 
 export function MenuCardInteractive({ item }: { item: AdminMenuItem }) {
   const pathname = usePathname();
-  const flags = useSettingsStore((s) => ({
-    allowTakeaway: s.allowTakeaway,
-    allowTableOrders: s.allowTableOrders,
-  }));
-  const orderingAllowed = canAddToCart(pathname, flags);
+  const allowTakeaway = useSettingsStore((s) => s.allowTakeaway);
+  const allowTableOrders = useSettingsStore((s) => s.allowTableOrders);
+  const orderingAllowed = canAddToCart(pathname, {
+    allowTakeaway,
+    allowTableOrders,
+  });
 
   const variants = priceVariants(item.price);
   const [customizerOpen, setCustomizerOpen] = useState(false);

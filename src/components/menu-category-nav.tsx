@@ -1,14 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import type { MenuCategory } from "@/lib/menu-data";
 
 export function MenuCategoryNav({ categories }: { categories: MenuCategory[] }) {
   const [active, setActive] = useState<string>(categories[0]?.id ?? "");
+  const categoriesRef = useRef(categories);
+  categoriesRef.current = categories;
+  const categoryIds = categories.map((c) => c.id).join("|");
 
   useEffect(() => {
-    const sections = categories
+    const cats = categoriesRef.current;
+    const first = cats[0]?.id ?? "";
+    setActive((prev) => (cats.some((c) => c.id === prev) ? prev : first));
+
+    const sections = cats
       .map((c) => document.getElementById(c.id))
       .filter((el): el is HTMLElement => !!el);
 
@@ -24,7 +31,7 @@ export function MenuCategoryNav({ categories }: { categories: MenuCategory[] }) 
 
     sections.forEach((s) => observer.observe(s));
     return () => observer.disconnect();
-  }, [categories]);
+  }, [categoryIds]);
 
   return (
     <div className="sticky top-[76px] z-30 -mx-5 overflow-x-hidden border-y border-pork-ink/10 bg-pork-cream/95 backdrop-blur-lg sm:-mx-8 md:top-[88px] lg:-mx-12">

@@ -28,12 +28,20 @@ export function InteractiveMenu({
 
   useEffect(() => {
     if (!hydrated) return;
-    if (tableParam) {
-      const n = Number(tableParam);
-      if (!Number.isNaN(n)) {
-        setContext({ type: "tavolo", table: n });
-      }
+    if (!tableParam) return;
+    const n = Number(tableParam);
+    if (Number.isNaN(n)) return;
+    const ctx = useCartStore.getState().context;
+    if (
+      ctx.type === "tavolo" &&
+      ctx.table === n &&
+      ctx.sessionId == null &&
+      ctx.tableId == null &&
+      ctx.clientId == null
+    ) {
+      return;
     }
+    setContext({ type: "tavolo", table: n });
   }, [tableParam, hydrated, setContext]);
 
   const categories = useMemo(

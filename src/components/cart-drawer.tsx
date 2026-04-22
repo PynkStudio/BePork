@@ -33,13 +33,14 @@ export function CartDrawer() {
   const [customizeItem, setCustomizeItem] = useState<AdminMenuItem | null>(null);
   const [bundleItem, setBundleItem] = useState<AdminMenuItem | null>(null);
 
-  const flags = useSettingsStore((s) => ({
-    allowTakeaway: s.allowTakeaway,
-    allowTableOrders: s.allowTableOrders,
-  }));
-  const orderingHere = canAddToCart(pathname, flags);
+  const allowTakeaway = useSettingsStore((s) => s.allowTakeaway);
+  const allowTableOrders = useSettingsStore((s) => s.allowTableOrders);
+  const orderingHere = canAddToCart(pathname, {
+    allowTakeaway,
+    allowTableOrders,
+  });
   const checkoutAllowed =
-    context.type === "tavolo" ? flags.allowTableOrders : flags.allowTakeaway;
+    context.type === "tavolo" ? allowTableOrders : allowTakeaway;
 
   const favoriteItems = useMemo(() => {
     return favIds

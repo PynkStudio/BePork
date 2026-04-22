@@ -46,6 +46,18 @@ export default function OrdinaPage() {
   const [slots] = useState(() => nextSlots());
 
   useEffect(() => {
+    const c = useCartStore.getState().context;
+    if (
+      c.type === "asporto" &&
+      c.sessionId == null &&
+      c.tableId == null &&
+      c.table == null &&
+      c.clientId == null &&
+      c.sessionCode == null &&
+      (c.nickname == null || c.nickname === "")
+    ) {
+      return;
+    }
     setContext({ type: "asporto" });
   }, [setContext]);
 
