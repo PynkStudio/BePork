@@ -5,5 +5,5 @@ export function getAdminPassword(): string {
   if (typeof process !== "undefined" && process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
     return process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
   }
-  return "bepork-admin";
+  return "admin";
 }

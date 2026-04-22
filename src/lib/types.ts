@@ -47,12 +47,39 @@ export type Order = {
   createdAt: string;
   type: OrderType;
   table?: number;
+  tableLabel?: string;
+  sessionId?: string;
+  sessionCode?: string;
+  dinerNickname?: string;
   customerName?: string;
   pickupTime?: string;
   notes?: string;
   lines: OrderLine[];
   total: number;
   status: OrderStatus;
+};
+
+export type Table = {
+  id: string;
+  label: string;
+  seats?: number;
+  createdAt: number;
+};
+
+export type SessionDiner = {
+  clientId: string;
+  nickname: string;
+  joinedAt: number;
+};
+
+export type TableSession = {
+  id: string;
+  tableId: string;
+  code: string;
+  status: "aperta" | "chiusa";
+  openedAt: number;
+  closedAt?: number;
+  diners: SessionDiner[];
 };
 
 export type CartLine = {

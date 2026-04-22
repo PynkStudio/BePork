@@ -177,22 +177,31 @@ export function MenuCardInteractive({ item }: { item: AdminMenuItem }) {
             ))}
           </div>
 
-          <button
-            type="button"
-            onClick={handleAddClick}
-            disabled={unavailable}
-            className={cn(
-              "inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full shadow-lg transition-all active:scale-90",
-              unavailable
-                ? "cursor-not-allowed bg-pork-ink/10 text-pork-ink/30"
-                : "bg-pork-ink text-pork-cream hover:bg-pork-red",
+          <div className="flex shrink-0 flex-col items-end gap-1">
+            {canCustomize && !unavailable && (
+              <span className="hidden rounded-full bg-pork-mustard/40 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-pork-ink sm:block">
+                Personalizza
+              </span>
             )}
-            aria-label={
-              unavailable ? "Non disponibile" : `Aggiungi ${item.name} al carrello`
-            }
-          >
-            <Plus size={20} />
-          </button>
+            <button
+              type="button"
+              onClick={handleAddClick}
+              disabled={unavailable}
+              className={cn(
+                "inline-flex h-11 w-11 items-center justify-center rounded-full shadow-lg transition-all active:scale-90",
+                unavailable
+                  ? "cursor-not-allowed bg-pork-ink/10 text-pork-ink/30"
+                  : "bg-pork-ink text-pork-cream hover:bg-pork-red",
+              )}
+              aria-label={
+                unavailable
+                  ? "Non disponibile"
+                  : `Aggiungi ${item.name} al carrello`
+              }
+            >
+              <Plus size={20} />
+            </button>
+          </div>
         </div>
       </div>
 

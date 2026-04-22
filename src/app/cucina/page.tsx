@@ -147,9 +147,17 @@ function KitchenCard({
           </div>
           <p className="headline text-xl leading-tight">
             {order.type === "tavolo"
-              ? `Tavolo ${order.table}`
+              ? order.tableLabel ?? `Tavolo ${order.table ?? ""}`
               : order.customerName ?? "Asporto"}
           </p>
+          {order.type === "tavolo" &&
+            (order.sessionCode || order.dinerNickname) && (
+              <p className="text-[11px] text-pork-ink/60">
+                {order.sessionCode && <span>cod. {order.sessionCode}</span>}
+                {order.sessionCode && order.dinerNickname && " · "}
+                {order.dinerNickname && <span>{order.dinerNickname}</span>}
+              </p>
+            )}
         </div>
         <div className="text-right">
           <p className="inline-flex items-center gap-1 text-xs text-pork-ink/60">
@@ -172,15 +180,31 @@ function KitchenCard({
         </p>
       )}
 
-      <ul className="mt-3 space-y-1 text-sm">
+      <ul className="mt-3 space-y-2 text-sm">
         {order.lines.map((l, i) => (
-          <li key={i} className="flex items-start justify-between gap-2">
-            <span className="flex-1">
-              <span className="font-bold">{l.qty}×</span> {l.name}
-              {l.note && (
-                <span className="ml-1 italic text-pork-red">— {l.note}</span>
-              )}
-            </span>
+          <li key={i} className="rounded-lg bg-pork-cream/60 px-2 py-1.5">
+            <div className="flex items-start justify-between gap-2">
+              <span className="flex-1 text-base">
+                <span className="font-bold">{l.qty}×</span> {l.name}
+              </span>
+            </div>
+            {l.removedIngredients && l.removedIngredients.length > 0 && (
+              <p className="mt-0.5 text-[13px] font-bold uppercase tracking-wide text-pork-red">
+                – senza {l.removedIngredients.join(", ")}
+              </p>
+            )}
+            {l.addedExtras && l.addedExtras.length > 0 && (
+              <ul className="text-[13px] font-bold uppercase tracking-wide text-pork-green">
+                {l.addedExtras.map((x) => (
+                  <li key={x.id}>+ {x.name}</li>
+                ))}
+              </ul>
+            )}
+            {l.note && (
+              <p className="mt-0.5 text-[12px] italic text-pork-ink/70">
+                &ldquo;{l.note}&rdquo;
+              </p>
+            )}
           </li>
         ))}
       </ul>

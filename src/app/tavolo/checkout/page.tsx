@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter } from "next/navigation";
 import { StickyNote, Send } from "lucide-react";
 import { useCartStore, cartTotal } from "@/store/cart-store";
 import { useMenuStore } from "@/store/menu-store";
@@ -13,34 +13,35 @@ import { LineMods } from "@/components/line-mods";
 function CheckoutTavoloBody() {
   const hydrated = useHydrated();
   const router = useRouter();
-  const params = useSearchParams();
-  const tableParam = params.get("t");
-  const table = tableParam ? Number(tableParam) : null;
 
   const lines = useCartStore((s) => s.lines);
   const clear = useCartStore((s) => s.clear);
-  const setContext = useCartStore((s) => s.setContext);
+  const context = useCartStore((s) => s.context);
   const addOrder = useMenuStore((s) => s.addOrder);
+  const sessions = useMenuStore((s) => s.sessions);
+
+  const sessionStillOpen = context.sessionId
+    ? sessions.some(
+        (s) => s.id === context.sessionId && s.status === "aperta",
+      )
+    : true;
 
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    if (table && !Number.isNaN(table)) {
-      setContext({ type: "tavolo", table });
-    }
-  }, [table, setContext]);
 
   const total = cartTotal(lines);
   const empty = hydrated && lines.length === 0;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!table || lines.length === 0) return;
+    if (!context.tableId || lines.length === 0 || !sessionStillOpen) return;
     setSubmitting(true);
     const created = addOrder({
       type: "tavolo",
-      table,
+      tableLabel: context.tableLabel,
+      sessionId: context.sessionId,
+      sessionCode: context.sessionCode,
+      dinerNickname: context.nickname,
       notes: notes.trim() || undefined,
       lines: lines.map((l) => ({
         itemId: l.itemId,
@@ -59,12 +60,17 @@ function CheckoutTavoloBody() {
     router.replace(`/ordina/conferma?id=${created.id}`);
   }
 
-  if (!table || Number.isNaN(table)) {
+  if (!hydrated) return null;
+
+  if (!context.tableId) {
     return (
       <div className="container-wide py-32 text-center">
-        <p className="impact-title text-pork-red">Numero tavolo mancante.</p>
-        <Link href="/menu" className="btn-primary mt-6 inline-flex">
-          Torna al menu
+        <p className="impact-title text-pork-red">Nessun tavolo attivo.</p>
+        <p className="mt-2 text-pork-ink/60">
+          Apri la pagina del tavolo scansionando il QR code o inserendo il codice.
+        </p>
+        <Link href="/tavolo" className="btn-primary mt-6 inline-flex">
+          Entra al tavolo
         </Link>
       </div>
     );
@@ -74,7 +80,21 @@ function CheckoutTavoloBody() {
     <>
       <section className="relative bg-pork-ink pt-32 pb-10 text-pork-cream md:pt-40">
         <div className="container-wide">
-          <span className="chip-mustard">Tavolo {table}</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="chip-mustard">
+              {context.tableLabel ?? "Tavolo"}
+            </span>
+            {context.sessionCode && (
+              <span className="chip bg-pork-cream/10 text-pork-cream/70">
+                Codice {context.sessionCode}
+              </span>
+            )}
+            {context.nickname && (
+              <span className="chip bg-pork-red text-white">
+                {context.nickname}
+              </span>
+            )}
+          </div>
           <h1 className="headline mt-4 text-5xl sm:text-6xl lg:text-7xl">
             Invia in <span className="text-pork-mustard">cucina.</span>
           </h1>
@@ -83,11 +103,30 @@ function CheckoutTavoloBody() {
 
       <div className="bg-pork-cream pb-32 pt-10">
         <div className="container-wide">
-          {empty ? (
+          {!sessionStillOpen ? (
+            <div className="rounded-3xl bg-white p-12 text-center ring-1 ring-pork-ink/5">
+              <p className="impact-title text-2xl text-pork-red">
+                La tua sessione &egrave; stata chiusa.
+              </p>
+              <p className="mt-2 text-pork-ink/60">
+                Lo staff ha chiuso il conto del tavolo. Per fare un nuovo ordine
+                scansiona di nuovo il QR code o chiedi al bancone.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  clear();
+                }}
+                className="btn-primary mt-6 inline-flex"
+              >
+                Ok, svuota carrello
+              </button>
+            </div>
+          ) : empty ? (
             <div className="rounded-3xl bg-white p-12 text-center ring-1 ring-pork-ink/5">
               <p className="impact-title text-2xl">Il carrello è vuoto.</p>
               <Link
-                href={`/tavolo?t=${table}`}
+                href={`/tavolo?t=${context.tableId}`}
                 className="btn-primary mt-6 inline-flex"
               >
                 Torna al menu
@@ -99,10 +138,10 @@ function CheckoutTavoloBody() {
                 onSubmit={handleSubmit}
                 className="rounded-3xl bg-white p-6 ring-1 ring-pork-ink/5 sm:p-8"
               >
-                <h2 className="headline text-3xl">Note al tavolo</h2>
+                <h2 className="headline text-3xl">Note per la cucina</h2>
                 <p className="mt-2 text-sm text-pork-ink/60">
-                  Allergie, intolleranze, preferenze. Qualsiasi cosa la cucina debba
-                  sapere.
+                  Allergie, intolleranze, preferenze. Qualsiasi cosa la cucina
+                  debba sapere.
                 </p>
 
                 <label className="mt-5 block">
@@ -130,14 +169,19 @@ function CheckoutTavoloBody() {
                   Invia in cucina ({formatEuro(total)})
                 </button>
                 <p className="mt-2 text-center text-[11px] text-pork-ink/50">
-                  Paghi al bancone a fine serata.
+                  Paghi al bancone a fine serata, sul conto unico del tavolo.
                 </p>
               </form>
 
               <aside className="rounded-3xl bg-pork-ink p-6 text-pork-cream ring-1 ring-pork-ink sm:p-8 lg:sticky lg:top-28 lg:self-start">
                 <h3 className="headline text-2xl text-pork-mustard">
-                  Tavolo {table}
+                  {context.tableLabel ?? "Tavolo"}
                 </h3>
+                {context.nickname && (
+                  <p className="text-sm text-pork-cream/70">
+                    Ordine di {context.nickname}
+                  </p>
+                )}
                 <ul className="mt-4 space-y-3">
                   {lines.map((l) => (
                     <li
@@ -168,7 +212,7 @@ function CheckoutTavoloBody() {
                 </ul>
                 <div className="mt-5 flex items-baseline justify-between border-t border-pork-cream/20 pt-4">
                   <span className="impact-title text-sm text-pork-cream/70">
-                    Totale
+                    Il tuo totale
                   </span>
                   <span className="headline text-3xl text-pork-mustard">
                     {formatEuro(total)}

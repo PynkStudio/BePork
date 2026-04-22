@@ -9,6 +9,12 @@ const CART_KEY = "bepork-cart-v1";
 export interface CartContext {
   type: OrderType;
   table?: number;
+  tableId?: string;
+  tableLabel?: string;
+  sessionId?: string;
+  sessionCode?: string;
+  clientId?: string;
+  nickname?: string;
 }
 
 export interface CartState {

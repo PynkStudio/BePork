@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import {
   ChefHat,
   ClipboardList,
+  QrCode,
   RefreshCw,
   UtensilsCrossed,
 } from "lucide-react";
@@ -16,6 +17,7 @@ export default function AdminHome() {
   const hydrated = useHydrated();
   const items = useMenuStore((s) => s.items);
   const orders = useMenuStore((s) => s.orders);
+  const sessions = useMenuStore((s) => s.sessions);
   const resetToSeed = useMenuStore((s) => s.resetToSeed);
 
   const stats = useMemo(() => {
@@ -36,8 +38,9 @@ export default function AdminHome() {
         );
       })
       .reduce((a, o) => a + o.total, 0);
-    return { total, unavailable, openOrders, todayRevenue };
-  }, [items, orders]);
+    const tablesOpen = sessions.filter((s) => s.status === "aperta").length;
+    return { total, unavailable, openOrders, todayRevenue, tablesOpen };
+  }, [items, orders, sessions]);
 
   return (
     <div className="space-y-8">
@@ -49,7 +52,7 @@ export default function AdminHome() {
       </header>
 
       {hydrated && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <Stat
             label="Piatti totali"
             value={stats.total.toString()}
@@ -66,14 +69,19 @@ export default function AdminHome() {
             tone="red"
           />
           <Stat
+            label="Tavoli attivi"
+            value={stats.tablesOpen.toString()}
+            tone="green"
+          />
+          <Stat
             label="Incassato oggi"
             value={formatEuro(stats.todayRevenue)}
-            tone="green"
+            tone="ink"
           />
         </div>
       )}
 
-      <div className="grid gap-5 md:grid-cols-3">
+      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
         <Quick
           href="/admin/menu"
           title="Gestisci menu"
@@ -85,6 +93,12 @@ export default function AdminHome() {
           title="Ordini"
           desc="Vedi e aggiorna gli ordini in corso"
           icon={<ClipboardList size={22} />}
+        />
+        <Quick
+          href="/admin/tavoli"
+          title="Tavoli & QR"
+          desc="Crea tavoli, stampa QR, chiudi conti"
+          icon={<QrCode size={22} />}
         />
         <Quick
           href="/cucina"

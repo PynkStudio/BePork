@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   LogOut,
   Menu as MenuIcon,
+  QrCode,
   UtensilsCrossed,
   X,
 } from "lucide-react";
@@ -19,6 +20,7 @@ const items = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/menu", label: "Menu", icon: UtensilsCrossed },
   { href: "/admin/ordini", label: "Ordini", icon: ClipboardList },
+  { href: "/admin/tavoli", label: "Tavoli & QR", icon: QrCode },
   { href: "/cucina", label: "Kitchen display", icon: ChefHat, external: true },
 ];
 

@@ -21,9 +21,7 @@ export function CartDrawer() {
   if (!hydrated) return null;
 
   const checkoutHref =
-    context.type === "tavolo"
-      ? `/tavolo/checkout${context.table ? `?t=${context.table}` : ""}`
-      : "/ordina";
+    context.type === "tavolo" ? "/tavolo/checkout" : "/ordina";
 
   return (
     <>
@@ -46,10 +44,17 @@ export function CartDrawer() {
           <div>
             <p className="impact-title text-xs text-pork-red">
               {context.type === "tavolo"
-                ? `Tavolo ${context.table ?? "—"}`
+                ? context.tableLabel ?? "Tavolo"
                 : "Asporto"}
+              {context.sessionCode && (
+                <span className="ml-1 text-pork-ink/50">
+                  · cod. {context.sessionCode}
+                </span>
+              )}
             </p>
-            <h2 className="headline text-2xl">Il tuo ordine</h2>
+            <h2 className="headline text-2xl">
+              {context.nickname ? `Ordine di ${context.nickname}` : "Il tuo ordine"}
+            </h2>
           </div>
           <button
             type="button"

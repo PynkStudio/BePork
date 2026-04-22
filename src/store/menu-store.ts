@@ -11,6 +11,8 @@ import type {
   OrderStatus,
   PriceFormat,
   MenuTag,
+  Table,
+  TableSession,
 } from "@/lib/types";
 
 const STORAGE_KEY = "bepork-menu-v1";
@@ -46,6 +48,9 @@ export interface MenuState {
   orders: Order[];
   lastOrderSeq: number;
 
+  tables: Table[];
+  sessions: TableSession[];
+
   updateItem: (id: string, patch: Partial<AdminMenuItem>) => void;
   setAvailable: (id: string, available: boolean) => void;
   updatePrice: (id: string, price: PriceFormat) => void;
@@ -61,7 +66,30 @@ export interface MenuState {
   removeOrder: (id: string) => void;
   clearCompletedOrders: () => void;
 
+  addTable: (label: string, seats?: number) => Table;
+  updateTable: (id: string, patch: Partial<Table>) => void;
+  removeTable: (id: string) => void;
+
+  openSession: (tableId: string) => TableSession;
+  addDiner: (sessionId: string, clientId: string, nickname: string) => void;
+  updateDinerNickname: (
+    sessionId: string,
+    clientId: string,
+    nickname: string,
+  ) => void;
+  closeSession: (sessionId: string) => void;
+
   resetToSeed: () => void;
+}
+
+function seedTables(): Table[] {
+  const now = Date.now();
+  return [1, 2, 3, 4, 5, 6].map((n, i) => ({
+    id: `tbl-${n}`,
+    label: `Tavolo ${n}`,
+    seats: n <= 2 ? 2 : 4,
+    createdAt: now + i,
+  }));
 }
 
 function buildInitial() {
@@ -70,7 +98,16 @@ function buildInitial() {
     items: seedItems(),
     orders: [] as Order[],
     lastOrderSeq: 0,
+    tables: seedTables(),
+    sessions: [] as TableSession[],
   };
+}
+
+function genCode(): string {
+  return Math.floor(1000 + Math.random() * 9000).toString();
+}
+function genId(prefix: string): string {
+  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 }
 
 export const useMenuStore = create<MenuState>()(
@@ -175,6 +212,89 @@ export const useMenuStore = create<MenuState>()(
           ),
         })),
 
+      addTable: (label, seats) => {
+        const t: Table = {
+          id: genId("tbl"),
+          label: label.trim() || "Tavolo",
+          seats,
+          createdAt: Date.now(),
+        };
+        set((s) => ({ tables: [...s.tables, t] }));
+        return t;
+      },
+
+      updateTable: (id, patch) =>
+        set((s) => ({
+          tables: s.tables.map((t) => (t.id === id ? { ...t, ...patch } : t)),
+        })),
+
+      removeTable: (id) =>
+        set((s) => ({
+          tables: s.tables.filter((t) => t.id !== id),
+          sessions: s.sessions.filter((ss) => ss.tableId !== id),
+        })),
+
+      openSession: (tableId) => {
+        let session!: TableSession;
+        set((s) => {
+          const existing = s.sessions.find(
+            (ss) => ss.tableId === tableId && ss.status === "aperta",
+          );
+          if (existing) {
+            session = existing;
+            return {};
+          }
+          session = {
+            id: genId("ts"),
+            tableId,
+            code: genCode(),
+            status: "aperta",
+            openedAt: Date.now(),
+            diners: [],
+          };
+          return { sessions: [session, ...s.sessions] };
+        });
+        return session;
+      },
+
+      addDiner: (sessionId, clientId, nickname) =>
+        set((s) => ({
+          sessions: s.sessions.map((ss) => {
+            if (ss.id !== sessionId) return ss;
+            if (ss.diners.some((d) => d.clientId === clientId)) return ss;
+            return {
+              ...ss,
+              diners: [
+                ...ss.diners,
+                { clientId, nickname, joinedAt: Date.now() },
+              ],
+            };
+          }),
+        })),
+
+      updateDinerNickname: (sessionId, clientId, nickname) =>
+        set((s) => ({
+          sessions: s.sessions.map((ss) =>
+            ss.id !== sessionId
+              ? ss
+              : {
+                  ...ss,
+                  diners: ss.diners.map((d) =>
+                    d.clientId === clientId ? { ...d, nickname } : d,
+                  ),
+                },
+          ),
+        })),
+
+      closeSession: (sessionId) =>
+        set((s) => ({
+          sessions: s.sessions.map((ss) =>
+            ss.id === sessionId
+              ? { ...ss, status: "chiusa", closedAt: Date.now() }
+              : ss,
+          ),
+        })),
+
       resetToSeed: () => set(buildInitial()),
     }),
     {
@@ -186,6 +306,8 @@ export const useMenuStore = create<MenuState>()(
         items: s.items,
         orders: s.orders,
         lastOrderSeq: s.lastOrderSeq,
+        tables: s.tables,
+        sessions: s.sessions,
       }),
     },
   ),
@@ -211,4 +333,25 @@ export function selectItemById(
   id: string,
 ): AdminMenuItem | undefined {
   return items.find((i) => i.id === id);
+}
+
+export function selectActiveSession(
+  sessions: TableSession[],
+  tableId: string,
+): TableSession | undefined {
+  return sessions.find((s) => s.tableId === tableId && s.status === "aperta");
+}
+
+export function selectSessionByCode(
+  sessions: TableSession[],
+  code: string,
+): TableSession | undefined {
+  return sessions.find((s) => s.code === code && s.status === "aperta");
+}
+
+export function selectOrdersBySession(
+  orders: Order[],
+  sessionId: string,
+): Order[] {
+  return orders.filter((o) => o.sessionId === sessionId);
 }

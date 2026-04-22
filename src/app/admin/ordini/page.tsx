@@ -13,6 +13,7 @@ import {
   formatTime,
 } from "@/lib/orders-ui";
 import { formatEuro } from "@/lib/price-utils";
+import { LineMods } from "@/components/line-mods";
 
 const FILTERS: Array<{ value: "open" | "all" | OrderStatus; label: string }> = [
   { value: "open", label: "Aperti" },
@@ -116,13 +117,23 @@ export default function AdminOrdersPage() {
                         </div>
                         <p className="headline mt-1 text-2xl">
                           {o.type === "tavolo"
-                            ? `Tavolo ${o.table}`
+                            ? o.tableLabel ?? `Tavolo ${o.table ?? ""}`
                             : o.customerName ?? "Asporto"}
                         </p>
                         <p className="text-xs text-pork-ink/60">
-                          {o.type === "tavolo"
-                            ? "Al tavolo"
-                            : `Asporto · ritiro ${o.pickupTime ?? "—"}`}
+                          {o.type === "tavolo" ? (
+                            <>
+                              Al tavolo
+                              {o.sessionCode && (
+                                <span> · cod. {o.sessionCode}</span>
+                              )}
+                              {o.dinerNickname && (
+                                <span> · {o.dinerNickname}</span>
+                              )}
+                            </>
+                          ) : (
+                            `Asporto · ritiro ${o.pickupTime ?? "—"}`
+                          )}
                         </p>
                       </div>
                       <span className="font-impact text-2xl text-pork-red">
@@ -130,17 +141,20 @@ export default function AdminOrdersPage() {
                       </span>
                     </div>
 
-                    <ul className="mt-3 space-y-1 text-sm">
+                    <ul className="mt-3 space-y-2 text-sm">
                       {o.lines.map((l, i) => (
                         <li key={i} className="flex justify-between gap-3">
-                          <span className="text-pork-ink/80">
-                            {l.qty} × {l.name}
-                            {l.note && (
-                              <span className="ml-1 italic text-pork-ink/50">
-                                — {l.note}
-                              </span>
-                            )}
-                          </span>
+                          <div className="min-w-0 flex-1 text-pork-ink/80">
+                            <span>
+                              {l.qty} × {l.name}
+                            </span>
+                            <LineMods
+                              removed={l.removedIngredients}
+                              extras={l.addedExtras}
+                              note={l.note}
+                              withPrices
+                            />
+                          </div>
                           <span className="tabular-nums text-pork-ink/60">
                             {formatEuro(l.lineTotal)}
                           </span>
