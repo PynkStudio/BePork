@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 const TENANT_ID = "pynkstudio";
 const REMINDER_LEAD_MINUTES = 20;
-const PYNK_FROM = "PYNK STUDIO <amministrazione@pynkstudio.it>";
+const PYNK_FROM = "PYNK STUDIO <amministrazione@pynkstudio.eu>";
 
 // pg_cron chiama con Authorization: Bearer {CRON_SECRET}.
 function isAuthorized(req: Request): boolean {
@@ -77,7 +77,7 @@ export async function GET(req: Request) {
       await sendEmail({
         to: b.email,
         fromOverride: PYNK_FROM,
-        replyTo: "amministrazione@pynkstudio.it",
+        replyTo: "amministrazione@pynkstudio.eu",
         subject: "La tua call con PYNK STUDIO inizia tra ~20 minuti",
         html: bookingReminderHtml({ name: b.name, slotLabel, topic: b.topic, phone: b.phone }),
       });

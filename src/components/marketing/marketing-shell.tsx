@@ -92,7 +92,7 @@ async function MarketingFooter() {
             <p className="mt-6 text-[13px] leading-6 text-[var(--menuary-muted)]">
               Un servizio di{" "}
               <a
-                href="https://pynkstudio.it"
+                href="https://pynkstudio.eu"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-semibold text-[var(--menuary-ink)] underline decoration-[var(--menuary-copper)] underline-offset-4 transition-colors hover:text-[var(--menuary-copper)]"

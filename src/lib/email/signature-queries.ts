@@ -45,8 +45,8 @@ const BRAND_TEMPLATE = {
   pynkstudio: {
     label:    "PynkStudio",
     tagline:  "Gruppo creativo e tecnologico",
-    email:    "hello@pynkstudio.it",
-    website:  "pynkstudio.it",
+    email:    "hello@pynkstudio.eu",
+    website:  "pynkstudio.eu",
     accent:   "#D946A8",
     accentInk:"#9B2D7A",
     paper:    "#FDF5FA",

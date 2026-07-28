@@ -101,7 +101,7 @@ export async function MarketingContactsPage() {
                 <p className="mt-3 text-[13px] text-[var(--menuary-muted)]">
                   {t.serviceBy}{" "}
                   <a
-                    href="https://pynkstudio.it"
+                    href="https://pynkstudio.eu"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="font-semibold text-[var(--menuary-ink)] underline decoration-[var(--menuary-copper)] underline-offset-4 hover:text-[var(--menuary-copper)]"

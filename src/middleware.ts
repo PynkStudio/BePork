@@ -285,7 +285,7 @@ function canonicalInternalPlatformRedirect(
     pathname.startsWith("/admin-pynkstudio") &&
     mode !== "admin-pynkstudio"
   ) {
-    return NextResponse.redirect(new URL(`https://admin.pynkstudio.it${pathname}${search}`));
+    return NextResponse.redirect(new URL(`https://admin.pynkstudio.eu${pathname}${search}`));
   }
 
   if (pathname.startsWith("/admin") && mode !== "platform-admin") {
@@ -822,7 +822,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // ── Admin PynkStudio (admin.pynkstudio.it) ────────────────────────────────
+  // ── Admin PynkStudio (admin.pynkstudio.eu) ────────────────────────────────
   if (mode === "admin-pynkstudio") {
     const effectivePath = pathname.startsWith("/admin-pynkstudio")
       ? pathname
@@ -862,7 +862,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // ── Pagamenti PynkStudio (pagamenti.pynkstudio.it) ────────────────────────
+  // ── Pagamenti PynkStudio (pagamenti.pynkstudio.eu) ────────────────────────
   if (mode === "pagamenti-pynkstudio") {
     if (!pathname.startsWith("/pagamenti-pynkstudio")) {
       const rewritten = request.nextUrl.clone();

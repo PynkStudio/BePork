@@ -196,7 +196,7 @@ function PynkNavbar({ theme, onToggleTheme }: { theme: PynkTheme; onToggleTheme:
 function PynkFooter() {
   const copy = usePynkCopy();
   const href = useTenantLocalizedHref();
-  // Accesso staff/gestione sul dominio del tenant (gestione.pynkstudio.it).
+  // Accesso staff/gestione sul dominio del tenant (gestione.pynkstudio.eu).
   const staffUrl = buildTenantManagementUrl("pynkstudio");
   const links = [
     { label: copy.nav.servizi, to: "/servizi" },

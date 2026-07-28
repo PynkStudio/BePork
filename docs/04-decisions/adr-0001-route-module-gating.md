@@ -6,7 +6,7 @@
 
 ## Contesto
 
-Le route "globali" servite dagli stessi file sotto `src/app/` (`/menu`, `/prenota`, `/galleria`, `/recensioni`, `/preferiti`, `/tavolo`, `/ordina`, `/staff`, `/cucina`, `/assistant-menu`) non verificavano mai i feature flag del tenant risolto da host/preview slug. Un tenant services come PynkStudio (che ha `onlineMenu: false`, `reservations: false`, `gallery: false`, ecc.) mostrava comunque queste pagine — con il proprio tema/CSS — se qualcuno visitava direttamente `pynkstudio.it/menu`, anche se il modulo menu non ha senso per quel tenant.
+Le route "globali" servite dagli stessi file sotto `src/app/` (`/menu`, `/prenota`, `/galleria`, `/recensioni`, `/preferiti`, `/tavolo`, `/ordina`, `/staff`, `/cucina`, `/assistant-menu`) non verificavano mai i feature flag del tenant risolto da host/preview slug. Un tenant services come PynkStudio (che ha `onlineMenu: false`, `reservations: false`, `gallery: false`, ecc.) mostrava comunque queste pagine — con il proprio tema/CSS — se qualcuno visitava direttamente `pynkstudio.eu/menu`, anche se il modulo menu non ha senso per quel tenant.
 
 ## Decisione
 

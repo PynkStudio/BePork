@@ -1498,7 +1498,7 @@ const pynkstudioContent: TenantContent = {
   showcaseLogoAlt: "PYNK STUDIO — Software house AI e sviluppo su misura",
   description:
     "Software house specializzata in soluzioni AI: chatbot, agenti, RAG, AI locale e cloud, integrazioni, governance tecnica e conformità AI Act.",
-  url: "https://pynkstudio.it",
+  url: "https://pynkstudio.eu",
   social: {
     instagram: "https://www.instagram.com/pynkstudios",
     facebook: "https://www.linkedin.com/company/pynkstudio",
@@ -1507,7 +1507,7 @@ const pynkstudioContent: TenantContent = {
   },
   contact: {
     phone: "+39 351 376 8607",
-    email: "info@pynkstudio.it",
+    email: "info@pynkstudio.eu",
     whatsappDigits: "393513768607",
     whatsappMessage: "Buongiorno, vorrei informazioni su PYNK STUDIO.",
   },
@@ -1522,7 +1522,7 @@ const pynkstudioContent: TenantContent = {
     name: `PYNK STUDIO di ${PLATFORM_OPERATOR.legalName}`,
     address: PLATFORM_OPERATOR.address,
     phone: "+39 351 376 8607",
-    email: "info@pynkstudio.it",
+    email: "info@pynkstudio.eu",
     piva: PLATFORM_OPERATOR.piva,
     pec: PLATFORM_OPERATOR.pec,
   },

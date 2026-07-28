@@ -2057,7 +2057,7 @@
   }
 
   /* ════════════════════════════════════════════════════════════
-     PYNK STUDIO — admin panel (admin.pynkstudio.it)
+     PYNK STUDIO — admin panel (admin.pynkstudio.eu)
      Dark sidebar + light content area, palette propria.
      ════════════════════════════════════════════════════════════ */
 
@@ -2176,7 +2176,7 @@
     background: hsl(240 8% 6% / 0.7);
   }
 
-  /* Page titles on admin.pynkstudio.it */
+  /* Page titles on admin.pynkstudio.eu */
   .pynk-admin-page-title {
     font-weight: 300;
     font-size: clamp(1.6rem, 2.4vw, 2rem);

@@ -21,8 +21,8 @@
 // "kiosk-custom"      → kiosk.[dominio]         runtime kiosk operativo del tenant/sede
 // "cucina-custom"     → cucina.[dominio]        kitchen display operativo del tenant/sede
 // "rider-custom"      → rider.[dominio]         app web rider delivery del tenant
-// "admin-pynkstudio"      → admin.pynkstudio.it         pannello controllo PynkStudio (azienda madre)
-// "pagamenti-pynkstudio"  → pagamenti.pynkstudio.it     portale pagamenti unificato (tutti i verticali)
+// "admin-pynkstudio"      → admin.pynkstudio.eu         pannello controllo PynkStudio (azienda madre)
+// "pagamenti-pynkstudio"  → pagamenti.pynkstudio.eu     portale pagamenti unificato (tutti i verticali)
 export type PlatformMode =
   | "tenant"
   | "marketing"
@@ -56,8 +56,8 @@ export const PLATFORM_HOSTS = {
   "marketing-bizery": ["bizery.it", "www.bizery.it", "bizery.localhost"],
   "marketing-orpheo": ["weuseorpheo.com", "www.weuseorpheo.com", "orpheo.localhost"],
   admin:              ["admin.menuary.it", "admin.menuary.localhost"],
-  "admin-pynkstudio":     ["admin.pynkstudio.it", "admin.pynkstudio.localhost"],
-  "pagamenti-pynkstudio": ["pagamenti.pynkstudio.it", "pagamenti.pynkstudio.localhost"],
+  "admin-pynkstudio":     ["admin.pynkstudio.eu", "admin.pynkstudio.localhost"],
+  "pagamenti-pynkstudio": ["pagamenti.pynkstudio.eu", "pagamenti.pynkstudio.localhost"],
   preview:            ["demo.menuary.it", "demo.menuary.localhost"],
   "preview-bizery":   ["demo.bizery.it", "demo.bizery.localhost"],
   "preview-orpheo":   ["demo.weuseorpheo.com", "demo.weuseorpheo.localhost"],

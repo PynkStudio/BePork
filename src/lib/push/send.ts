@@ -38,7 +38,7 @@ function ensureVapid(): boolean {
   if (vapidReady !== null) return vapidReady;
   const publicKey = process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY;
   const privateKey = process.env.WEB_PUSH_PRIVATE_KEY;
-  const subject = process.env.WEB_PUSH_SUBJECT || "mailto:info@pynkstudio.it";
+  const subject = process.env.WEB_PUSH_SUBJECT || "mailto:info@pynkstudio.eu";
   if (!publicKey || !privateKey) {
     vapidReady = false;
     return false;

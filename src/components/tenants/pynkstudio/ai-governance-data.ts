@@ -34,7 +34,7 @@ export type PynkBlogArticle = {
   related: string[];
 };
 
-export const PYNK_ORIGIN = "https://pynkstudio.it";
+export const PYNK_ORIGIN = "https://pynkstudio.eu";
 
 export const governanceServices: PynkGovernanceService[] = [
   {

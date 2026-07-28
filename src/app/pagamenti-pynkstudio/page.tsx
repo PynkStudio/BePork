@@ -117,7 +117,7 @@ export default async function PynkCheckoutPage({ searchParams }: Props) {
                 Link di pagamento non valido o scaduto.
               </p>
               <a
-                href="mailto:amministrazione@pynkstudio.it"
+                href="mailto:amministrazione@pynkstudio.eu"
                 style={{ marginTop: 16, color: PYNK.primary, fontSize: 14, display: "inline-flex", alignItems: "center", gap: 6, textDecoration: "none" }}
               >
                 <Mail size={14} strokeWidth={1.7} />
@@ -208,10 +208,10 @@ export default async function PynkCheckoutPage({ searchParams }: Props) {
               <br />
               {FORNITORE.piva && `P.IVA ${FORNITORE.piva} · `}
               <a
-                href="mailto:amministrazione@pynkstudio.it"
+                href="mailto:amministrazione@pynkstudio.eu"
                 style={{ color: PYNK.muted, textDecoration: "none" }}
               >
-                amministrazione@pynkstudio.it
+                amministrazione@pynkstudio.eu
               </a>
             </p>
           </div>
@@ -365,7 +365,7 @@ function CancelledState() {
         Hai annullato l&apos;operazione. Puoi chiudere questa finestra o contattarci per riprogrammare il pagamento.
       </p>
       <a
-        href="mailto:amministrazione@pynkstudio.it"
+        href="mailto:amministrazione@pynkstudio.eu"
         style={{ display: "inline-block", marginTop: 20, fontSize: 13, color: PYNK.primary, textDecoration: "none" }}
       >
         Scrivi allo studio →
@@ -421,10 +421,10 @@ function NotFoundState() {
         Questo link di pagamento non è più valido. Contattaci e ti invieremo un nuovo link.
       </p>
       <a
-        href="mailto:amministrazione@pynkstudio.it"
+        href="mailto:amministrazione@pynkstudio.eu"
         style={{ display: "inline-block", marginTop: 20, fontSize: 13, color: PYNK.primary, textDecoration: "none" }}
       >
-        amministrazione@pynkstudio.it
+        amministrazione@pynkstudio.eu
       </a>
     </div>
   );

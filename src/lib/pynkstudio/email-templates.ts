@@ -47,10 +47,10 @@ function shell(body: string): string {
         <td style="background:#faf4f8;border:1px solid ${BORDER};border-top:none;border-radius:0 0 12px 12px;padding:20px 40px;text-align:center;">
           <p style="margin:0;font-size:12px;color:${MUTED};line-height:1.6;">
             Hai domande? Rispondi a questa email oppure scrivici a
-            <a href="mailto:amministrazione@pynkstudio.it" style="color:${PYNK};text-decoration:none;">amministrazione@pynkstudio.it</a>
+            <a href="mailto:amministrazione@pynkstudio.eu" style="color:${PYNK};text-decoration:none;">amministrazione@pynkstudio.eu</a>
           </p>
           <p style="margin:10px 0 0;font-size:11px;color:#b09ab0;">
-            PYNK STUDIO · <a href="https://pynkstudio.it" style="color:#b09ab0;">pynkstudio.it</a>
+            PYNK STUDIO · <a href="https://pynkstudio.eu" style="color:#b09ab0;">pynkstudio.eu</a>
           </p>
         </td>
       </tr>

@@ -411,7 +411,7 @@ export function Footer() {
             <span>
               Realizzato da{" "}
               <a
-                href="https://pynkstudio.it"
+                href="https://pynkstudio.eu"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-pork-cream/70 transition-colors hover:text-pork-mustard hover:underline"

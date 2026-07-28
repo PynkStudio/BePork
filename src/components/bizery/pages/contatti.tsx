@@ -49,7 +49,7 @@ export function BizeryContattiPage() {
                   icon={MapPin}
                   label="Studio"
                   value="Milano, Italia"
-                  href="https://pynkstudio.it"
+                  href="https://pynkstudio.eu"
                   external
                 />
               </div>

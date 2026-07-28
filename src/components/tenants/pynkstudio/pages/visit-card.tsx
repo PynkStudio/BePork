@@ -9,7 +9,7 @@ import { PynkShell } from "../pynk-shell";
 import { usePynkCopy } from "@/lib/pynkstudio-i18n";
 
 const VCARD_FILENAME = "massimo-pernozzoli-pynkstudio.vcf";
-const PAGE_URL = "https://pynkstudio.it/ad/mp";
+const PAGE_URL = "https://pynkstudio.eu/ad/mp";
 
 const buildVCard = () =>
   [
@@ -20,8 +20,8 @@ const buildVCard = () =>
     "ORG:Pynk Studio",
     "TITLE:CEO",
     "TEL;TYPE=CELL:+393513768607",
-    "EMAIL;TYPE=INTERNET:info@pynkstudio.it",
-    "URL:https://pynkstudio.it",
+    "EMAIL;TYPE=INTERNET:info@pynkstudio.eu",
+    "URL:https://pynkstudio.eu",
     "URL:https://www.instagram.com/mpernozzoli",
     "URL:https://www.instagram.com/pynkstudios",
     "END:VCARD",
@@ -127,7 +127,7 @@ function VisitCardInner() {
       </div>
 
       <p className="pynk-vcard-home">
-        <Link href="/">pynkstudio.it</Link>
+        <Link href="/">pynkstudio.eu</Link>
       </p>
 
       {toast && <div className="pynk-toast">{toast}</div>}

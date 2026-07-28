@@ -115,7 +115,7 @@ export function organizationSchema() {
     contactPoint: {
       "@type": "ContactPoint",
       contactType: "technical consulting",
-      email: "info@pynkstudio.it",
+      email: "info@pynkstudio.eu",
       telephone: "+39 351 3768607",
       areaServed: "IT",
       availableLanguage: ["it"],

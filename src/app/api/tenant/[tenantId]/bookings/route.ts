@@ -9,7 +9,7 @@ import { bookingConfirmHtml } from "@/lib/pynkstudio/email-templates";
 
 export const dynamic = "force-dynamic";
 
-const PYNK_FROM = "PYNK STUDIO <amministrazione@pynkstudio.it>";
+const PYNK_FROM = "PYNK STUDIO <amministrazione@pynkstudio.eu>";
 
 type Body = {
   name?: string;
@@ -121,7 +121,7 @@ export async function POST(
     await sendEmail({
       to: email,
       fromOverride: PYNK_FROM,
-      replyTo: "amministrazione@pynkstudio.it",
+      replyTo: "amministrazione@pynkstudio.eu",
       subject: `Call confermata — ${slotLabel}`,
       html: bookingConfirmHtml({ name, slotLabel, topic, phone }),
     });

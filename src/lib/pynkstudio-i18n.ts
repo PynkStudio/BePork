@@ -470,7 +470,7 @@ const it = {
     titleAccent: "progetto.",
     subtitle:
       "Sviluppo software o consulenza operativa: compilate il form o scriveteci. Call di 20 minuti, senza impegno.",
-    email: "info@pynkstudio.it",
+    email: "info@pynkstudio.eu",
     phoneLabel: "+39 351 3768607",
     phoneHref: "tel:+393513768607",
     whatsappLabel: "Scrivici su WhatsApp",
@@ -515,7 +515,7 @@ const it = {
     role: "CEO · Pynk Studio",
     phoneLabel: "+39 351 376 8607",
     phoneHref: "tel:+393513768607",
-    email: "info@pynkstudio.it",
+    email: "info@pynkstudio.eu",
     saveContact: "Salva in rubrica",
     downloadVcf: "Scarica .vcf",
     qrHint: "Scansiona per aprire questa pagina",

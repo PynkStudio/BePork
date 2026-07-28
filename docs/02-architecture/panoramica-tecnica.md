@@ -40,7 +40,7 @@ Da `CLAUDE.md` / `README.md`:
 2. **Moduli logici condivisi**: unico riuso ammesso in `src/components/modules/` e `src/lib/`; modifiche retrocompatibili e autorizzate.
 3. **Isolamento dati**: i dati di un tenant non compaiono mai in un altro; nessun fallback cross-tenant.
 4. **Multilingua/SEO**: ogni tenant predisposto per URL localizzati, canonical, `hreflang` con `x-default`, sitemap localizzata (pattern di riferimento: Doca).
-5. **Route dei moduli globali gated dal middleware**: `src/lib/tenant-route-modules.ts` mappa il primo segmento URL delle route pubbliche condivise (`/menu`, `/prenota`, `/galleria`, `/recensioni`, `/preferiti`, `/tavolo`, `/ordina`, `/staff`, `/cucina`, `/assistant-menu`) alla feature flag del tenant che la abilita. `src/middleware.ts` verifica questa mappa sia per dominio custom (mode `tenant`) sia per preview (`/[previewSlug]/...`): se il modulo non è attivo per quel tenant, redirect alla home del tenant invece di renderizzare la pagina col tema di un altro verticale (es. `pynkstudio.it/menu`, che non ha `onlineMenu`).
+5. **Route dei moduli globali gated dal middleware**: `src/lib/tenant-route-modules.ts` mappa il primo segmento URL delle route pubbliche condivise (`/menu`, `/prenota`, `/galleria`, `/recensioni`, `/preferiti`, `/tavolo`, `/ordina`, `/staff`, `/cucina`, `/assistant-menu`) alla feature flag del tenant che la abilita. `src/middleware.ts` verifica questa mappa sia per dominio custom (mode `tenant`) sia per preview (`/[previewSlug]/...`): se il modulo non è attivo per quel tenant, redirect alla home del tenant invece di renderizzare la pagina col tema di un altro verticale (es. `pynkstudio.eu/menu`, che non ha `onlineMenu`).
 
 ## SEO siti marketing (menuary.it / bizery.it / weuseorpheo.com)
 
