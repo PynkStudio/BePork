@@ -33,7 +33,7 @@ export function ValentinaOrciuoliHeader({ variant = "default" }: { variant?: "de
         <span className="vo-brand-mark" aria-hidden="true">VO</span>
       </a>
       <nav className="vo-nav vo-nav-secondary" aria-label="Altre pagine">
-        <a href={`${valentinaBasePath}/eventi`}>Eventi</a>
+        <a href={`${valentinaBasePath}/blog`}>Blog</a>
         <a href={`${valentinaBasePath}/contatti`}>Contatti</a>
       </nav>
       <div className="vo-header-socials" aria-label="Social">
