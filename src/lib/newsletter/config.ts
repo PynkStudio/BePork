@@ -7,7 +7,7 @@ import {
 import type { NewsletterContext } from "@pynkstudio/newsletterapp/server";
 
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
-import { findTenantById } from "@/lib/tenant-registry";
+import { findTenantById, TENANTS } from "@/lib/tenant-registry";
 import { getTenantLocaleConfig } from "@/lib/tenant-locales";
 import { resolveSender, sendEmail } from "@/lib/email/sender";
 import {
@@ -15,6 +15,18 @@ import {
   renderConfirmationEmail,
   renderWelcomeEmail,
 } from "@/lib/newsletter/templates";
+
+/**
+ * Le tabelle `tenant_newsletter_*` sono nuove: finché `database.types.ts` non
+ * viene rigenerato dopo la migrazione, il client Supabase tipizzato non le
+ * conosce. Tipo strutturale minimo invece di `any`, per i due bootstrap che
+ * risolvono il tenant da un token prima di poter costruire un contesto.
+ */
+type TenantLookupQuery = {
+  eq(column: string, value: string): TenantLookupQuery;
+  maybeSingle(): Promise<{ data: { tenant_id: string } | null }>;
+};
+type LooseDb = { from(table: string): { select(columns: string): TenantLookupQuery } };
 
 /**
  * Mappatura Menuary → `@pynkstudio/newsletterapp`.
@@ -61,15 +73,35 @@ const RPC = {
   registerClick: "tenant_newsletter_register_click",
 } as const;
 
-function siteUrlFor(tenantId: string): string {
+function platformOrigin(): string {
+  return process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") ?? "https://menuary.it";
+}
+
+/**
+ * Origine usata per costruire conferma, disiscrizione e tracking.
+ *
+ * Deve essere l'origine su cui le route `/api/newsletter/*` sono davvero
+ * raggiungibili: per un tenant con dominio proprio è quel dominio (le route
+ * API sono servite dalla stessa app Next su tutti i domini collegati); per un
+ * tenant senza dominio (lead, preview) è la piattaforma, **senza** lo slug —
+ * `/api/newsletter/confirm` non vive sotto `/[previewSlug]`, e concatenare lo
+ * slug qui romperebbe ogni URL che finisce in un'email.
+ */
+function operationalOriginFor(tenantId: string): string {
+  const domain = findTenantById(tenantId)?.domains?.[0];
+  return domain ? `https://${domain}` : platformOrigin();
+}
+
+/**
+ * Pagina pubblica del tenant, con lo slug quando non ha un dominio proprio.
+ * Usata per i link "vai al sito" dentro le email transazionali — un link
+ * operativo (conferma, disiscrizione) non deve passare da qui.
+ */
+export function tenantPublicUrl(tenantId: string): string {
   const tenant = findTenantById(tenantId);
   const domain = tenant?.domains?.[0];
   if (domain) return `https://${domain}`;
-
-  // Tenant ancora senza dominio proprio (lead, preview): gli URL vivono sotto
-  // lo slug di preview della piattaforma.
-  const base = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") ?? "https://menuary.it";
-  return `${base}/${tenant?.previewSlug ?? tenantId}`;
+  return `${platformOrigin()}/${tenant?.previewSlug ?? tenantId}`;
 }
 
 /**
@@ -80,10 +112,9 @@ export function newsletterConfigFor(tenantId: string): NewsletterConfig {
   // Un tenant non ancora registrato in tenant-locales resta monolingua
   // italiano: pubblicare una lingua senza copy è peggio che non pubblicarla.
   const locales = getTenantLocaleConfig(tenantId) ?? { defaultLocale: "it", locales: ["it"] };
-  const siteUrl = siteUrlFor(tenantId);
 
   return resolveNewsletterConfig({
-    siteUrl,
+    siteUrl: operationalOriginFor(tenantId),
     siteName: findTenantById(tenantId)?.name ?? tenantId,
     senderDomain: process.env.EMAIL_SENDER_DOMAIN ?? "menuary.it",
 
@@ -144,7 +175,11 @@ export function newsletterContextFor(tenantId: string): NewsletterContext {
         brand: sender.brand,
         language,
         defaultLanguage: config.defaultLanguage,
-        siteUrl: config.siteUrl,
+        // La conferma usa `templateData.confirmationUrl`, già un URL operativo
+        // costruito dal package; il benvenuto linka la pagina pubblica del
+        // tenant, che per un tenant senza dominio proprio è sotto lo slug e
+        // quindi diversa dall'origine operativa di `config.siteUrl`.
+        publicSiteUrl: tenantPublicUrl(tenantId),
         templateData,
       });
 
@@ -178,7 +213,7 @@ function renderTransactional(
     brand: ReturnType<typeof resolveSender>["brand"];
     language: string;
     defaultLanguage: string;
-    siteUrl: string;
+    publicSiteUrl: string;
     templateData: Record<string, unknown>;
   },
 ) {
@@ -188,14 +223,14 @@ function renderTransactional(
         brand: ctx.brand,
         language: ctx.language,
         defaultLanguage: ctx.defaultLanguage,
-        confirmationUrl: String(ctx.templateData.confirmationUrl ?? ctx.siteUrl),
+        confirmationUrl: String(ctx.templateData.confirmationUrl ?? ctx.publicSiteUrl),
       });
     case "newsletter-welcome":
       return renderWelcomeEmail({
         brand: ctx.brand,
         language: ctx.language,
         defaultLanguage: ctx.defaultLanguage,
-        siteUrl: ctx.siteUrl,
+        siteUrl: ctx.publicSiteUrl,
       });
     default:
       return null;
@@ -205,4 +240,58 @@ function renderTransactional(
 /** True quando il tenant ha il modulo attivo. */
 export function newsletterEnabledFor(tenantId: string): boolean {
   return Boolean(findTenantById(tenantId)?.features.fanbaseCommunity);
+}
+
+/**
+ * Tutti i tenant con il modulo attivo, per il ciclo del cron: il dispatcher del
+ * package lavora su un tenant alla volta, quindi la funzione che smista le
+ * campagne deve iterare questa lista e costruire un contesto per ciascuno.
+ */
+export function listNewsletterEnabledTenantIds(): string[] {
+  return TENANTS.filter((tenant) => tenant.features.fanbaseCommunity).map((tenant) => tenant.id);
+}
+
+/**
+ * Risolve il tenant a partire da un token di conferma o disiscrizione, prima
+ * ancora di poter costruire un contesto — è per questo che i due token restano
+ * globalmente unici nello schema (vedi la migrazione): un link di conferma
+ * arriva senza sapere di quale tenant sia.
+ *
+ * Non è una lettura cross-tenant: il token identifica un solo tenant per
+ * costruzione, questa funzione fa solo da bootstrap per ottenerlo prima di
+ * costruire il contesto scoped.
+ */
+async function resolveTenantIdForToken(
+  table: "tenant_newsletter_confirmation_tokens" | "tenant_newsletter_unsubscribe_tokens",
+  token: string,
+): Promise<string | null> {
+  const db = createSupabaseServiceClient();
+  if (!db) return null;
+  const { data } = await (db as unknown as LooseDb).from(table).select("tenant_id").eq("token", token).maybeSingle();
+  return data?.tenant_id ?? null;
+}
+
+export function resolveTenantIdForConfirmationToken(token: string): Promise<string | null> {
+  return resolveTenantIdForToken("tenant_newsletter_confirmation_tokens", token);
+}
+
+export function resolveTenantIdForUnsubscribeToken(token: string): Promise<string | null> {
+  return resolveTenantIdForToken("tenant_newsletter_unsubscribe_tokens", token);
+}
+
+/**
+ * Stesso bootstrap per il tracking: la coppia (delivery id, tracker token) è
+ * unica su tutti i tenant, quindi identifica il tenant prima di poter
+ * costruire il contesto per registrare l'apertura o il click.
+ */
+export async function resolveTenantIdForDelivery(deliveryId: string, token: string): Promise<string | null> {
+  const db = createSupabaseServiceClient();
+  if (!db) return null;
+  const { data } = await (db as unknown as LooseDb)
+    .from("tenant_newsletter_deliveries")
+    .select("tenant_id")
+    .eq("id", deliveryId)
+    .eq("tracker_token", token)
+    .maybeSingle();
+  return data?.tenant_id ?? null;
 }

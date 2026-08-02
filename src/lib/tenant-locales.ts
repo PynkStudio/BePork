@@ -21,6 +21,13 @@ const TENANT_LOCALES: Record<string, TenantLocaleConfig> = {
     defaultLocale: "it",
     locales: ["it"],
   },
+  // Predisposto per l'inglese: la trilogia ha già un titolo internazionale
+  // ("The Emotion Dragons Trilogy"), ma pubblicare la lingua richiede copy
+  // completi sul sito e nella newsletter, non solo il titolo tradotto.
+  "valentina-orciuoli": {
+    defaultLocale: "it",
+    locales: ["it"],
+  },
 };
 
 export function getTenantLocaleConfig(tenantId: string) {

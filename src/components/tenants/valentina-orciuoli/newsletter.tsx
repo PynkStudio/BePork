@@ -43,6 +43,10 @@ export function useValentinaNewsletter() {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const email = String(form.get("email") ?? "").trim();
+    // Il checkbox è `required`, ma leggiamo il suo valore reale invece di darlo
+    // per scontato: se in futuro il form venisse inviato via `requestSubmit()`
+    // saltando la validazione nativa, il consenso resterebbe comunque esplicito.
+    const consent = form.get("consent") === "on";
     setNewsletterPending(true);
     setNewsletterError(null);
     try {
@@ -54,7 +58,7 @@ export function useValentinaNewsletter() {
           email,
           locale: document.documentElement.lang || "it",
           source: "valentina_orciuoli_site",
-          consent: true,
+          consent,
         }),
       });
       const data = await response.json().catch(() => ({}));
@@ -184,7 +188,7 @@ function ValentinaNewsletterForm({
         <input name="consent" type="checkbox" required />
         <span>Accetto la <Link href="/privacy">privacy policy</Link> e l&apos;invio della newsletter.</span>
       </label>
-      {sent ? <small>Grazie, la tua iscrizione è stata registrata.</small> : null}
+      {sent ? <small>Controlla la tua casella email: ti abbiamo mandato un link per confermare l&apos;iscrizione.</small> : null}
       {error ? <small role="alert">{error}</small> : null}
     </form>
   );

@@ -1,17 +1,29 @@
-export type NewsletterSubscriberStatus = "active" | "unsubscribed" | "bounced" | "complained";
+/**
+ * Tipi della dashboard newsletter di Menuary.
+ *
+ * Rispecchiano le colonne di `supabase/migrations/20260802200000_newsletter_canonical_schema.sql`,
+ * la variante multi-tenant dello schema di `@pynkstudio/newsletterapp`. Il corpo
+ * dei messaggi è per lingua (una mappa `{ it: "...", en: "..." }`) perché ogni
+ * tenant Menuary nasce predisposto per il multilingua, anche quando pubblica una
+ * sola lingua al primo rilascio (AGENTS.md).
+ */
+
 export type NewsletterMessageKind = "campaign" | "automation";
 export type NewsletterMessageStatus = "draft" | "scheduled" | "active" | "paused" | "sending" | "sent";
+export type NewsletterAutomationTrigger = "subscribed" | "unsubscribed";
+
+export type TranslationMap = Record<string, string>;
 
 export type NewsletterSubscriber = {
   id: string;
   tenantId: string;
   email: string;
   name: string | null;
-  locale: string;
-  source: string;
-  status: NewsletterSubscriberStatus;
+  preferredLanguage: string | null;
+  source: string | null;
+  subscribed: boolean;
   tags: string[];
-  consentAt: string;
+  consentAt: string | null;
   unsubscribedAt: string | null;
   createdAt: string;
 };
@@ -22,11 +34,11 @@ export type NewsletterMessage = {
   kind: NewsletterMessageKind;
   name: string;
   status: NewsletterMessageStatus;
-  triggerKey: string | null;
-  delayMinutes: number;
-  subject: string;
-  preheader: string | null;
-  bodyHtml: string;
+  automationTrigger: NewsletterAutomationTrigger | null;
+  automationDelayMinutes: number;
+  subjectTranslations: TranslationMap;
+  preheaderTranslations: TranslationMap;
+  bodyHtmlTranslations: TranslationMap;
   fromName: string | null;
   replyTo: string | null;
   scheduledAt: string | null;
@@ -47,7 +59,7 @@ export type NewsletterDelivery = {
   createdAt: string;
 };
 
-export type NewsletterUnsubscribe = {
+export type NewsletterUnsubscribeFeedback = {
   id: string;
   email: string;
   reasonCode: string | null;
@@ -59,15 +71,8 @@ export type NewsletterDashboardData = {
   subscribers: NewsletterSubscriber[];
   messages: NewsletterMessage[];
   deliveries: NewsletterDelivery[];
-  unsubscribes: NewsletterUnsubscribe[];
-  metrics: {
-    activeSubscribers: number;
-    unsubscribed: number;
-    sent: number;
-    delivered: number;
-    uniqueOpens: number;
-    uniqueClicks: number;
-    openRate: number;
-    clickRate: number;
-  };
+  unsubscribeFeedback: NewsletterUnsubscribeFeedback[];
+  /** Lingue in cui il tenant pubblica: guida quali campi lingua mostrare nel composer. */
+  locales: readonly string[];
+  defaultLocale: string;
 };

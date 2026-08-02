@@ -1,44 +1,51 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
-import { createSupabaseServiceClient } from "@/lib/supabase/service";
-import { getTenantById } from "@/lib/data/tenant";
-import { enqueueNewsletterTrigger } from "@/lib/newsletter/server";
+import { subscribeToNewsletter } from "@pynkstudio/newsletterapp/server";
 
+import { newsletterContextFor, newsletterEnabledFor } from "@/lib/newsletter/config";
+
+/**
+ * Iscrizione pubblica alla newsletter di un tenant.
+ *
+ * Honeypot, consenso obbligatorio, rate limit per IP e cooldown per indirizzo
+ * vivono in `@pynkstudio/newsletterapp`; qui c'è solo il montaggio multi-tenant:
+ * il tenant arriva esplicito nel body (i siti dei tenant lo passano già così),
+ * viene validato contro il modulo attivo, e si costruisce un contesto per lui.
+ *
+ * Come nel package, ogni esito che coinvolge un indirizzo reale risponde
+ * `{ ok: true }`: l'endpoint non deve rivelare se un indirizzo è già iscritto.
+ */
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null) as Record<string, unknown> | null;
   const tenantId = typeof body?.tenantId === "string" ? body.tenantId.trim().slice(0, 120) : "";
-  const email = typeof body?.email === "string" ? body.email.trim().toLowerCase().slice(0, 320) : "";
-  if (!tenantId || body?.consent !== true || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return NextResponse.json({ error: "Dati non validi." }, { status: 400 });
-  }
-  const tenant = await getTenantById(tenantId);
-  if (!tenant?.features.fanbaseCommunity) {
+
+  if (!tenantId || !newsletterEnabledFor(tenantId)) {
     return NextResponse.json({ error: "Newsletter non disponibile." }, { status: 404 });
   }
-  const raw = createSupabaseServiceClient();
-  if (!raw) return NextResponse.json({ error: "Servizio non disponibile." }, { status: 503 });
-  const db = raw as any;
-  const now = new Date().toISOString();
-  const { data: existing } = await db
-    .from("tenant_newsletter_subscribers")
-    .select("id, status")
-    .eq("tenant_id", tenantId)
-    .eq("email", email)
-    .maybeSingle();
-  const { data, error } = await db.from("tenant_newsletter_subscribers").upsert({
-    tenant_id: tenantId,
-    email,
-    name: typeof body?.name === "string" ? body.name.trim().slice(0, 160) || null : null,
-    locale: typeof body?.locale === "string" ? body.locale.slice(0, 12) : "it",
-    source: typeof body?.source === "string" ? body.source.slice(0, 80) : "web",
-    status: "active",
-    consent_at: now,
-    unsubscribed_at: null,
-    updated_at: now,
-  }, { onConflict: "tenant_id,email" }).select("id").single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  if (!existing || existing.status !== "active") {
-    await enqueueNewsletterTrigger({ tenantId, triggerKey: "subscriber_joined", subscriberId: data.id });
+
+  const context = newsletterContextFor(tenantId);
+  const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
+
+  const result = await subscribeToNewsletter(context, {
+    email: body?.email,
+    consent: body?.consent,
+    honeypot: body?.website ?? body?.company,
+    preferredLanguage: body?.locale,
+    source: body?.source,
+    clientIp,
+  });
+
+  if (result.ok) {
+    return NextResponse.json({ ok: true });
   }
-  return NextResponse.json({ ok: true });
+
+  switch (result.error) {
+    case "invalid_email":
+      return NextResponse.json({ error: "Email non valida." }, { status: 400 });
+    case "consent_required":
+      return NextResponse.json({ error: "Il consenso è obbligatorio." }, { status: 400 });
+    case "rate_limited":
+      return NextResponse.json({ error: "Troppe richieste, riprova più tardi." }, { status: 429 });
+    default:
+      return NextResponse.json({ error: "Iscrizione non riuscita." }, { status: 500 });
+  }
 }
