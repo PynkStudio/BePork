@@ -220,7 +220,9 @@ export function newsletterConfigFor(tenant: TenantRow): NewsletterConfig {
     siteLanguages: locales.locales,
     defaultSiteLanguage: locales.defaultLocale,
     confirmPath: "/api/newsletter/confirm",
-    unsubscribePath: "/newsletter/preferenze",
+    // Sotto /api, non una pagina: vedi la stessa nota in
+    // `src/lib/newsletter/config.ts` lato Next.js — tenuta in sync qui.
+    unsubscribePath: "/api/newsletter/preferenze",
     oneClickUnsubscribePath: "/api/newsletter/unsubscribe",
     trackingBasePath: "/api/newsletter/t",
     tables: TENANT_TABLES,

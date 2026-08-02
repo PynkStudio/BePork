@@ -7,9 +7,9 @@ import { newsletterConfigFor, newsletterContextFor, resolveTenantIdForUnsubscrib
  * Target di `List-Unsubscribe` (RFC 8058) — solo one-click.
  *
  * La scelta granulare (mantenere il digest, disattivare solo le notifiche di
- * story, lasciare un motivo) vive su `/api/newsletter/preferenze` e sulla
- * pagina `/newsletter/preferenze`: questo endpoint è quello che i provider
- * mostrano accanto al mittente, e deve fare esattamente una cosa, subito.
+ * story, lasciare un motivo) vive su `/api/newsletter/preferenze`: questo
+ * endpoint è quello che i provider mostrano accanto al mittente, e deve fare
+ * esattamente una cosa, subito.
  *
  * Il token non porta il tenant: va risolto per primo, perché resta
  * globalmente unico nello schema apposta per questo bootstrap (vedi la
@@ -20,7 +20,7 @@ export async function GET(request: Request) {
   const tenantId = token ? await resolveTenantIdForUnsubscribeToken(token) : null;
 
   const destination = new URL(
-    tenantId ? newsletterConfigFor(tenantId).unsubscribePath : "/newsletter/preferenze",
+    tenantId ? newsletterConfigFor(tenantId).unsubscribePath : "/api/newsletter/preferenze",
     request.url,
   );
   if (token) destination.searchParams.set("token", token);

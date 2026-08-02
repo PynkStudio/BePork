@@ -127,7 +127,12 @@ export function newsletterConfigFor(tenantId: string): NewsletterConfig {
     // Supabase: sono gli URL che finiscono dentro le email, e devono combaciare
     // col dominio del mittente.
     confirmPath: "/api/newsletter/confirm",
-    unsubscribePath: "/newsletter/preferenze",
+    // Sotto /api/newsletter, non una pagina Next.js: il middleware di
+    // piattaforma tratta i path di primo livello come contenuto di un tenant
+    // con prefisso lingua, e una pagina reale a /newsletter/preferenze finiva
+    // 404 perché non è contenuto di nessun tenant — il token nell'URL
+    // determina il tenant, non l'URL.
+    unsubscribePath: "/api/newsletter/preferenze",
     oneClickUnsubscribePath: "/api/newsletter/unsubscribe",
     trackingBasePath: "/api/newsletter/t",
 
