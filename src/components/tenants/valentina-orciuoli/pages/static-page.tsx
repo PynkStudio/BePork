@@ -18,7 +18,7 @@ import {
   type ValentinaCreativeWork,
 } from "@/components/tenants/valentina-orciuoli/content";
 
-type ValentinaPageKind = "libri" | "autrice" | "eventi" | "contatti" | "link";
+type ValentinaPageKind = "libri" | "autrice" | "eventi" | "contatti" | "link" | "blog";
 
 export function ValentinaOrciuoliStaticPage({ page }: { page: ValentinaPageKind }) {
   const gestioneHref = getTenantGestioneExternalHref("valentina-orciuoli");
@@ -188,6 +188,36 @@ export function ValentinaOrciuoliStaticPage({ page }: { page: ValentinaPageKind 
         </section>
       )}
 
+      {page === "blog" && (
+        <section className="vo-section vo-events-section vo-subpage-section">
+          <div className="vo-event-list" aria-label="Articoli del blog">
+            {[
+              {
+                category: "Psicologia delle storie",
+                title: "Perché le storie ci attraversano",
+                copy: "Appunti su simboli, emozioni e personaggi che diventano specchi interiori.",
+              },
+              {
+                category: "Dietro le quinte",
+                title: "Dentro la scrittura di un romanzo",
+                copy: "Processo creativo, atmosfere, ricerca e scelte narrative dietro i libri.",
+              },
+              {
+                category: "Marketing editoriale",
+                title: "Comunicare un libro senza snaturarlo",
+                copy: "Riflessioni sul racconto pubblico di un’opera e sul rapporto con i lettori.",
+              },
+            ].map((article) => (
+              <article key={article.title}>
+                <span>{article.category}</span>
+                <h3>{article.title}</h3>
+                <p>{article.copy}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+
       {page === "contatti" && (
         <section className="vo-section vo-contact-section vo-subpage-section">
           <div>
@@ -310,6 +340,7 @@ const pageTitles: Record<ValentinaPageKind, string> = {
   eventi: "",
   contatti: "Contatti",
   link: "Link",
+  blog: "Blog",
 };
 
 const pageEyebrows: Record<ValentinaPageKind, string> = {
@@ -318,6 +349,7 @@ const pageEyebrows: Record<ValentinaPageKind, string> = {
   eventi: "Eventi",
   contatti: "Valentina Orciuoli",
   link: "Valentina Orciuoli",
+  blog: "Valentina Orciuoli",
 };
 
 const pageLeads: Record<ValentinaPageKind, string> = {
@@ -328,4 +360,5 @@ const pageLeads: Record<ValentinaPageKind, string> = {
   eventi: "",
   contatti: "Form diretto, Instagram e email ufficiale.",
   link: "Un unico posto, brandizzato Valentina Orciuoli, per raggiungere libri, social e aggiornamenti.",
+  blog: "Psicologia delle storie, dietro le quinte e riflessioni sul mondo editoriale.",
 };

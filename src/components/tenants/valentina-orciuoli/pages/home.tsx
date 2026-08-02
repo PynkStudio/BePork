@@ -76,8 +76,7 @@ export function ValentinaOrciuoliHomePage() {
               href={`${valentinaBasePath}/autrice`}
               aria-label="Vai alla pagina Chi sono di Valentina Orciuoli"
             >
-              <img src="/valentina-orciuoli/sfondo-valentina.webp" alt="Valentina Orciuoli" />
-              <span aria-hidden="true">Chi sono</span>
+              <img src="/valentina-orciuoli/valentina-appoggiata-no-books.png" alt="Valentina Orciuoli" />
             </Link>
           </motion.div>
         </div>

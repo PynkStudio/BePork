@@ -2133,9 +2133,8 @@
     inset: 0;
     z-index: -4;
     background:
-      radial-gradient(circle at 73% 34%, rgba(71, 45, 104, 0.34), transparent 22rem),
-      radial-gradient(circle at 18% 72%, rgba(198, 161, 90, 0.1), transparent 18rem),
-      linear-gradient(135deg, #050505 0%, #09070d 44%, #1a1026 100%);
+      linear-gradient(180deg, rgba(5, 5, 5, 0.02) 0%, rgba(5, 5, 5, 0.04) 100%),
+      url("/valentina-orciuoli/home-editorial-bg.webp") center / cover no-repeat;
   }
 
   .vo-home-site .vo-hero-cosmos::before,
@@ -2147,38 +2146,29 @@
   }
 
   .vo-home-site .vo-hero-cosmos::before {
-    background:
-      linear-gradient(90deg, rgba(5, 5, 5, 0.1), rgba(5, 5, 5, 0.64)),
-      url("/valentina-orciuoli/sfondo-valentina.webp") 72% center / cover no-repeat;
-    opacity: 0.18;
-    filter: grayscale(0.25) saturate(0.7) blur(1px);
+    display: none;
   }
 
   .vo-home-site .vo-hero-cosmos::after {
-    background-image:
-      radial-gradient(circle, rgba(198, 161, 90, 0.34) 0 1px, transparent 1.4px),
-      radial-gradient(circle, rgba(71, 45, 104, 0.28) 0 1px, transparent 1.5px);
-    background-position: 0 0, 48px 72px;
-    background-size: 190px 190px, 260px 260px;
-    opacity: 0.16;
+    display: none;
   }
 
   .vo-home-site .vo-hero-shade {
     z-index: -1;
     background:
-      linear-gradient(90deg, rgba(3, 3, 5, 0.1) 0%, rgba(3, 3, 5, 0.02) 50%, rgba(3, 3, 5, 0.08) 100%),
-      linear-gradient(180deg, rgba(3, 3, 5, 0.22) 0%, transparent 48%, #030305 100%);
+      radial-gradient(circle at 73% 62%, rgba(71, 45, 104, 0.2), transparent 24rem),
+      linear-gradient(180deg, rgba(5, 5, 5, 0) 0%, rgba(5, 5, 5, 0.28) 78%, #050505 100%);
   }
 
   .vo-home-site .vo-header {
     display: grid;
     width: min(100% - 7rem, 1390px);
     min-height: 7.4rem;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 0.82fr) auto;
+    grid-template-columns: minmax(0, 0.84fr) auto minmax(0, 1fr) auto;
     margin-top: 0;
     gap: clamp(1.2rem, 2.3vw, 3.2rem);
     border: 0;
-    background: linear-gradient(180deg, rgba(3, 3, 5, 0.88), transparent);
+    background: transparent;
     padding: 0 0.8rem;
     box-shadow: none;
     backdrop-filter: none;
@@ -2411,26 +2401,11 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: 72% center;
-    filter: saturate(0.86) contrast(1.08) brightness(0.86);
-    transform: scale(1.08);
+    object-position: 53% top;
+    filter: saturate(0.78) contrast(1.08) brightness(0.82);
+    mix-blend-mode: screen;
+    transform: scale(1.12);
     transition: transform 900ms cubic-bezier(0.16, 1, 0.3, 1), filter 900ms ease;
-  }
-
-  .vo-home-site .vo-hero-portrait-link span {
-    position: absolute;
-    right: 12%;
-    bottom: 13%;
-    z-index: 3;
-    border-bottom: 1px solid rgba(198, 161, 90, 0.48);
-    padding-bottom: 0.38rem;
-    color: #f4f1eb;
-    font-family: Inter, ui-sans-serif, system-ui, sans-serif;
-    font-size: 0.68rem;
-    font-weight: 800;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    opacity: 0.82;
   }
 
   .vo-home-site .vo-hero-portrait-link:hover,
@@ -2446,7 +2421,7 @@
   .vo-home-site .vo-hero-portrait-link:hover img,
   .vo-home-site .vo-hero-portrait-link:focus-visible img {
     filter: saturate(0.92) contrast(1.12) brightness(0.95);
-    transform: scale(1.13);
+    transform: scale(1.16);
   }
 
   @media (max-width: 1120px) {
@@ -2525,8 +2500,8 @@
 
     .vo-home-site .vo-hero-cosmos {
       background:
-        radial-gradient(circle at 50% 55%, rgba(71, 45, 104, 0.32), transparent 20rem),
-        linear-gradient(180deg, #050505 0%, #1a1026 54%, #050505 100%);
+        linear-gradient(180deg, rgba(5, 5, 5, 0) 0%, rgba(5, 5, 5, 0.38) 78%, #050505 100%),
+        url("/valentina-orciuoli/home-editorial-bg.webp") center / cover no-repeat;
     }
 
     .vo-home-site .vo-hero-inner {
