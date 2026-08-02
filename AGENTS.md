@@ -90,6 +90,29 @@ I **moduli** in `src/components/modules/` e `src/lib/` sono l'unica cosa che va 
 
 ---
 
+## Newsletter: la logica vive in `@pynkstudio/newsletterapp`, non qui
+
+Il modulo newsletter (attivato dal feature-flag `fanbaseCommunity`) **non ha logica propria in questa repo**. Iscrizione con double opt-in, preferenze, disiscrizione one-click RFC 8058, soppressioni, dispatch di campagne e automazioni, tracking aperture/click — tutto vive in [`@pynkstudio/newsletterapp`](https://github.com/PynkStudio/pynkstudio-newsletterapp), package condiviso PynkStudio pinnato a `v0.2.0` (clone locale `~/Documents/Unreal Projects/siti/pynkstudio-newsletterapp`). Gemello di `@pynkstudio/mailapp`: quello possiede la casella di posta, questo possiede la lista.
+
+**Qualsiasi cambiamento al comportamento della newsletter va scritto nel package**, non in un `if (tenantId === "...")` qui dentro. Resta in questa repo solo:
+
+- `src/lib/newsletter/config.ts` — mappatura tabelle/RPC verso `@pynkstudio/newsletterapp`, risoluzione lingue e dominio per tenant;
+- `src/lib/newsletter/templates.ts` — le tre email transazionali che il package nomina (conferma, benvenuto, campagna), rese con l'identità visiva della piattaforma/tenant;
+- `src/lib/newsletter/server.ts` — CRUD manuale della console gestione (aggiungere un iscritto a mano, salvare un messaggio) e l'invocazione del dispatch;
+- `supabase/functions/_shared/newsletter*.ts` — stessa mappatura, lato edge function. **Va tenuta manualmente allineata a `src/lib/newsletter/config.ts`**: i due runtime (Next.js e Deno) non condividono moduli, e uno dei due bug trovati durante l'attivazione (`unsubscribePath` puntato a una pagina 404) è nato proprio da una config non allineata.
+
+Il package è **multi-tenant dal v0.2.0**: ogni funzione filtra le query e marchia le scritture con `context.tenantId`, e i moduli server non chiamano mai `db.from()` direttamente — passano da `selectFrom`/`insertInto`/`upsertInto`/`updateIn`/`deleteFrom` (`@pynkstudio/newsletterapp/server`), che derivano nome tabella e scope dalla chiave logica. Un tenant nuovo che attiva `fanbaseCommunity` eredita tutto questo gratis: non serve toccare il package, basta che `tenant-locales.ts` abbia un'entry per lui (altrimenti resta monolingua italiano di default).
+
+Due pin da tenere sincronizzati quando si aggiorna il package:
+1. il tarball npm in `package.json` (route Next.js e console gestione);
+2. l'URL raw dell'albero `deno/` in `supabase/functions/_shared/newsletterapp.ts` (edge function) — Deno non può usare `dist/`, scritto con estensioni `.js` per Node ESM.
+
+I file Deno (`_shared/newsletterapp.ts`, `_shared/newsletter.ts`, `process-tenant-newsletter/index.ts`) portano `// @ts-nocheck`: il `tsconfig.json` di root include `**/*.ts` e finirebbe per tipizzare specifier `npm:`/URL raw e il global `Deno` con le regole di Next.js. Si verificano invece con `deno check --config supabase/functions/process-tenant-newsletter/deno.json <file>` — l'auto-discovery del config senza `--config` esplicito non è affidabile in questa repo.
+
+Nota per chi deploya le edge function da riga di comando: se `supabase functions deploy` fallisce con `Entrypoint path does not exist` pur essendo nella directory giusta, controllare `vercel ls`-equivalente per Supabase — in questo ambiente la CLI a volte risolve `workdir` su un `~/supabase/` estraneo invece della repo corrente. Passare `--workdir "$(pwd)"` esplicito risolve.
+
+---
+
 ## Come aggiungere un nuovo tenant — checklist
 
 ### 1. Registra il tenant
