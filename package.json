@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@pynkstudio/mailapp": "https://github.com/PynkStudio/pynkstudio-mailapp/archive/refs/tags/v0.3.1.tar.gz",
+    "@pynkstudio/newsletterapp": "https://github.com/PynkStudio/pynkstudio-newsletterapp/archive/refs/tags/v0.2.0.tar.gz",
     "@react-pdf/renderer": "^4.5.1",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.105.4",
