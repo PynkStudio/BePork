@@ -19,7 +19,6 @@ import {
   instagramHref,
   tiktokHref,
   trilogy,
-  valentinaBasePath,
 } from "@/components/tenants/valentina-orciuoli/content";
 
 export function ValentinaOrciuoliHomePage() {
@@ -31,56 +30,16 @@ export function ValentinaOrciuoliHomePage() {
       <div className="vo-home-header">
         <ValentinaOrciuoliHeader variant="home" />
       </div>
-      <section id="top" className="vo-hero">
-        <div className="vo-hero-cosmos" aria-hidden="true" />
-        <div className="vo-hero-shade" aria-hidden="true" />
-
-        <div className="vo-hero-inner">
-          <motion.div
-            className="vo-hero-copy"
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-          >
-            <h1>
-              <span>Valentina</span>
-              <span>Orciuoli</span>
-            </h1>
-            <div className="vo-hero-byline">
-              <span aria-hidden="true" />
-              <p>Autrice italiana</p>
-              <span aria-hidden="true" />
-            </div>
-            <p className="vo-hero-series">Fantasy romance e noir psicologico</p>
-            <p className="vo-hero-manifesto">
-              Le storie sono specchi.
-              <br />
-              Attraverso metafore e simboli raccontano
-              <br />
-              ciò che spesso non riusciamo a dire.
-            </p>
-            <div className="vo-hero-actions">
-              <a className="vo-btn vo-btn-primary vo-btn-trilogy" href="#libri">
-                Scopri i miei libri <span aria-hidden="true">✦</span>
-              </a>
-            </div>
-          </motion.div>
-          <motion.div
-            className="vo-hero-portrait-wrap"
-            initial={{ opacity: 0, scale: 0.96, y: 22 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.15, ease: "easeOut" }}
-          >
-            <Link
-              className="vo-hero-portrait-link"
-              href={`${valentinaBasePath}/autrice`}
-              aria-label="Vai alla pagina Chi sono di Valentina Orciuoli"
-            >
-              <img src="/valentina-orciuoli/valentina-appoggiata-no-books.png" alt="Valentina Orciuoli" />
-            </Link>
-          </motion.div>
-        </div>
-        <span className="vo-hero-signature" aria-hidden="true">VO✦</span>
+      <section id="top" className="vo-hero vo-hero-paper">
+        <div className="vo-hero-paper-texture" aria-hidden="true" />
+        <motion.p
+          className="vo-hero-paper-name"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.9, ease: "easeOut" }}
+        >
+          valentina orciuoli
+        </motion.p>
       </section>
 
       <div className="vo-sticky-header-region">

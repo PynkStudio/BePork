@@ -1,6 +1,15 @@
 /* eslint-disable @next/next/no-img-element */
-import { Instagram, Music2 } from "lucide-react";
-import { instagramHref, tiktokHref, valentinaBasePath } from "./content";
+import { valentinaBasePath } from "./content";
+
+type NavItem = { label: string; href: string; current?: boolean };
+
+const homeNavItems: NavItem[] = [
+  { label: "Home", href: valentinaBasePath, current: true },
+  { label: "Libri", href: `${valentinaBasePath}/libri` },
+  { label: "Chi sono", href: `${valentinaBasePath}/autrice` },
+  { label: "Blog", href: `${valentinaBasePath}/blog` },
+  { label: "Contatti", href: `${valentinaBasePath}/contatti` },
+];
 
 export function ValentinaOrciuoliHeader({ variant = "default" }: { variant?: "default" | "home" }) {
   if (variant === "default") {
@@ -23,30 +32,17 @@ export function ValentinaOrciuoliHeader({ variant = "default" }: { variant?: "de
   }
 
   return (
-    <header className="vo-header">
-      <nav className="vo-nav vo-nav-primary" aria-label="Menu principale">
-        <a href={valentinaBasePath}>Home</a>
-        <a href={`${valentinaBasePath}/libri`}>Libri</a>
-        <a href={`${valentinaBasePath}/autrice`}>Chi sono</a>
-      </nav>
-      <a className="vo-brand" href={valentinaBasePath} aria-label="Valentina Orciuoli, home">
-        <span className="vo-brand-mark" aria-hidden="true">VO</span>
-      </a>
-      <nav className="vo-nav vo-nav-secondary" aria-label="Altre pagine">
-        <a href={`${valentinaBasePath}/blog`}>Blog</a>
-        <a href={`${valentinaBasePath}/contatti`}>Contatti</a>
-      </nav>
-      <div className="vo-header-socials" aria-label="Social">
-        <a href={instagramHref} target="_blank" rel="noopener noreferrer" aria-label="Instagram">
-          <Instagram size={18} strokeWidth={1.7} />
-        </a>
-        <a href={tiktokHref} target="_blank" rel="noopener noreferrer" aria-label="TikTok">
-          <Music2 size={18} strokeWidth={1.7} />
-        </a>
+    <header className="vo-header vo-header-elegant">
+      <div className="vo-header-hairline" aria-hidden="true">
+        <span />
       </div>
-      <a className="vo-mobile-menu-link" href={`${valentinaBasePath}/libri`}>
-        Menu libri
-      </a>
+      <nav className="vo-nav vo-nav-elegant" aria-label="Menu principale">
+        {homeNavItems.map((item) => (
+          <a key={item.href} href={item.href} aria-current={item.current ? "page" : undefined}>
+            {item.label}
+          </a>
+        ))}
+      </nav>
     </header>
   );
 }
