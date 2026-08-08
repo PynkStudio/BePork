@@ -104,6 +104,7 @@ export const VALENTINA_ORCIUOLI_MODULE_FLAGS: TenantFeatureFlags = {
   reputationReviews: false,
   fanbaseCommunity: true,
   linktree: true,
+  blog: true,
 };
 
 /** Studio Legale Aranzulla: studio legale su verticale services. */

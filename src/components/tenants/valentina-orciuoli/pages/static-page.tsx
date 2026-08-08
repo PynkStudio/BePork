@@ -3,12 +3,14 @@
 /* eslint-disable @next/next/no-img-element */
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { ArrowRight, ExternalLink, Instagram, Mail, Music2, Send } from "lucide-react";
+import { ArrowRight, BookOpen, Instagram, Mail, Music2, Send } from "lucide-react";
 import { getTenantGestioneExternalHref } from "@/lib/gestione-routing";
 import { ValentinaOrciuoliHeader } from "@/components/tenants/valentina-orciuoli/vo-header";
 import { TenantLinktreeView, type TenantLinktreeItem } from "@/components/modules/linktree/linktree-view";
+import { TenantBlogSection } from "@/components/modules/blog/blog-section";
+import type { TenantBlogPost } from "@/lib/tenant-blog";
 import {
-  amazonHref,
+  amazonStoreHref,
   instagramHref,
   tiktokHref,
   valentinaEmail,
@@ -16,9 +18,8 @@ import {
   valentinaBasePath,
   valentinaCreativeWorks,
   type ValentinaCreativeWork,
+  type ValentinaPageKind,
 } from "@/components/tenants/valentina-orciuoli/content";
-
-type ValentinaPageKind = "libri" | "autrice" | "eventi" | "contatti" | "link" | "blog";
 
 export function ValentinaOrciuoliStaticPage({ page }: { page: ValentinaPageKind }) {
   const gestioneHref = getTenantGestioneExternalHref("valentina-orciuoli");
@@ -31,6 +32,21 @@ export function ValentinaOrciuoliStaticPage({ page }: { page: ValentinaPageKind 
     })),
   );
   const [creativeWorks, setCreativeWorks] = useState<ValentinaCreativeWork[]>(valentinaCreativeWorks);
+  const [blogPosts, setBlogPosts] = useState<TenantBlogPost[]>([]);
+
+  useEffect(() => {
+    if (page !== "blog") return;
+    let alive = true;
+    fetch("/api/tenant/valentina-orciuoli/blog")
+      .then((res) => res.json())
+      .then((data) => {
+        if (alive && Array.isArray(data.posts)) setBlogPosts(data.posts);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [page]);
 
   useEffect(() => {
     if (page !== "link") return;
@@ -189,33 +205,23 @@ export function ValentinaOrciuoliStaticPage({ page }: { page: ValentinaPageKind 
       )}
 
       {page === "blog" && (
-        <section className="vo-section vo-events-section vo-subpage-section">
-          <div className="vo-event-list" aria-label="Articoli del blog">
-            {[
-              {
-                category: "Psicologia delle storie",
-                title: "Perché le storie ci attraversano",
-                copy: "Appunti su simboli, emozioni e personaggi che diventano specchi interiori.",
-              },
-              {
-                category: "Dietro le quinte",
-                title: "Dentro la scrittura di un romanzo",
-                copy: "Processo creativo, atmosfere, ricerca e scelte narrative dietro i libri.",
-              },
-              {
-                category: "Marketing editoriale",
-                title: "Comunicare un libro senza snaturarlo",
-                copy: "Riflessioni sul racconto pubblico di un’opera e sul rapporto con i lettori.",
-              },
-            ].map((article) => (
-              <article key={article.title}>
-                <span>{article.category}</span>
-                <h3>{article.title}</h3>
-                <p>{article.copy}</p>
+        blogPosts.length > 0 ? (
+          <TenantBlogSection tenantId="valentina-orciuoli" posts={blogPosts} className="vo-blog-section" />
+        ) : (
+          <section className="vo-section vo-events-section vo-subpage-section">
+            <div className="vo-event-list" aria-label="Blog">
+              <article>
+                <span>In aggiornamento</span>
+                <h3>I primi articoli sono in arrivo</h3>
+                <p>
+                  I contenuti verranno pubblicati qui appena pronti. Per novità nel frattempo
+                  puoi seguire Valentina sui social o contattarla{" "}
+                  <Link href={`${valentinaBasePath}/contatti`}>qui</Link>.
+                </p>
               </article>
-            ))}
-          </div>
-        </section>
+            </div>
+          </section>
+        )
       )}
 
       {page === "contatti" && (
@@ -245,7 +251,7 @@ export function ValentinaOrciuoliStaticPage({ page }: { page: ValentinaPageKind 
           <div className="vo-linktree-card">
             <img src="/valentina-orciuoli/logo.png" alt="" aria-hidden="true" />
             <span className="vo-dragon-mark">Link ufficiali</span>
-            <h2>Valentina Orciuoli</h2>
+            <h1>Valentina Orciuoli</h1>
             <p>Libri, social, contatti ed eventi dell&apos;autrice.</p>
             <TenantLinktreeView items={linktreeItems} className="vo-linktree-list" />
           </div>
@@ -262,8 +268,11 @@ export function ValentinaOrciuoliStaticPage({ page }: { page: ValentinaPageKind 
           <a href={instagramHref} target="_blank" rel="noopener noreferrer">
             <Instagram size={15} /> Instagram
           </a>
-          <a href={amazonHref} target="_blank" rel="noopener noreferrer">
-            Amazon <ExternalLink size={14} />
+          <a href={tiktokHref} target="_blank" rel="noopener noreferrer">
+            <Music2 size={15} /> TikTok
+          </a>
+          <a href={amazonStoreHref} target="_blank" rel="noopener noreferrer">
+            <BookOpen size={15} /> Amazon
           </a>
           <Link href="/privacy">Privacy Policy</Link>
           <Link href="/cookie">Cookie Policy</Link>
@@ -337,7 +346,7 @@ function ValentinaContactForm() {
 const pageTitles: Record<ValentinaPageKind, string> = {
   libri: "Valentina Orciuoli",
   autrice: "Scopri chi è",
-  eventi: "",
+  eventi: "Eventi",
   contatti: "Contatti",
   link: "Link",
   blog: "Blog",
@@ -346,7 +355,7 @@ const pageTitles: Record<ValentinaPageKind, string> = {
 const pageEyebrows: Record<ValentinaPageKind, string> = {
   libri: "Scopri i libri di",
   autrice: "Autrice",
-  eventi: "Eventi",
+  eventi: "Valentina Orciuoli",
   contatti: "Valentina Orciuoli",
   link: "Valentina Orciuoli",
   blog: "Valentina Orciuoli",

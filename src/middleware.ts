@@ -49,6 +49,7 @@ import {
   type MarketingRouteKey,
 } from "@/lib/marketing-slugs";
 import { isRouteModuleAllowed } from "@/lib/tenant-route-modules";
+import { valentinaStaticPageKinds } from "@/components/tenants/valentina-orciuoli/content";
 
 const LOCALE_SET = new Set<string>(SUPPORTED_LOCALES);
 const TENANT_LOCALE_REWRITE_HEADER = "x-tenant-locale-rewrite";
@@ -563,8 +564,16 @@ function handlePreviewTenantLocale(
     );
   }
   const rest = parts.slice(2).join("/");
+  const firstSegment = rest.split("/")[0];
+  // Il tenant valentina-orciuoli serve alcune pagine (contatti, blog, ...) tramite
+  // [previewSlug]/[bookId]: se il segmento coincide anche con una route globale
+  // condivisa (es. /contatti food, /blog PynkStudio) va sempre priorità alla pagina
+  // propria del tenant, altrimenti quelle pagine finiscono dirottate sui template sbagliati.
+  const isValentinaOwnPage =
+    tenantId === "valentina-orciuoli" &&
+    (valentinaStaticPageKinds as readonly string[]).includes(firstSegment);
   const rewrittenPathname =
-    rest && PREVIEW_GLOBAL_TENANT_ROUTES.has(rest.split("/")[0])
+    rest && !isValentinaOwnPage && PREVIEW_GLOBAL_TENANT_ROUTES.has(firstSegment)
       ? `/${rest}`
       : `/${previewSlug}${rest ? `/${rest}` : ""}`;
   return tenantLocaleRewrite(

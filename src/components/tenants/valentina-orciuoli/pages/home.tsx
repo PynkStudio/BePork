@@ -32,14 +32,14 @@ export function ValentinaOrciuoliHomePage() {
       </div>
       <section id="top" className="vo-hero vo-hero-paper">
         <div className="vo-hero-paper-texture" aria-hidden="true" />
-        <motion.p
+        <motion.h1
           className="vo-hero-paper-name"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, ease: "easeOut" }}
         >
           valentina orciuoli
-        </motion.p>
+        </motion.h1>
       </section>
 
       <div className="vo-sticky-header-region">
@@ -149,7 +149,7 @@ export function ValentinaOrciuoliHomePage() {
             <Link href="/privacy">Privacy Policy</Link>
             <Link href="/cookie">Cookie Policy</Link>
             <a className="vo-footer-staff-link" href={staffHref} target="_blank" rel="noopener noreferrer">
-              Staff
+              Gestione
             </a>
           </div>
         </footer>

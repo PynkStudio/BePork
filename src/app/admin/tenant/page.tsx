@@ -19,7 +19,7 @@ import { HubriseIntegrationModal } from "@/components/admin/tenant/hubrise-integ
 import { StripeIntegrationModal } from "@/components/admin/tenant/stripe-integration-modal";
 import { HubriseInboxBanner } from "@/components/admin/tenant/hubrise-inbox-banner";
 import { AdminTenantLocationsPanel } from "@/components/admin/tenant-locations-panel";
-import { useTenant } from "@/components/core/tenant-provider";
+import { useTenantOrNull } from "@/components/core/tenant-provider";
 import { usePlatformMode } from "@/components/core/platform-mode-provider";
 import type {
   TenantFeatureFlags,
@@ -107,7 +107,7 @@ type TenantAdvancedModalProps = {
 
 export default function AdminTenantPage() {
   const mode = usePlatformMode();
-  const activeTenant = useTenant();
+  const activeTenant = useTenantOrNull();
   const overrides = useTenantAdminStore((state) => state.overrides);
   const setTenantEnabled = useTenantAdminStore((state) => state.setTenantEnabled);
   const setFeatureEnabled = useTenantAdminStore((state) => state.setFeatureEnabled);
@@ -267,7 +267,7 @@ export default function AdminTenantPage() {
         <div className="mt-3 divide-y divide-pork-ink/10">
           {filteredTenants.map((tenant) => {
             const effective = mergeTenantOverrides(tenant, overrides[tenant.id]);
-            const current = tenant.id === activeTenant.id;
+            const current = tenant.id === activeTenant?.id;
             const demoEnabled = demoControls[tenant.id]?.enabled ?? true;
             const backendLive = demoControls[tenant.id]?.backendLive ?? false;
             const isDemoSaving = demoSaving[tenant.id] ?? false;

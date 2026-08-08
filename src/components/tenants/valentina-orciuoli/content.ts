@@ -1,5 +1,10 @@
 export const valentinaBasePath = "/valentina-orciuoli";
 
+/** Pagine statiche proprie del tenant, servite da [previewSlug]/[bookId] — usato anche dal middleware
+ * per evitare che questi segmenti vengano dirottati sulle route globali (es. /contatti, /blog food/PynkStudio). */
+export const valentinaStaticPageKinds = ["libri", "autrice", "eventi", "contatti", "link", "blog"] as const;
+export type ValentinaPageKind = (typeof valentinaStaticPageKinds)[number];
+
 export const amazonHref = "https://www.amazon.it/Anxiety-Valentina-Orciuoli-ebook/dp/B0F1KVZKFC";
 export const amazonStoreHref = "https://www.amazon.it/stores/Valentina-Orciuoli/author/B0F1TXYZ27?ref=ap_rdr&shoppingPortalEnabled=true";
 export const trilogyHref = "https://www.amazon.it/stores/author/B0F1TXYZ27/allbooks";

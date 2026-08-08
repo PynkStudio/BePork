@@ -3,13 +3,18 @@ import { valentinaBasePath } from "./content";
 
 type NavItem = { label: string; href: string; current?: boolean };
 
-const homeNavItems: NavItem[] = [
-  { label: "Home", href: valentinaBasePath, current: true },
+const navItems: NavItem[] = [
+  { label: "Home", href: valentinaBasePath },
   { label: "Libri", href: `${valentinaBasePath}/libri` },
   { label: "Chi sono", href: `${valentinaBasePath}/autrice` },
   { label: "Blog", href: `${valentinaBasePath}/blog` },
+  { label: "Eventi", href: `${valentinaBasePath}/eventi` },
   { label: "Contatti", href: `${valentinaBasePath}/contatti` },
 ];
+
+const homeNavItems: NavItem[] = navItems.map((item) =>
+  item.href === valentinaBasePath ? { ...item, current: true } : item,
+);
 
 export function ValentinaOrciuoliHeader({ variant = "default" }: { variant?: "default" | "home" }) {
   if (variant === "default") {
@@ -21,11 +26,9 @@ export function ValentinaOrciuoliHeader({ variant = "default" }: { variant?: "de
           </span>
         </a>
         <nav className="vo-nav" aria-label="Menu principale">
-          <a href={valentinaBasePath}>Home</a>
-          <a href={`${valentinaBasePath}/libri`}>Libri</a>
-          <a href={`${valentinaBasePath}/autrice`}>Autrice</a>
-          <a href={`${valentinaBasePath}/eventi`}>Eventi</a>
-          <a href={`${valentinaBasePath}/contatti`}>Contatti</a>
+          {navItems.map((item) => (
+            <a key={item.href} href={item.href}>{item.label}</a>
+          ))}
         </nav>
       </header>
     );

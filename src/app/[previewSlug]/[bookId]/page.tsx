@@ -3,12 +3,13 @@ import { notFound } from "next/navigation";
 import { TenantProvider } from "@/components/core/tenant-provider";
 import { LibritechBookDetailPage } from "@/components/tenants/libritech/pages/book-detail";
 import { ValentinaOrciuoliStaticPage } from "@/components/tenants/valentina-orciuoli/pages/static-page";
+import { valentinaStaticPageKinds, type ValentinaPageKind } from "@/components/tenants/valentina-orciuoli/content";
 import { getPlatformModeFromHost } from "@/lib/platform";
 import { resolveTenantFromPreviewSlug } from "@/lib/tenant-runtime";
 import { tenantThemeCssVars } from "@/lib/tenant-theme";
 import { libritechCatalog } from "@/lib/libritech-catalog";
 
-const valentinaPages = new Set(["libri", "autrice", "eventi", "contatti", "link", "blog"]);
+const valentinaPages = new Set<string>(valentinaStaticPageKinds);
 
 export default async function BookDetailRoute({
   params,
@@ -37,7 +38,7 @@ export default async function BookDetailRoute({
           data-tenant-surface={tenant.id}
           style={themeVars as React.CSSProperties}
         >
-          <ValentinaOrciuoliStaticPage page={bookId as "libri" | "autrice" | "eventi" | "contatti" | "link" | "blog"} />
+          <ValentinaOrciuoliStaticPage page={bookId as ValentinaPageKind} />
         </div>
       </TenantProvider>
     );

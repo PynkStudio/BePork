@@ -1180,7 +1180,7 @@
     margin: 0 auto 1rem;
   }
 
-  .vo-linktree-card h2 {
+  .vo-linktree-card h1 {
     margin: 0.35rem 0 0;
     color: var(--vo-gold);
     font-family: Georgia, "Times New Roman", serif;
@@ -1406,6 +1406,230 @@
     color: rgba(242, 216, 148, 0.56);
     font-size: 0.7rem;
     letter-spacing: 0.08em;
+  }
+
+  .vo-blog-section {
+    display: grid;
+    gap: clamp(2.5rem, 6vw, 4rem);
+    padding: 0 max(2rem, calc((100vw - 1180px) / 2)) clamp(5rem, 8vw, 8rem);
+  }
+
+  .vo-blog-section .tenant-blog-post {
+    border: 1px solid rgba(216, 173, 90, 0.24);
+    background:
+      radial-gradient(circle at 92% 0%, rgba(216, 173, 90, 0.1), transparent 14rem),
+      rgba(5, 5, 5, 0.46);
+    padding: clamp(1.6rem, 4vw, 2.6rem);
+    box-shadow: 0 1.4rem 3.4rem rgba(0, 0, 0, 0.28);
+  }
+
+  .vo-blog-section .tenant-blog-cover {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    margin: -1.6rem -1.6rem 1.6rem;
+    border-bottom: 1px solid rgba(216, 173, 90, 0.24);
+  }
+
+  @media (min-width: 640px) {
+    .vo-blog-section .tenant-blog-cover {
+      margin: -2.6rem -2.6rem 2rem;
+    }
+  }
+
+  .vo-blog-section .tenant-blog-post header time {
+    display: block;
+    color: var(--vo-gold);
+    font-size: 0.74rem;
+    font-weight: 850;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .vo-blog-section .tenant-blog-post header h2 {
+    margin: 0.6rem 0 0;
+    color: var(--vo-gold-soft);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    font-weight: 400;
+    line-height: 1.08;
+  }
+
+  .vo-blog-section .tenant-blog-post header p {
+    max-width: 40rem;
+    margin: 0.8rem 0 0;
+    color: rgba(248, 226, 175, 0.78);
+    font-size: 1rem;
+    line-height: 1.65;
+  }
+
+  .vo-blog-section .tenant-blog-body {
+    display: grid;
+    gap: 1.1rem;
+    max-width: 42rem;
+    margin-top: 1.6rem;
+    color: rgba(248, 226, 175, 0.86);
+    font-size: 1.02rem;
+    line-height: 1.75;
+  }
+
+  .vo-blog-section .tenant-blog-body h3 {
+    margin: 0.6rem 0 0;
+    color: var(--vo-gold);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 1.5rem;
+    font-weight: 400;
+  }
+
+  .vo-blog-section .tenant-blog-body blockquote {
+    margin: 0;
+    border-left: 2px solid var(--vo-gold);
+    padding-left: 1.1rem;
+    color: var(--vo-gold-soft);
+    font-family: Georgia, "Times New Roman", serif;
+    font-style: italic;
+  }
+
+  .vo-blog-section .tenant-blog-body blockquote cite {
+    display: block;
+    margin-top: 0.4rem;
+    color: rgba(242, 216, 148, 0.6);
+    font-size: 0.8rem;
+    font-style: normal;
+  }
+
+  .vo-blog-section .tenant-blog-media-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+    gap: 0.6rem;
+  }
+
+  .vo-blog-section .tenant-blog-media {
+    position: relative;
+    display: block;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border: 1px solid rgba(216, 173, 90, 0.24);
+  }
+
+  .vo-blog-section .tenant-blog-body a {
+    color: var(--vo-gold);
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+  }
+
+  .vo-blog-section .tenant-blog-comments {
+    margin-top: 2rem;
+    border-top: 1px solid rgba(216, 173, 90, 0.2);
+    padding-top: 1.6rem;
+  }
+
+  .vo-blog-section .tenant-blog-comment-list {
+    display: grid;
+    gap: 1rem;
+    margin-bottom: 1.4rem;
+  }
+
+  .vo-blog-section .tenant-blog-comment-list article {
+    border: 1px solid rgba(216, 173, 90, 0.16);
+    background: rgba(5, 5, 5, 0.36);
+    padding: 0.9rem 1.05rem;
+  }
+
+  .vo-blog-section .tenant-blog-comment-list strong {
+    color: var(--vo-gold-soft);
+    font-size: 0.86rem;
+    font-weight: 850;
+  }
+
+  .vo-blog-section .tenant-blog-comment-list time {
+    margin-left: 0.55rem;
+    color: rgba(242, 216, 148, 0.5);
+    font-size: 0.76rem;
+  }
+
+  .vo-blog-section .tenant-blog-comment-list p {
+    margin: 0.5rem 0 0;
+    color: rgba(248, 226, 175, 0.82);
+    font-size: 0.92rem;
+    line-height: 1.55;
+  }
+
+  .vo-blog-section .tenant-blog-comment-form {
+    display: grid;
+    gap: 0.9rem;
+    border: 1px solid rgba(216, 173, 90, 0.3);
+    background:
+      radial-gradient(circle at 95% 8%, rgba(151, 31, 24, 0.24), transparent 13rem),
+      rgba(5, 5, 5, 0.56);
+    padding: clamp(1.2rem, 4vw, 2rem);
+    box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.28);
+  }
+
+  .vo-blog-section .tenant-blog-comment-form > div:first-child {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+    gap: 0.9rem;
+  }
+
+  .vo-blog-section .tenant-blog-comment-form label {
+    display: grid;
+    gap: 0.42rem;
+    color: rgba(242, 216, 148, 0.7);
+    font-size: 0.72rem;
+    font-weight: 850;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .vo-blog-section .tenant-blog-comment-form input,
+  .vo-blog-section .tenant-blog-comment-form textarea {
+    width: 100%;
+    border: 1px solid rgba(216, 173, 90, 0.28);
+    background: rgba(3, 3, 3, 0.74);
+    padding: 0.85rem 0.95rem;
+    color: var(--vo-gold-soft);
+    font: inherit;
+    outline: none;
+  }
+
+  .vo-blog-section .tenant-blog-comment-form input:focus,
+  .vo-blog-section .tenant-blog-comment-form textarea:focus {
+    border-color: rgba(242, 216, 148, 0.72);
+    box-shadow: 0 0 0 3px rgba(216, 173, 90, 0.14);
+  }
+
+  .vo-blog-section .tenant-blog-comment-form textarea {
+    resize: vertical;
+  }
+
+  .vo-blog-section .tenant-blog-comment-form button {
+    display: inline-flex;
+    width: max-content;
+    min-height: 3.2rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    border: 1px solid rgba(242, 216, 148, 0.42);
+    background: linear-gradient(180deg, #a42a22, #701711);
+    color: #f8e2af;
+    cursor: pointer;
+    font-size: 0.78rem;
+    font-weight: 850;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .vo-blog-section .tenant-blog-comment-form button:disabled {
+    cursor: wait;
+    opacity: 0.7;
+  }
+
+  .vo-blog-section .tenant-blog-comment-form p {
+    margin: 0;
+    color: rgba(242, 216, 148, 0.72);
+    font-size: 0.82rem;
+    font-weight: 700;
   }
 
   .gestione-admin[data-gestione-tenant="valentina-orciuoli"] {
