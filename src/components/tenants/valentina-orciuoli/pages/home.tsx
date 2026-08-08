@@ -12,10 +12,9 @@ import {
 } from "@/components/tenants/valentina-orciuoli/newsletter";
 import { ValentinaOrciuoliHeader } from "@/components/tenants/valentina-orciuoli/vo-header";
 import {
-  amazonHref,
   amazonStoreHref,
-  anxietyCoverSrc,
   authorPortraitSrc,
+  darkNoirCoverSrc,
   instagramHref,
   tiktokHref,
   trilogy,
@@ -45,32 +44,30 @@ export function ValentinaOrciuoliHomePage() {
           <div className="vo-ink-bg" aria-hidden="true" />
           <motion.a
             className="vo-book-feature"
-            href={amazonHref}
-            target="_blank"
-            rel="noopener noreferrer"
+            href="#newsletter"
             initial={{ opacity: 0, y: 30, rotate: 2 }}
             animate={{ opacity: 1, y: 0, rotate: -2 }}
             transition={{ duration: 0.9, delay: 0.15, ease: "easeOut" }}
-            aria-label="Apri Anxiety su Amazon"
+            aria-label="Vai alla newsletter"
           >
             <div className="vo-book-cover">
               <img
-                src={anxietyCoverSrc}
-                alt="Anxiety di Valentina Orciuoli"
+                src={darkNoirCoverSrc}
+                alt="Un nuovo progetto di Valentina Orciuoli"
               />
             </div>
           </motion.a>
           <div className="vo-book-copy">
             <span className="vo-dragon-mark">龍</span>
-            <h2>Anxiety</h2>
-            <small>The Emotion Dragons Trilogy · Volume I</small>
+            <h2>Una nuova storia sta per arrivare</h2>
             <p>
-              Il primo libro della trilogia porta Neirè dentro le mura del palazzo imperiale
-              di Errethera e trasforma l&apos;ansia in potere, drago e percorso di liberazione.
-              Romantic fantasy dai tratti orientali, pubblicato il 17 marzo 2025.
+              Questo autunno, Valentina torna con un nuovo thriller psicologico, un progetto
+              ancora avvolto nel mistero. Per ora non possiamo svelare molto... ma una cosa è
+              certa: un nuovo viaggio sta per iniziare.
             </p>
-            <a href={amazonHref} target="_blank" rel="noopener noreferrer">
-              Scopri di più <ArrowRight size={15} />
+            <p>In uscita questo autunno. Presto saranno rivelati tutti i dettagli.</p>
+            <a href="#newsletter">
+              Resta aggiornato <ArrowRight size={15} />
             </a>
           </div>
         </section>

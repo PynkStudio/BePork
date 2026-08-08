@@ -40,7 +40,7 @@ export const valentinaCreativeWorks: ValentinaCreativeWork[] = [
     description: "E se l'ansia fosse un potere? E se questo potere si manifestasse nella forma di un dragone?",
     secondaryText: "Quando non è più possibile mentire a sé stessi, quando il vero combatte per uscire allo scoperto il potere dell'ansia si sprigiona, più feroce che mai.",
     coverImageUrl: anxietyCoverSrc,
-    backgroundMediaUrl: "/valentina-orciuoli/video-anxiety.webm",
+    backgroundMediaUrl: "/valentina-orciuoli/sfondo-anxiety.webp",
     ctaLabel: "Leggilo qui",
     ctaHref: amazonHref,
     enabled: true,
@@ -52,7 +52,7 @@ export const valentinaCreativeWorks: ValentinaCreativeWork[] = [
     description: "E se perdere se stessi fosse l'unico modo per salvare chi ami? Quando la rabbia prende il sopravvento, cosa resta del proprio io?",
     secondaryText: "Un secolo prima dell'apparizione del Dragone Nero dell'ansia, il Primo Long era l'incarnazione della rabbia.",
     coverImageUrl: furyCoverSrc,
-    backgroundMediaUrl: "/valentina-orciuoli/video-fury.webm",
+    backgroundMediaUrl: "/valentina-orciuoli/sfondo-fury-girato.webp",
     ctaLabel: "Leggilo qui",
     ctaHref: furyHref,
     enabled: true,
@@ -64,7 +64,7 @@ export const valentinaCreativeWorks: ValentinaCreativeWork[] = [
     description: "E se il fumo fosse l'unico posto dove poter nascondere la verità?",
     secondaryText: "Nella Milano cupa degli anni '70, tra nebbia, silenzi e ombre che sembrano respirare, una donna cerca di dimenticare ciò che ha perduto. Ma ogni sigaretta accesa riporta a galla un ricordo, ogni strada bagnata riflette un volto che non vuole più vedere.",
     coverImageUrl: darkNoirCoverSrc,
-    backgroundMediaUrl: "/valentina-orciuoli/video-dark.webm",
+    backgroundMediaUrl: "/valentina-orciuoli/sfondo-dark.webp",
     ctaLabel: "Preordina qui",
     ctaHref: linktreeHref,
     enabled: true,
@@ -110,7 +110,26 @@ export const valentinaLinks = [
   },
 ];
 
-export const trilogy = [
+export const trilogy: Array<{
+  n: string;
+  slug?: string;
+  volumeLabel?: string;
+  title: string;
+  desc: string;
+  state: string;
+  href: string | null;
+  coverSrc: string | null;
+  coverAlt: string;
+}> = [
+  {
+    n: "I",
+    title: "Anxiety",
+    desc: "Neirè scopre che l'ansia può diventare drago, potere e via di liberazione.",
+    state: "Disponibile su Kindle",
+    href: amazonHref,
+    coverSrc: anxietyCoverSrc,
+    coverAlt: "Copertina di Anxiety di Valentina Orciuoli",
+  },
   {
     n: "II",
     title: "Fury",
@@ -128,16 +147,5 @@ export const trilogy = [
     href: null,
     coverSrc: null,
     coverAlt: "",
-  },
-  {
-    n: "I",
-    slug: "tra-fumo-e-ombre",
-    volumeLabel: "Novel Dark-Noir",
-    title: "Tra fumo e ombre",
-    desc: "Thriller psicologico dove la protagonista è il vero drago.",
-    state: "prenota ora",
-    href: "https://demo.weuseorpheo.com/valentina-orciuoli/libri#tra-fumo-e-ombre",
-    coverSrc: darkNoirCoverSrc,
-    coverAlt: "Copertina di Tra fumo e ombre di Valentina Orciuoli",
   },
 ];
