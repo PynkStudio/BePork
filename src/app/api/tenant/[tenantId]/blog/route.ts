@@ -13,6 +13,6 @@ export async function GET(
   if (!tenant) return NextResponse.json({ error: "tenant_not_found" }, { status: 404 });
   if (!tenant.features.blog) return NextResponse.json({ posts: [] });
 
-  const posts = await getTenantBlogPosts(tenantId, { publishedOnly: true });
+  const posts = await getTenantBlogPosts(tenantId, { publishedOnly: true, includeComments: true });
   return NextResponse.json({ posts });
 }

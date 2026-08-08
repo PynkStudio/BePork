@@ -71,88 +71,64 @@
     position: relative;
     z-index: 3;
     display: flex;
-    width: min(100% - 6rem, 1220px);
-    margin: 1.15rem auto 0;
+    flex-direction: column;
     align-items: center;
-    justify-content: space-between;
-    gap: 2rem;
-    border: 1px solid rgba(216, 173, 90, 0.22);
-    background: rgba(5, 5, 5, 0.54);
-    padding: 0.38rem 0.9rem;
-    box-shadow: 0 1.2rem 3rem rgba(0, 0, 0, 0.22);
-    backdrop-filter: blur(14px);
+    width: min(100% - 4rem, 1100px);
+    margin: 1.05rem auto 0;
+    gap: 0.9rem;
   }
 
   .vo-sticky-header-region {
     position: relative;
   }
 
-  .vo-header-reveal {
-    position: sticky;
-    top: 0;
-    z-index: 20;
-    padding: 0.85rem 0 0.65rem;
-    pointer-events: none;
-  }
-
-  .vo-header-reveal .vo-header {
-    pointer-events: auto;
-  }
-
-  .vo-brand-mark {
-    display: block;
-    width: 4.9rem;
-    height: 4.9rem;
-    overflow: hidden;
-  }
-
-  .vo-brand-mark img {
-    display: block;
+  .vo-header-hairline {
+    position: relative;
+    display: flex;
     width: 100%;
-    height: 100%;
-    object-fit: contain;
+    height: 1px;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(90deg, transparent, rgba(198, 161, 90, 0.55) 10%, rgba(198, 161, 90, 0.55) 90%, transparent);
   }
 
-  .vo-brand:not(:has(img)) .vo-brand-mark {
-    display: grid;
-    place-items: center;
-    border-bottom: 2px solid var(--vo-gold);
-    color: var(--vo-gold-soft);
-    font-family: Georgia, "Times New Roman", serif;
-    font-size: 2.15rem;
-    line-height: 1;
-    text-shadow: 0 0 1.5rem rgba(216, 173, 90, 0.34);
+  .vo-header-hairline span {
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 1px;
+    background: var(--vo-gold);
+    box-shadow: 0 0 0.8rem rgba(216, 173, 90, 0.55);
+    transform: rotate(45deg);
   }
 
   .vo-nav {
     display: flex;
     align-items: center;
-    gap: clamp(1rem, 3.2vw, 3.8rem);
-    color: var(--vo-gold-soft);
-    font-size: 0.8rem;
-    font-weight: 800;
-    letter-spacing: 0.28em;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: clamp(1.3rem, 3vw, 3.5rem);
+    color: rgba(201, 168, 116, 0.82);
+    font-family: "The Seasons Light", "The Seasons", Georgia, "Times New Roman", serif;
+    font-size: clamp(0.76rem, 0.95vw, 0.92rem);
+    font-weight: 400;
+    letter-spacing: 0.22em;
     text-transform: uppercase;
   }
 
   .vo-nav a {
     position: relative;
+    white-space: nowrap;
     opacity: 0.9;
+    transition: color 200ms ease;
   }
 
-  .vo-nav a::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    bottom: -0.8rem;
-    width: 0;
-    height: 1px;
-    background: var(--vo-gold);
-    transition: width 180ms ease;
-  }
-
-  .vo-nav a:hover::after {
-    width: 100%;
+  .vo-nav a:hover,
+  .vo-nav a[aria-current="page"] {
+    color: #f4ead9;
+    opacity: 1;
   }
 
   .vo-hero-inner {
@@ -723,72 +699,6 @@
     transform: translateY(-2px);
     border-color: rgba(255, 248, 236, 0.86);
     background: rgba(255, 244, 232, 0.28);
-  }
-
-  .vo-subpage-hero {
-    position: relative;
-    min-height: 34rem;
-    overflow: hidden;
-    isolation: isolate;
-    background: #050505;
-  }
-
-  .vo-subpage-bg {
-    position: absolute;
-    inset: 0;
-    z-index: -2;
-    background:
-      linear-gradient(180deg, rgba(5, 5, 5, 0.16), #050505 100%),
-      linear-gradient(90deg, rgba(5, 5, 5, 0.8), rgba(5, 5, 5, 0.24)),
-      url("/valentina-orciuoli/hero-dragon-moon.png") center / cover no-repeat;
-  }
-
-  .vo-subpage-hero::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    background:
-      radial-gradient(circle at 24% 46%, rgba(216, 173, 90, 0.18), transparent 18rem),
-      linear-gradient(180deg, transparent 0%, #050505 100%);
-  }
-
-  .vo-subpage-intro {
-    position: relative;
-    z-index: 1;
-    width: min(100% - 6rem, 1220px);
-    margin-inline: auto;
-    padding: clamp(5rem, 10vw, 8rem) 0 clamp(4rem, 8vw, 7rem);
-  }
-
-  .vo-subpage-intro-plain {
-    padding-top: clamp(4.5rem, 8vw, 7rem);
-    padding-bottom: clamp(3.5rem, 7vw, 5.5rem);
-  }
-
-  .vo-subpage-intro h1 {
-    margin: 0.35rem 0 0;
-    color: #e5c77d;
-    font-family: Georgia, "Times New Roman", serif;
-    font-size: clamp(4.6rem, 11vw, 10rem);
-    font-weight: 400;
-    letter-spacing: -0.03em;
-    line-height: 0.86;
-    text-shadow: 0 0 1rem rgba(216, 173, 90, 0.18);
-  }
-
-  .vo-subpage-intro h1.vo-subpage-title-compact {
-    font-size: clamp(2.3rem, 5.5vw, 5rem);
-  }
-
-  .vo-subpage-intro p {
-    max-width: 34rem;
-    margin: 1.4rem 0 0;
-    color: #f3dfaf;
-    font-family: Georgia, "Times New Roman", serif;
-    font-size: clamp(1.1rem, 1.8vw, 1.45rem);
-    line-height: 1.55;
   }
 
   .vo-subpage-section {
@@ -2121,9 +2031,7 @@
   }
 
   @media (max-width: 980px) {
-    .vo-header,
-    .vo-hero-inner,
-    .vo-subpage-intro {
+    .vo-hero-inner {
       width: min(100% - 2rem, 1220px);
     }
 
@@ -2178,36 +2086,6 @@
   }
 
   @media (max-width: 760px) {
-    .vo-header {
-      align-items: flex-start;
-      gap: 0.8rem;
-      margin-top: 0;
-      padding: 0.34rem 0.62rem;
-    }
-
-    .vo-header-reveal {
-      padding-top: 0.55rem;
-    }
-
-    .vo-brand-mark {
-      width: 3.7rem;
-      height: 3.7rem;
-    }
-
-    .vo-nav {
-      overflow-x: auto;
-      width: 100%;
-      gap: 1rem;
-      font-size: 0.68rem;
-      letter-spacing: 0.12em;
-      padding: 0.55rem 0 0.35rem;
-      scrollbar-width: none;
-    }
-
-    .vo-nav::-webkit-scrollbar {
-      display: none;
-    }
-
     .vo-hero-inner {
       min-height: calc(100svh - 4rem);
       padding-bottom: 5rem;
@@ -2285,8 +2163,7 @@
     }
 
     .vo-book-showcase,
-    .vo-section,
-    .vo-subpage-intro {
+    .vo-section {
       padding-inline: 1.25rem;
     }
 
@@ -2326,25 +2203,15 @@
     }
   }
 
-  .vo-home-header {
-    position: fixed;
-    inset: 0 0 auto;
+  .vo-site-header {
+    position: sticky;
+    top: 0;
     z-index: 20;
     pointer-events: none;
   }
 
-  .vo-home-header .vo-header {
+  .vo-site-header .vo-header {
     pointer-events: auto;
-  }
-
-  .vo-header-socials {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-  }
-
-  .vo-mobile-menu-link {
-    display: none;
   }
 
   .vo-home-site .vo-hero {
@@ -2380,7 +2247,7 @@
     place-items: center;
     margin: 0;
     padding: 6rem 1.5rem;
-    color: #dcc59c;
+    color: var(--vo-paper);
     font-family: "The Seasons Light", "The Seasons", Georgia, "Times New Roman", serif;
     font-size: clamp(2.4rem, 6.4vw, 5.4rem);
     font-weight: 400;
@@ -2391,72 +2258,13 @@
     text-shadow: 0 0 2.6rem rgba(122, 60, 140, 0.45);
   }
 
-  .vo-home-site .vo-header {
-    display: grid;
-    width: min(100% - 4rem, 1100px);
-    margin-top: 1.05rem;
-    gap: 0.9rem;
-    justify-items: center;
-    border: 0;
-    background: transparent;
-    padding: 0;
-    box-shadow: none;
-    backdrop-filter: none;
-  }
-
-  .vo-home-site .vo-header-hairline {
-    position: relative;
-    display: flex;
-    width: 100%;
-    height: 1px;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(90deg, transparent, rgba(198, 161, 90, 0.55) 10%, rgba(198, 161, 90, 0.55) 90%, transparent);
-  }
-
-  .vo-home-site .vo-header-hairline span {
-    position: relative;
-    z-index: 1;
-    display: block;
-    width: 0.5rem;
-    height: 0.5rem;
-    border-radius: 1px;
-    background: #d8ad5a;
-    box-shadow: 0 0 0.8rem rgba(216, 173, 90, 0.55);
-    transform: rotate(45deg);
-  }
-
-  .vo-home-site .vo-nav-elegant {
-    justify-content: center;
-    gap: clamp(1.3rem, 3vw, 3.5rem);
-    color: rgba(201, 168, 116, 0.82);
-    font-family: "The Seasons Light", "The Seasons", Georgia, "Times New Roman", serif;
-    font-size: clamp(0.76rem, 0.95vw, 0.92rem);
-    font-weight: 400;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-  }
-
-  .vo-home-site .vo-nav-elegant a {
-    white-space: nowrap;
-    transition: color 200ms ease;
-  }
-
-  .vo-home-site .vo-nav-elegant a::after {
-    display: none;
-  }
-
-  .vo-home-site .vo-nav-elegant a:hover,
-  .vo-home-site .vo-nav-elegant a[aria-current="page"] {
-    color: #f4ead9;
-  }
 
   @media (max-width: 1120px) {
-    .vo-home-site .vo-header {
+    .vo-header {
       width: min(100% - 2.5rem, 1040px);
     }
 
-    .vo-home-site .vo-nav-elegant {
+    .vo-nav {
       gap: clamp(0.9rem, 2.4vw, 1.8rem);
       font-size: clamp(0.7rem, 1vw, 0.86rem);
       letter-spacing: 0.16em;
@@ -2468,12 +2276,12 @@
       min-height: 46rem;
     }
 
-    .vo-home-site .vo-header {
+    .vo-header {
       width: calc(100% - 1.5rem);
       margin-top: 0.8rem;
     }
 
-    .vo-home-site .vo-nav-elegant {
+    .vo-nav {
       flex-wrap: wrap;
       gap: 0.85rem 1.1rem;
       font-size: 0.68rem;

@@ -78,21 +78,7 @@ export function ValentinaOrciuoliStaticPage({ page }: { page: ValentinaPageKind 
 
   return (
     <main className="vo-site">
-      {page !== "link" && (
-        <>
-        <ValentinaOrciuoliHeader />
-        <section className="vo-subpage-intro vo-subpage-intro-plain">
-          <span className="vo-dragon-mark">{pageEyebrows[page]}</span>
-          {pageTitles[page] && (
-            <h1 className={page === "libri" ? "vo-subpage-title-compact" : undefined}>{pageTitles[page]}</h1>
-          )}
-          {pageLeads[page] &&
-            pageLeads[page].split("\n\n").map((paragraph) => (
-              <p key={paragraph}>{paragraph}</p>
-            ))}
-        </section>
-        </>
-      )}
+      {page !== "link" && <ValentinaOrciuoliHeader />}
 
       {page === "libri" && (
         <>
@@ -343,31 +329,3 @@ function ValentinaContactForm() {
   );
 }
 
-const pageTitles: Record<ValentinaPageKind, string> = {
-  libri: "Valentina Orciuoli",
-  autrice: "Scopri chi è",
-  eventi: "Eventi",
-  contatti: "Contatti",
-  link: "Link",
-  blog: "Blog",
-};
-
-const pageEyebrows: Record<ValentinaPageKind, string> = {
-  libri: "Scopri i libri di",
-  autrice: "Autrice",
-  eventi: "Valentina Orciuoli",
-  contatti: "Valentina Orciuoli",
-  link: "Valentina Orciuoli",
-  blog: "Valentina Orciuoli",
-};
-
-const pageLeads: Record<ValentinaPageKind, string> = {
-  libri:
-    "sei più da fantasy orientale, dove ogni emozione ha il suo drago oppure sei più da noir meneghino, dove il mistero ed il thriller ne dettano il ritmo?",
-  autrice:
-    "Valentina Orciuoli è un’autrice italiana di fantasy romance e romantasy. Laureata in Relazioni Internazionali e studentessa di Comunicazione e Marketing, coltiva da sempre una grande passione per le storie fantastiche, i mondi popolati da draghi e magia, e le trame romance capaci di intrecciare emozioni intense e avventura.\n\nCon Anxiety, primo volume della saga The Emotion Dragons Trilogy, dà vita a un universo narrativo in cui sentimenti, potere e destino si incontrano. Fury, secondo capitolo della trilogia, amplia questo mondo raccontandone nuove sfumature e radici.\n\nAttraverso la sua scrittura, Valentina unisce immaginazione, introspezione e romanticismo, accompagnando i lettori in viaggi dove le emozioni diventano forza, conflitto e magia.",
-  eventi: "",
-  contatti: "Form diretto, Instagram e email ufficiale.",
-  link: "Un unico posto, brandizzato Valentina Orciuoli, per raggiungere libri, social e aggiornamenti.",
-  blog: "Psicologia delle storie, dietro le quinte e riflessioni sul mondo editoriale.",
-};

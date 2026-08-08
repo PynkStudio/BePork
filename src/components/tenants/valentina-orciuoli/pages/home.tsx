@@ -27,9 +27,7 @@ export function ValentinaOrciuoliHomePage() {
 
   return (
     <main className="vo-site vo-home-site">
-      <div className="vo-home-header">
-        <ValentinaOrciuoliHeader variant="home" />
-      </div>
+      <ValentinaOrciuoliHeader />
       <section id="top" className="vo-hero vo-hero-paper">
         <div className="vo-hero-paper-texture" aria-hidden="true" />
         <motion.h1

@@ -1,11 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { X } from "lucide-react";
 import Link from "next/link";
 
 const newsletterStorageKey = "valentina-orciuoli-newsletter-popup-seen";
+const newsletterPopupDelayMs = 4000;
 
 export function useValentinaNewsletter() {
   const [showNewsletterPopup, setShowNewsletterPopup] = useState(false);
@@ -14,14 +15,25 @@ export function useValentinaNewsletter() {
   const [newsletterError, setNewsletterError] = useState<string | null>(null);
 
   useEffect(() => {
+    let seen = false;
     try {
-      if (window.localStorage.getItem(newsletterStorageKey)) return;
-
-      window.localStorage.setItem(newsletterStorageKey, "true");
-      setShowNewsletterPopup(true);
+      seen = Boolean(window.localStorage.getItem(newsletterStorageKey));
     } catch {
-      setShowNewsletterPopup(true);
+      seen = false;
     }
+    if (seen) return;
+
+    // Lascia respirare l'hero prima di coprirlo con il popup.
+    const timer = window.setTimeout(() => {
+      try {
+        window.localStorage.setItem(newsletterStorageKey, "true");
+      } catch {
+        // localStorage non disponibile (es. private browsing): mostriamo comunque il popup una volta.
+      }
+      setShowNewsletterPopup(true);
+    }, newsletterPopupDelayMs);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -120,6 +132,43 @@ export function ValentinaNewsletterPopup({
   onClose: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const previouslyFocused = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    previouslyFocused.current = document.activeElement as HTMLElement | null;
+    closeButtonRef.current?.focus();
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (event.key !== "Tab" || !dialogRef.current) return;
+      const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      previouslyFocused.current?.focus();
+    };
+  }, [open, onClose]);
+
   if (!open) return null;
 
   return (
@@ -132,6 +181,7 @@ export function ValentinaNewsletterPopup({
     >
       <motion.div
         className="vo-newsletter-dialog"
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="vo-newsletter-title"
@@ -140,6 +190,7 @@ export function ValentinaNewsletterPopup({
         transition={{ duration: 0.44, ease: [0.16, 1, 0.3, 1] }}
       >
         <button
+          ref={closeButtonRef}
           className="vo-newsletter-close"
           type="button"
           aria-label="Chiudi newsletter"
