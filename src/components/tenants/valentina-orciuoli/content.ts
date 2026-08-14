@@ -149,3 +149,16 @@ export const trilogy: Array<{
     coverAlt: "",
   },
 ];
+
+/**
+ * Tutti i segmenti di primo livello che appartengono al tenant: le sezioni fisse
+ * più una pagina per ogni opera. Il middleware lo usa per non dirottare questi
+ * path sulle route globali della piattaforma.
+ *
+ * Sta in fondo al file perché ha bisogno di `valentinaCreativeWorks`, che è
+ * dichiarato sopra.
+ */
+export const valentinaOwnedSegments: readonly string[] = [
+  ...valentinaStaticPageKinds,
+  ...valentinaCreativeWorks.map((work) => work.slug),
+];

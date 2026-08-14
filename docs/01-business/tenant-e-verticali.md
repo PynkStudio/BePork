@@ -24,6 +24,16 @@ Estratti da `TENANTS[]` in `src/lib/tenant-registry.ts` (campi `id`, `name`, `ve
 
 > Nota: il tenant `bepork` ha `name: "ThePork"` nel codice; il `package.json` si chiama `thepork-website`. è stato anonimizzato per poterlo usare come esempio per altri senza fare rirefimento diretto al ristorante BePork di Bari che non ha acquistato il servizio.
 
+## Note per tenant
+
+- **`valentina-orciuoli`** — il sito pubblico è reso come un libro sfogliabile: ogni
+  route pubblica corrisponde a una doppia pagina, la copertina si apre scorrendo entrando
+  dalla home. L'ordine delle pagine vive in
+  `src/components/tenants/valentina-orciuoli/book/book-map.ts`. Vedi
+  [[adr-0002-valentina-book-shell]]. `/autrice` non è una pagina ma la **quarta di
+  copertina**: il volume si chiude e si rigira per mostrarla. La pagina `/link` (linktree)
+  resta fuori dal libro.
+
 ## Stati tenant osservati
 
 Valori di `status` presenti nel registro: `active`, `trial`, `trattativa`. Il significato di business preciso di ciascuno è **da confermare** (vedi `20260518_tenant_vertical_status.sql`).

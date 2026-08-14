@@ -49,7 +49,7 @@ import {
   type MarketingRouteKey,
 } from "@/lib/marketing-slugs";
 import { isRouteModuleAllowed } from "@/lib/tenant-route-modules";
-import { valentinaStaticPageKinds } from "@/components/tenants/valentina-orciuoli/content";
+import { valentinaOwnedSegments } from "@/components/tenants/valentina-orciuoli/content";
 
 const LOCALE_SET = new Set<string>(SUPPORTED_LOCALES);
 const TENANT_LOCALE_REWRITE_HEADER = "x-tenant-locale-rewrite";
@@ -571,7 +571,7 @@ function handlePreviewTenantLocale(
   // propria del tenant, altrimenti quelle pagine finiscono dirottate sui template sbagliati.
   const isValentinaOwnPage =
     tenantId === "valentina-orciuoli" &&
-    (valentinaStaticPageKinds as readonly string[]).includes(firstSegment);
+    valentinaOwnedSegments.includes(firstSegment);
   const rewrittenPathname =
     rest && !isValentinaOwnPage && PREVIEW_GLOBAL_TENANT_ROUTES.has(firstSegment)
       ? `/${rest}`

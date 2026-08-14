@@ -14,7 +14,7 @@ import { ServicesCategories } from "@/components/tenants/_shared/services-catego
 import { ServicesContact } from "@/components/tenants/_shared/services-contact";
 import { OfficinaKamHomePage } from "@/components/tenants/officinakam/pages/home";
 import { LibritechHomePage } from "@/components/tenants/libritech/pages/home";
-import { ValentinaOrciuoliHomePage } from "@/components/tenants/valentina-orciuoli/pages/home";
+import { ValentinaOrciuoliBookSite } from "@/components/tenants/valentina-orciuoli/book/book-site";
 import { StudioAranzullaHomePage } from "@/components/tenants/studioaranzulla/pages/home";
 import { PynkStudioHomePage } from "@/components/tenants/pynkstudio/pages/home";
 import { JuniorFoodHomePage } from "@/components/tenants/junior-food/pages/home";
@@ -156,7 +156,7 @@ export default async function PreviewTenantHome({
           style={themeVars as React.CSSProperties}
         >
           {tenant.id === "valentina-orciuoli" ? (
-            <ValentinaOrciuoliHomePage />
+            <ValentinaOrciuoliBookSite initialSpread={0} />
           ) : (
             <OrpheoShell>
               <div className="menuary-container py-24">

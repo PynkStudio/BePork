@@ -2294,3 +2294,1484 @@
     }
   }
 }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Il sito-libro: scena 3D, fogli, copertina.
+   Namespace `vo-book-*`, `vo-page-*`, `vo-leaf-*`, `vo-cover-*`, `vo-face-*`.
+   ───────────────────────────────────────────────────────────────────────────── */
+@layer components {
+  .vo-book-site {
+    --vo-book-paper: #ece0c8;
+    --vo-book-paper-2: #e2d3b4;
+    --vo-book-ink: #2a2119;
+    --vo-book-ink-soft: rgba(42, 33, 25, 0.66);
+    --vo-book-rule: rgba(42, 33, 25, 0.16);
+    --vo-book-accent: #971f18;
+    --vo-book-gilt: #9c7530;
+    --vo-book-room: #0b0908;
+
+    position: relative;
+    /* Il sito occupa esattamente il viewport e non scorre mai: testatina e piede
+       restano ancorati, e la rotella è tutta del libro. `min-height: 100vh` del
+       contenitore di route andrebbe oltre l'area visibile su mobile (barra URL)
+       ed è quello che generava la barra di scorrimento. */
+    height: 100dvh;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    overflow: hidden;
+    background:
+      radial-gradient(130% 92% at 50% 8%, rgba(216, 173, 90, 0.11), transparent 60%),
+      radial-gradient(90% 70% at 50% 100%, rgba(151, 31, 24, 0.1), transparent 70%),
+      var(--vo-book-room);
+    color: var(--vo-gold-soft);
+  }
+
+  /* ── Testatina di navigazione ─────────────────────────────────────────────── */
+  .vo-book-nav {
+    position: relative;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 0.95rem clamp(1rem, 4vw, 2.75rem);
+    background: linear-gradient(180deg, rgba(11, 9, 8, 0.92), rgba(11, 9, 8, 0));
+    font-family: Georgia, "Times New Roman", serif;
+  }
+
+  .vo-book-nav-mark {
+    font-size: 1.05rem;
+    letter-spacing: 0.24em;
+    color: var(--vo-gold);
+  }
+
+  .vo-book-nav nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.35rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    text-transform: lowercase;
+  }
+
+  .vo-book-nav nav a {
+    position: relative;
+    padding-bottom: 0.2rem;
+    color: rgba(242, 216, 148, 0.62);
+    transition: color 0.25s ease;
+  }
+
+  .vo-book-nav nav a:hover,
+  .vo-book-nav nav a[aria-current="page"] {
+    color: var(--vo-gold-soft);
+  }
+
+  .vo-book-nav nav a[aria-current="page"]::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 1px;
+    background: var(--vo-gold);
+  }
+
+  /* ── Cerimonia di apertura ────────────────────────────────────────────────── */
+  .vo-book-viewport {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-height: 0;
+    /* Durante la cerimonia la rotella è consumata da JS: qui si impedisce solo
+       che il gesto rimbalzi sul documento. */
+    overscroll-behavior: contain;
+  }
+
+  .vo-book-viewport[data-ceremony] {
+    touch-action: none;
+  }
+
+  .vo-cover-prompt {
+    position: absolute;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    bottom: clamp(0.6rem, 2.4vh, 1.6rem);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.7rem;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 0.74rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: rgba(242, 216, 148, 0.55);
+  }
+
+  .vo-cover-prompt span {
+    width: 1px;
+    height: 2.4rem;
+    background: linear-gradient(180deg, var(--vo-gold), transparent);
+    animation: vo-prompt-drift 2.2s ease-in-out infinite;
+  }
+
+  @keyframes vo-prompt-drift {
+    0%,
+    100% {
+      opacity: 0.25;
+      transform: scaleY(0.55);
+      transform-origin: top;
+    }
+    50% {
+      opacity: 1;
+      transform: scaleY(1);
+      transform-origin: top;
+    }
+  }
+
+  .vo-book-controls {
+    position: absolute;
+    bottom: clamp(0.5rem, 2vh, 1.2rem);
+    display: flex;
+    gap: 1rem;
+  }
+
+  .vo-book-controls button,
+  .vo-book-controls a {
+    padding: 0.5rem 1.15rem;
+    border: 1px solid var(--vo-line);
+    border-radius: 999px;
+    background: rgba(11, 9, 8, 0.6);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(242, 216, 148, 0.72);
+    cursor: pointer;
+    transition: color 0.25s ease, border-color 0.25s ease;
+  }
+
+  .vo-book-controls button:hover,
+  .vo-book-controls a:hover {
+    color: var(--vo-gold-soft);
+    border-color: var(--vo-gold);
+  }
+
+  /* ── Scena 3D ─────────────────────────────────────────────────────────────── */
+  .vo-volume {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .vo-book-stage {
+    /* L'altezza la detta la riga della griglia, non il viewport: sotto ci sono
+       i comandi e il piede, che devono restare visibili. */
+    --vo-page-h: min(76%, 38vw);
+    --vo-page-w: calc(var(--vo-page-h) / 1.44);
+    --vo-cover-w: calc(var(--vo-page-w) * 1.02);
+
+    position: relative;
+    width: calc(var(--vo-page-w) * 2);
+    height: var(--vo-page-h);
+    perspective: 2800px;
+    perspective-origin: 50% 46%;
+  }
+
+  .vo-book-ambient {
+    position: absolute;
+    left: 50%;
+    bottom: -7%;
+    width: 118%;
+    height: 16%;
+    transform: translateX(-50%);
+    background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.72), transparent 68%);
+    filter: blur(10px);
+    pointer-events: none;
+  }
+
+  .vo-book {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    /* L'inclinazione da scrivania la applica il componente: framer-motion
+       riscrive `transform` per intero e cancellerebbe una regola CSS. */
+    transform-style: preserve-3d;
+    /* Il giro sulla quarta avviene a volume chiuso, quando il libro occupa la
+       metà destra del blocco: il perno deve stare lì, non sul dorso. */
+    transform-origin: 75% 50%;
+  }
+
+  /* Taglio delle pagine: lo spessore migra da destra a sinistra man mano che si legge. */
+  .vo-book-edge {
+    position: absolute;
+    top: 1.2%;
+    height: 97.6%;
+    width: calc(3px + var(--vo-edge, 0) * 2.6px);
+    background: repeating-linear-gradient(
+      90deg,
+      rgba(214, 197, 165, 0.95) 0 1px,
+      rgba(150, 133, 104, 0.75) 1px 2px
+    );
+    pointer-events: none;
+  }
+
+  .vo-book-edge-left {
+    left: 0;
+    transform: translateX(-100%);
+    border-radius: 2px 0 0 2px;
+    box-shadow: -3px 0 8px rgba(0, 0, 0, 0.45);
+  }
+
+  .vo-book-edge-right {
+    right: 0;
+    transform: translateX(100%);
+    border-radius: 0 2px 2px 0;
+    box-shadow: 3px 0 8px rgba(0, 0, 0, 0.45);
+  }
+
+  .vo-page {
+    position: absolute;
+    top: 0;
+    width: 50%;
+    height: 100%;
+    backface-visibility: hidden;
+  }
+
+  .vo-page-left {
+    left: 0;
+  }
+
+  .vo-page-right {
+    left: 50%;
+  }
+
+  .vo-book-gutter {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    width: 4.5%;
+    height: 100%;
+    transform: translateX(-50%);
+    background: linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0) 0%,
+      rgba(0, 0, 0, 0.3) 32%,
+      rgba(0, 0, 0, 0.46) 50%,
+      rgba(0, 0, 0, 0.3) 68%,
+      rgba(0, 0, 0, 0) 100%
+    );
+    pointer-events: none;
+  }
+
+  /* ── Il foglio di carta ───────────────────────────────────────────────────── */
+  .vo-page-sheet {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: linear-gradient(158deg, var(--vo-book-paper) 0%, var(--vo-book-paper-2) 100%);
+    color: var(--vo-book-ink);
+    font-family: Georgia, "Times New Roman", serif;
+  }
+
+  .vo-page-sheet-blank {
+    background: var(--vo-book-paper-2);
+  }
+
+  .vo-page-sheet[data-side="left"] {
+    box-shadow: inset -22px 0 34px -24px rgba(42, 33, 25, 0.85);
+  }
+
+  .vo-page-sheet[data-side="right"] {
+    box-shadow: inset 22px 0 34px -24px rgba(42, 33, 25, 0.85);
+  }
+
+  /* Grana generata, non una texture: gli asset editoriali del tenant contengono
+     immagini di pagina e finirebbero stampati dentro la carta. */
+  .vo-page-grain {
+    position: absolute;
+    inset: 0;
+    background-image:
+      /* Una sola direzione di fibra: incrociarne due dava carta a quadretti. */
+      repeating-linear-gradient(
+        96deg,
+        rgba(42, 33, 25, 0.022) 0 1px,
+        transparent 1px 9px
+      ),
+      radial-gradient(circle at 18% 22%, rgba(122, 96, 58, 0.075), transparent 40%),
+      radial-gradient(circle at 82% 74%, rgba(122, 96, 58, 0.06), transparent 44%),
+      radial-gradient(circle at 62% 12%, rgba(122, 96, 58, 0.05), transparent 34%);
+    mix-blend-mode: multiply;
+    pointer-events: none;
+  }
+
+  .vo-page-running-head {
+    flex: none;
+    padding: clamp(1.1rem, 2.6vh, 1.9rem) clamp(1.4rem, 3.2vw, 2.9rem) 0;
+    font-size: 0.6rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: rgba(42, 33, 25, 0.42);
+  }
+
+  .vo-page-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: clamp(0.9rem, 2.4vh, 1.6rem) clamp(1.4rem, 3.2vw, 2.9rem) clamp(2rem, 4vh, 2.8rem);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(42, 33, 25, 0.28) transparent;
+  }
+
+  .vo-page-folio {
+    position: absolute;
+    bottom: clamp(0.7rem, 2vh, 1.3rem);
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    color: rgba(42, 33, 25, 0.4);
+  }
+
+  /* ── Il foglio in volo ────────────────────────────────────────────────────── */
+  .vo-leaf {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 50%;
+    height: 100%;
+    transform-origin: left center;
+    transform-style: preserve-3d;
+    will-change: transform;
+  }
+
+  .vo-leaf-depth {
+    position: absolute;
+    inset: 0;
+    transform-style: preserve-3d;
+  }
+
+  .vo-leaf-face {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    backface-visibility: hidden;
+  }
+
+  .vo-leaf-back {
+    transform: rotateY(180deg);
+  }
+
+  .vo-leaf-content {
+    position: absolute;
+    inset: 0;
+  }
+
+  .vo-leaf-fold,
+  .vo-leaf-shade,
+  .vo-leaf-sheen {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  /* Il dorso resta il bordo di rotazione: sul verso, ruotato di 180°, è a destra. */
+  .vo-leaf-fold-front {
+    background: linear-gradient(to right, rgba(28, 21, 14, 0.62) 0%, rgba(28, 21, 14, 0) 16%);
+  }
+
+  .vo-leaf-fold-back {
+    background: linear-gradient(to left, rgba(28, 21, 14, 0.62) 0%, rgba(28, 21, 14, 0) 16%);
+  }
+
+  .vo-leaf-shade {
+    background: linear-gradient(105deg, rgba(6, 5, 4, 0.95) 0%, rgba(6, 5, 4, 0.62) 100%);
+  }
+
+  .vo-leaf-sheen {
+    background: linear-gradient(
+      104deg,
+      transparent 26%,
+      rgba(255, 248, 226, 0.42) 48%,
+      transparent 68%
+    );
+    mix-blend-mode: screen;
+  }
+
+  /* ── Presa sul taglio del foglio ──────────────────────────────────────────── */
+  .vo-leaf-hotspot {
+    position: absolute;
+    top: 6%;
+    z-index: 60;
+    width: clamp(30px, 7%, 72px);
+    height: 88%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    touch-action: none;
+  }
+
+  .vo-leaf-hotspot::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .vo-leaf-hotspot:hover::before,
+  .vo-leaf-hotspot:focus-visible::before {
+    opacity: 1;
+  }
+
+  .vo-leaf-hotspot:disabled {
+    cursor: default;
+    pointer-events: none;
+  }
+
+  .vo-leaf-hotspot-next {
+    right: 0;
+  }
+
+  .vo-leaf-hotspot-next::before {
+    background: linear-gradient(to left, rgba(42, 33, 25, 0.22), transparent);
+  }
+
+  .vo-leaf-hotspot-prev {
+    left: 0;
+  }
+
+  .vo-leaf-hotspot-prev::before {
+    background: linear-gradient(to right, rgba(42, 33, 25, 0.22), transparent);
+  }
+
+  .vo-book-live {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* ── Copertina ────────────────────────────────────────────────────────────── */
+  .vo-cover {
+    position: absolute;
+    top: -1.2%;
+    left: 50%;
+    width: calc(var(--vo-cover-w));
+    height: 102.4%;
+    transform-origin: left center;
+    transform-style: preserve-3d;
+    will-change: transform;
+  }
+
+  .vo-cover-depth {
+    position: absolute;
+    inset: 0;
+    transform-style: preserve-3d;
+  }
+
+  .vo-cover-face {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: 2px 7px 7px 2px;
+    backface-visibility: hidden;
+  }
+
+  .vo-cover-front {
+    background: linear-gradient(150deg, #1a120d 0%, #0b0706 60%, #150e09 100%);
+    box-shadow: 0 30px 60px -22px rgba(0, 0, 0, 0.9);
+  }
+
+  .vo-cover-staves {
+    position: absolute;
+    inset: 0;
+    transform-style: preserve-3d;
+  }
+
+  .vo-cover-stave {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    background-repeat: no-repeat;
+    transform-origin: left center;
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+  }
+
+  .vo-cover-plate {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  /* L'arte è ad alto contrasto: la titolazione ha bisogno di terra sotto i piedi. */
+  .vo-cover-plate::before {
+    content: "";
+    position: absolute;
+    inset: 38% 0 0 0;
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      rgba(8, 5, 4, 0.55) 42%,
+      rgba(8, 5, 4, 0.9) 100%
+    );
+  }
+
+  .vo-cover-frame {
+    position: absolute;
+    inset: clamp(0.7rem, 1.7vw, 1.35rem);
+    border: 1px solid rgba(216, 173, 90, 0.45);
+    box-shadow: inset 0 0 0 4px rgba(11, 7, 6, 0.35), inset 0 0 0 5px rgba(216, 173, 90, 0.18);
+  }
+
+  .vo-cover-titling {
+    position: absolute;
+    inset: auto clamp(1.6rem, 3.4vw, 2.9rem) clamp(2.2rem, 6vh, 3.6rem);
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    font-family: "The Seasons Light", "The Seasons", Georgia, serif;
+    text-align: center;
+  }
+
+  .vo-cover-kicker {
+    font-size: 0.62rem;
+    letter-spacing: 0.36em;
+    text-transform: uppercase;
+    color: rgba(216, 173, 90, 0.7);
+  }
+
+  .vo-cover-name {
+    font-size: clamp(1.35rem, 3vw, 2.35rem);
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    line-height: 1.1;
+    color: var(--vo-gold-soft);
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.65), 0 0 22px rgba(216, 173, 90, 0.3);
+  }
+
+  .vo-cover-rule {
+    width: 42%;
+    height: 1px;
+    margin: 0.2rem auto;
+    background: linear-gradient(90deg, transparent, var(--vo-gold), transparent);
+  }
+
+  .vo-cover-sub {
+    font-size: 0.6rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: rgba(242, 216, 148, 0.55);
+  }
+
+  .vo-cover-shade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(100deg, rgba(4, 3, 3, 0.96), rgba(4, 3, 3, 0.6));
+    pointer-events: none;
+  }
+
+  .vo-cover-inside {
+    transform: rotateY(180deg);
+    background: linear-gradient(140deg, #2a1512 0%, #1a0d0b 55%, #251310 100%);
+  }
+
+  .vo-cover-endpaper {
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 22% 28%, rgba(216, 173, 90, 0.16), transparent 42%),
+      radial-gradient(circle at 76% 72%, rgba(151, 31, 24, 0.28), transparent 46%);
+    opacity: 0.9;
+  }
+
+  /* ── Contenuto delle pagine ───────────────────────────────────────────────── */
+  .vo-face {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    min-height: 100%;
+  }
+
+  .vo-face h1,
+  .vo-face h2,
+  .vo-face h3 {
+    font-family: "The Seasons Light", "The Seasons", Georgia, serif;
+    font-weight: 400;
+    color: var(--vo-book-ink);
+  }
+
+  .vo-face h2 {
+    font-size: clamp(1.5rem, 2.5vw, 2.15rem);
+    line-height: 1.12;
+  }
+
+  .vo-face h3 {
+    font-size: clamp(1rem, 1.5vw, 1.2rem);
+    line-height: 1.2;
+  }
+
+  .vo-face p {
+    font-size: clamp(0.86rem, 1.05vw, 0.98rem);
+    line-height: 1.72;
+    color: var(--vo-book-ink-soft);
+  }
+
+  .vo-face a {
+    color: var(--vo-book-accent);
+    text-decoration: underline;
+    text-underline-offset: 0.22em;
+    text-decoration-thickness: 1px;
+  }
+
+  .vo-face-kicker {
+    font-size: 0.6rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--vo-book-gilt);
+  }
+
+  .vo-face-lead {
+    font-style: italic;
+    color: rgba(42, 33, 25, 0.8) !important;
+  }
+
+  .vo-face-rule {
+    width: 3.5rem;
+    height: 1px;
+    background: var(--vo-book-gilt);
+  }
+
+  .vo-face-glyph {
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    color: var(--vo-book-accent);
+    opacity: 0.5;
+  }
+
+  .vo-face-glyph-watermark {
+    position: absolute;
+    right: -0.5rem;
+    bottom: 12%;
+    font-size: clamp(6rem, 14vw, 11rem);
+    opacity: 0.05;
+    pointer-events: none;
+  }
+
+  /* Risguardo e dedica */
+  .vo-face-endpaper {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 1.6rem;
+  }
+
+  .vo-dedication {
+    max-width: 22ch;
+    font-size: clamp(1rem, 1.6vw, 1.35rem) !important;
+    font-style: italic;
+    line-height: 1.9 !important;
+    color: rgba(42, 33, 25, 0.72) !important;
+    /* La dedica si scrive da sé: la carta è già lì, l'inchiostro arriva dopo. */
+    animation: vo-inking 2.6s cubic-bezier(0.5, 0.05, 0.2, 1) 0.5s both;
+  }
+
+  .vo-dedication-sign {
+    font-style: italic;
+    font-size: 1.1rem;
+    letter-spacing: 0.18em;
+    color: var(--vo-book-accent);
+    animation: vo-fade-in 0.9s ease 3s both;
+  }
+
+  @keyframes vo-inking {
+    from {
+      clip-path: inset(0 100% 0 0);
+    }
+    to {
+      clip-path: inset(0 0 0 0);
+    }
+  }
+
+  @keyframes vo-fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* Frontespizio */
+  .vo-face-title {
+    justify-content: center;
+    gap: 0.85rem;
+  }
+
+  .vo-face-name {
+    font-size: clamp(1.6rem, 3vw, 2.6rem);
+    line-height: 1.04;
+    letter-spacing: 0.02em;
+  }
+
+  /* La copertina sta nel testo, che le gira attorno: incolonnarla di fianco
+     lasciava una colonna troppo stretta e il blocco traboccava dalla pagina. */
+  .vo-face-announce {
+    margin-top: 0.5rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid var(--vo-book-rule);
+  }
+
+  .vo-face-announce::after {
+    content: "";
+    display: block;
+    clear: both;
+  }
+
+  .vo-face-announce img {
+    float: left;
+    width: clamp(70px, 26%, 116px);
+    margin: 0.3rem clamp(0.8rem, 1.6vw, 1.15rem) 0.5rem 0;
+    border-radius: 2px;
+    box-shadow: 0 10px 24px -12px rgba(42, 33, 25, 0.8);
+  }
+
+  .vo-face-announce h2 {
+    font-size: clamp(1.15rem, 1.9vw, 1.6rem);
+    margin-bottom: 0.45rem;
+  }
+
+  .vo-face-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.7rem;
+    font-size: 0.76rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-decoration: none !important;
+  }
+
+  /* Opere */
+  .vo-face-works {
+    gap: 1.5rem;
+  }
+
+  .vo-work {
+    display: flex;
+    gap: 1rem;
+    padding-bottom: 1.35rem;
+    border-bottom: 1px solid var(--vo-book-rule);
+  }
+
+  .vo-work:last-child {
+    border-bottom: 0;
+  }
+
+  .vo-work img {
+    flex: none;
+    width: clamp(62px, 7.5vw, 96px);
+    border-radius: 2px;
+    box-shadow: 0 8px 20px -12px rgba(42, 33, 25, 0.75);
+  }
+
+  .vo-work a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.5rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-decoration: none;
+  }
+
+  /* Ritratto */
+  .vo-face-portrait {
+    justify-content: center;
+  }
+
+  .vo-face-portrait figure {
+    margin: 0;
+  }
+
+  .vo-face-portrait img {
+    width: 100%;
+    border-radius: 2px;
+    filter: sepia(0.18) contrast(1.04);
+    box-shadow: 0 18px 40px -22px rgba(42, 33, 25, 0.9);
+  }
+
+  .vo-face-portrait figcaption {
+    margin-top: 0.85rem;
+    font-style: italic;
+    font-size: 0.8rem;
+    text-align: center;
+    color: var(--vo-book-ink-soft);
+  }
+
+  /* Pilastri */
+  .vo-face-pillars {
+    display: flex;
+    flex-direction: column;
+    gap: 0.95rem;
+    margin: 0.5rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .vo-face-pillars li {
+    padding-left: 2.4rem;
+    position: relative;
+  }
+
+  .vo-face-pillars span {
+    position: absolute;
+    left: 0;
+    top: 0.1rem;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    color: var(--vo-book-gilt);
+  }
+
+  .vo-face-pillars strong {
+    font-family: "The Seasons Light", Georgia, serif;
+    font-weight: 400;
+    font-size: 1rem;
+  }
+
+  .vo-face-pillars p {
+    margin-top: 0.15rem;
+    font-size: 0.82rem !important;
+    line-height: 1.6 !important;
+  }
+
+  /* Appunti */
+  .vo-face-posts ul {
+    display: flex;
+    flex-direction: column;
+    gap: 1.3rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .vo-face-posts a {
+    display: block;
+    padding-bottom: 1.2rem;
+    border-bottom: 1px solid var(--vo-book-rule);
+    text-decoration: none;
+  }
+
+  .vo-face-posts time {
+    font-size: 0.66rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--vo-book-gilt);
+  }
+
+  .vo-face-posts h3 {
+    margin: 0.3rem 0 0.35rem;
+  }
+
+  .vo-face-empty h3 {
+    margin-bottom: 0.5rem;
+  }
+
+  /* Eventi */
+  .vo-face-events article {
+    padding-bottom: 1.2rem;
+    border-bottom: 1px solid var(--vo-book-rule);
+  }
+
+  .vo-face-events span {
+    font-size: 0.64rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--vo-book-gilt);
+  }
+
+  .vo-face-events h3 {
+    margin: 0.35rem 0 0.4rem;
+  }
+
+  /* Contatti */
+  .vo-face-channels {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    margin-top: 0.9rem;
+  }
+
+  .vo-face-channels a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: 0.84rem;
+    text-decoration: none;
+    color: var(--vo-book-ink) !important;
+  }
+
+  .vo-face-channels a:hover {
+    color: var(--vo-book-accent) !important;
+  }
+
+  /* ── Piede ────────────────────────────────────────────────────────────────── */
+  .vo-book-footer {
+    position: relative;
+    z-index: 20;
+    flex: none;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem 1.6rem;
+    padding: 1.1rem clamp(1rem, 4vw, 2.75rem) 1.4rem;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    color: rgba(242, 216, 148, 0.42);
+  }
+
+  .vo-book-footer-links {
+    display: flex;
+    gap: 1.2rem;
+  }
+
+  .vo-book-footer a:hover {
+    color: var(--vo-gold-soft);
+  }
+
+  /* ── Pagina singola sotto i 900px ─────────────────────────────────────────── */
+  @media (max-width: 899px) {
+    .vo-book-stage {
+      --vo-page-h: min(74%, 128vw);
+      --vo-page-w: calc(var(--vo-page-h) / 1.5);
+      --vo-cover-w: calc(var(--vo-page-w) * 1.03);
+      width: var(--vo-page-w);
+    }
+
+    .vo-book {
+      transform: none;
+    }
+
+    .vo-page-left,
+    .vo-book-gutter {
+      display: none;
+    }
+
+    .vo-page-right {
+      left: 0;
+      width: 100%;
+    }
+
+    .vo-leaf,
+    .vo-cover {
+      left: 0;
+      width: 100%;
+    }
+
+    .vo-page-sheet[data-side="right"] {
+      box-shadow: inset 14px 0 26px -20px rgba(42, 33, 25, 0.8);
+    }
+
+    .vo-leaf-hotspot {
+      width: 20%;
+    }
+
+    .vo-face-glyph-watermark {
+      display: none;
+    }
+
+    .vo-book-nav {
+      gap: 0.9rem;
+      padding: 0.7rem 0.9rem;
+    }
+
+    .vo-book-nav nav {
+      flex-wrap: nowrap;
+      gap: 0.95rem;
+      overflow-x: auto;
+      font-size: 0.64rem;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .vo-book-nav nav::-webkit-scrollbar {
+      display: none;
+    }
+
+    .vo-book-nav nav a {
+      white-space: nowrap;
+    }
+
+    /* Testatina e numero di pagina sono convenzioni di stampa che su una pagina
+       sola non hanno più il loro mestiere: la testatina ripete l'occhiello della
+       faccia che segue, e il folio numera uno spread che qui non esiste. */
+    .vo-page-running-head,
+    .vo-page-folio {
+      display: none;
+    }
+
+    .vo-page-body {
+      padding-top: clamp(1.4rem, 3.4vh, 2.1rem);
+    }
+
+    /* In compatto la pagina raccoglie entrambe le facce dello spread: senza uno
+       stacco leggerebbero come un unico blocco di testo. */
+    .vo-page-body > .vo-face + .vo-face {
+      margin-top: 1.5rem;
+      padding-top: 1.3rem;
+      border-top: 1px solid var(--vo-book-rule);
+    }
+  }
+
+  /* ── Moto ridotto: il libro resta, lo sfogliare no ────────────────────────── */
+  @media (prefers-reduced-motion: reduce) {
+    .vo-cover-scroll[data-ceremony] {
+      height: 100dvh;
+    }
+
+    .vo-cover {
+      display: none;
+    }
+
+    .vo-dedication,
+    .vo-dedication-sign,
+    .vo-cover-prompt span {
+      animation: none;
+    }
+
+    .vo-leaf {
+      display: none;
+    }
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Moduli condivisi riportati sulla carta.
+   Form contatti e pannello newsletter nascono per il fondo scuro del vecchio
+   sito: dentro il libro vivono su pergamena e vanno rivestiti, non riscritti.
+   ───────────────────────────────────────────────────────────────────────────── */
+@layer components {
+  .vo-face-form .vo-contact-form,
+  .vo-face .vo-newsletter-panel {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .vo-face .vo-newsletter-panel {
+    margin-top: 1.4rem;
+    padding-top: 1.3rem;
+    border-top: 1px solid var(--vo-book-rule);
+  }
+
+  .vo-face .vo-newsletter-panel h2,
+  .vo-face .vo-newsletter-panel h3,
+  .vo-face .vo-newsletter-panel p,
+  .vo-face .vo-newsletter-panel span,
+  .vo-face .vo-newsletter-panel small,
+  .vo-face .vo-newsletter-consent {
+    color: var(--vo-book-ink-soft);
+  }
+
+  .vo-face-form .vo-contact-form label,
+  .vo-face .vo-newsletter-form label {
+    color: var(--vo-book-gilt);
+    font-size: 0.62rem;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+  }
+
+  .vo-face-form .vo-contact-form input,
+  .vo-face-form .vo-contact-form textarea,
+  .vo-face .vo-newsletter-form input[type="email"] {
+    border: 0;
+    border-bottom: 1px solid rgba(42, 33, 25, 0.3);
+    border-radius: 0;
+    background: transparent;
+    color: var(--vo-book-ink);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 0.92rem;
+  }
+
+  /* Il campo della newsletter è solo: una riga sotto non basta a farlo leggere
+     come un campo, ci vuole il riquadro della cedola da ritagliare. */
+  .vo-face .vo-newsletter-form input[type="email"] {
+    border: 1px solid rgba(42, 33, 25, 0.34);
+    padding: 0.62rem 0.85rem;
+  }
+
+  .vo-face .vo-newsletter-form input[type="email"]::placeholder {
+    color: rgba(42, 33, 25, 0.42);
+  }
+
+  .vo-face-form .vo-contact-form input:focus,
+  .vo-face-form .vo-contact-form textarea:focus,
+  .vo-face .vo-newsletter-form input[type="email"]:focus {
+    outline: none;
+    border-bottom-color: var(--vo-book-accent);
+  }
+
+  .vo-face-form .vo-contact-form textarea {
+    border: 1px solid rgba(42, 33, 25, 0.3);
+    padding: 0.7rem 0.85rem;
+  }
+
+  .vo-face-form .vo-contact-form button,
+  .vo-face .vo-newsletter-form button {
+    align-self: flex-start;
+    border: 1px solid var(--vo-book-accent);
+    border-radius: 0;
+    background: transparent;
+    color: var(--vo-book-accent);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    transition: background 0.25s ease, color 0.25s ease;
+  }
+
+  .vo-face-form .vo-contact-form button:hover:not(:disabled),
+  .vo-face .vo-newsletter-form button:hover:not(:disabled) {
+    background: var(--vo-book-accent);
+    color: var(--vo-book-paper);
+  }
+
+  .vo-face-form .vo-contact-form small {
+    color: var(--vo-book-ink-soft);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Quarta di copertina: il piatto posteriore del volume.
+   Sta in fondo alla pila, girato di 180°, e si vede solo quando il libro si
+   chiude e si rigira — cioè quando si va su "Chi sono".
+   ───────────────────────────────────────────────────────────────────────────── */
+@layer components {
+  .vo-back-board {
+    position: absolute;
+    top: -1.2%;
+    left: 50%;
+    width: var(--vo-cover-w);
+    height: 102.4%;
+    transform: translateZ(-9px) rotateY(180deg);
+    transform-style: preserve-3d;
+  }
+
+  .vo-back-face {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.7rem, 1.6vh, 1.2rem);
+    padding: clamp(1.7rem, 3.4vw, 2.9rem) clamp(1.5rem, 3vw, 2.5rem);
+    overflow: hidden;
+    border-radius: 7px 2px 2px 7px;
+    background: linear-gradient(200deg, #191009 0%, #0a0605 58%, #140c07 100%);
+    backface-visibility: hidden;
+    box-shadow: 0 30px 60px -22px rgba(0, 0, 0, 0.9);
+  }
+
+  .vo-back-frame {
+    position: absolute;
+    inset: clamp(0.7rem, 1.7vw, 1.35rem);
+    border: 1px solid rgba(216, 173, 90, 0.32);
+    pointer-events: none;
+  }
+
+  .vo-back-portrait {
+    flex: none;
+    margin: 0 auto;
+    width: clamp(112px, 42%, 190px);
+  }
+
+  .vo-back-portrait img {
+    width: 100%;
+    border-radius: 1px;
+    filter: grayscale(0.55) sepia(0.3) contrast(1.06);
+    box-shadow: 0 12px 28px -14px rgba(0, 0, 0, 0.95);
+  }
+
+  .vo-back-copy {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    text-align: center;
+    font-family: Georgia, "Times New Roman", serif;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(216, 173, 90, 0.3) transparent;
+  }
+
+  .vo-back-kicker {
+    font-size: 0.58rem;
+    letter-spacing: 0.34em;
+    text-transform: uppercase;
+    color: rgba(216, 173, 90, 0.72);
+  }
+
+  .vo-back-copy h2 {
+    font-family: "The Seasons Light", "The Seasons", Georgia, serif;
+    font-weight: 400;
+    font-size: clamp(1.2rem, 2.2vw, 1.75rem);
+    letter-spacing: 0.04em;
+    color: var(--vo-gold-soft);
+  }
+
+  .vo-back-copy p {
+    font-size: clamp(0.78rem, 0.98vw, 0.9rem);
+    line-height: 1.72;
+    color: rgba(242, 216, 148, 0.78);
+  }
+
+  .vo-back-blurb {
+    font-style: italic;
+    font-size: clamp(0.86rem, 1.15vw, 1.02rem) !important;
+    color: rgba(242, 216, 148, 0.92) !important;
+  }
+
+  .vo-back-foot {
+    flex: none;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .vo-back-mark {
+    font-size: 1.5rem;
+    color: rgba(151, 31, 24, 0.9);
+  }
+
+  /* Codice a barre decorativo: è il dettaglio che rende la quarta una quarta. */
+  .vo-back-barcode {
+    width: clamp(58px, 26%, 96px);
+    height: clamp(26px, 5vh, 38px);
+    background-image: repeating-linear-gradient(
+      90deg,
+      #f2d894 0 1px,
+      transparent 1px 3px,
+      #f2d894 3px 5px,
+      transparent 5px 6px,
+      #f2d894 6px 8px,
+      transparent 8px 11px
+    );
+    opacity: 0.72;
+  }
+
+  @media (max-width: 899px) {
+    .vo-back-board {
+      left: 0;
+      width: 100%;
+    }
+
+    .vo-book {
+      transform-origin: 50% 50%;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .vo-back-board {
+      transform: none;
+    }
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Nastro segnalibro e interruttore del suono.
+   ───────────────────────────────────────────────────────────────────────────── */
+@layer components {
+  /* Il nastro pende dal dorso, dietro il blocco pagine: dell'intera fettuccia si
+     vede solo la coda che sporge sotto il taglio, come nei libri veri. A volume
+     rigirato quella coda diventa il modo per rientrare dove si stava leggendo. */
+  .vo-bookmark {
+    position: absolute;
+    top: -3%;
+    left: calc(50% + 0.5rem);
+    width: clamp(9px, 1.4%, 15px);
+    height: 118%;
+    /* Dietro il blocco pagine ma davanti al piatto posteriore: a libro aperto
+       corre nel solco del dorso, a libro rigirato resta nascosto tranne la coda. */
+    transform: translateZ(-4px);
+    background: linear-gradient(180deg, #7d1a15 0%, #9d2820 62%, #6d1410 100%);
+    box-shadow: 1px 0 3px rgba(0, 0, 0, 0.5);
+  }
+
+  .vo-bookmark-tail {
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 1.1rem;
+    background: inherit;
+    /* Taglio a coda di rondine. */
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 62%, 0 100%);
+  }
+
+  a.vo-bookmark {
+    cursor: pointer;
+  }
+
+  a.vo-bookmark:hover,
+  a.vo-bookmark:focus-visible {
+    filter: brightness(1.22);
+  }
+
+  .vo-sound-toggle {
+    font-size: 0.62rem !important;
+    letter-spacing: 0.18em !important;
+    opacity: 0.62;
+  }
+
+  .vo-sound-toggle:hover {
+    opacity: 1;
+  }
+
+  @media (max-width: 899px) {
+    .vo-bookmark {
+      left: auto;
+      right: 1.4rem;
+    }
+
+    .vo-book-controls {
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 0 1rem;
+    }
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Scheda dell'opera e indice.
+   Ogni libro ha la sua doppia pagina: copertina a piena altezza a sinistra,
+   testo e acquisto a destra. Serve a non far scorrere il contenuto dentro la
+   carta, che è la cosa che rompe l'illusione più di ogni altra.
+   ───────────────────────────────────────────────────────────────────────────── */
+@layer components {
+  .vo-face-work-cover {
+    align-items: center;
+    justify-content: center;
+    padding: clamp(0.5rem, 2vh, 1.4rem) 0;
+  }
+
+  .vo-face-work-cover img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    object-fit: contain;
+    border-radius: 2px;
+    box-shadow: 0 22px 46px -22px rgba(42, 33, 25, 0.92);
+  }
+
+  .vo-face-cover-placeholder {
+    display: grid;
+    place-items: center;
+    width: 62%;
+    aspect-ratio: 2 / 3;
+    border: 1px solid var(--vo-book-rule);
+    font-size: clamp(2.5rem, 6vw, 4rem);
+    color: var(--vo-book-accent);
+    opacity: 0.35;
+  }
+
+  .vo-face-work {
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .vo-face-work h2 {
+    font-size: clamp(1.7rem, 3vw, 2.6rem);
+  }
+
+  /* Indice tipografico con i puntini di guida, come nei sommari stampati. */
+  .vo-face-index {
+    justify-content: center;
+  }
+
+  .vo-face-index ol {
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
+    margin: 0.4rem 0 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: vo-index;
+  }
+
+  .vo-face-index li {
+    counter-increment: vo-index;
+  }
+
+  .vo-face-index a {
+    display: flex;
+    align-items: baseline;
+    gap: 0.55rem;
+    padding-bottom: 0.5rem;
+    text-decoration: none;
+    color: var(--vo-book-ink) !important;
+  }
+
+  .vo-face-index a::before {
+    content: counter(vo-index, upper-roman) ".";
+    flex: none;
+    min-width: 2.1rem;
+    font-size: 0.78rem;
+    letter-spacing: 0.1em;
+    color: var(--vo-book-gilt);
+  }
+
+  .vo-index-title {
+    flex: none;
+    font-family: "The Seasons Light", "The Seasons", Georgia, serif;
+    font-size: clamp(1.05rem, 1.6vw, 1.35rem);
+  }
+
+  .vo-index-dots {
+    flex: 1;
+    min-width: 1.5rem;
+    height: 0.45em;
+    border-bottom: 1px dotted rgba(42, 33, 25, 0.42);
+  }
+
+  .vo-index-folio {
+    flex: none;
+    min-width: 1.6rem;
+    text-align: right;
+    font-size: 0.86rem;
+    color: var(--vo-book-ink-soft);
+  }
+
+  .vo-face-index a:hover .vo-index-title {
+    color: var(--vo-book-accent);
+  }
+
+  @media (max-width: 899px) {
+    .vo-face-work-cover img {
+      max-height: 46vh;
+    }
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Il contenitore di route porta `min-h-screen` (100vh), che su mobile supera
+   l'area visibile quando la barra URL è mostrata: è da lì che nasceva la barra
+   di scorrimento. Per questo tenant l'altezza è esattamente il viewport reale.
+   ───────────────────────────────────────────────────────────────────────────── */
+@layer components {
+  [data-tenant-surface="valentina-orciuoli"]:has(.vo-book-site) {
+    min-height: 0;
+    height: 100dvh;
+    overflow: hidden;
+  }
+}

@@ -3,13 +3,15 @@ import { notFound } from "next/navigation";
 import { TenantProvider } from "@/components/core/tenant-provider";
 import { LibritechBookDetailPage } from "@/components/tenants/libritech/pages/book-detail";
 import { ValentinaOrciuoliStaticPage } from "@/components/tenants/valentina-orciuoli/pages/static-page";
-import { valentinaStaticPageKinds, type ValentinaPageKind } from "@/components/tenants/valentina-orciuoli/content";
+import { ValentinaOrciuoliBookSite } from "@/components/tenants/valentina-orciuoli/book/book-site";
+import { voSpreads } from "@/components/tenants/valentina-orciuoli/book/book-map";
+import { valentinaOwnedSegments, type ValentinaPageKind } from "@/components/tenants/valentina-orciuoli/content";
 import { getPlatformModeFromHost } from "@/lib/platform";
 import { resolveTenantFromPreviewSlug } from "@/lib/tenant-runtime";
 import { tenantThemeCssVars } from "@/lib/tenant-theme";
 import { libritechCatalog } from "@/lib/libritech-catalog";
 
-const valentinaPages = new Set<string>(valentinaStaticPageKinds);
+const valentinaPages = new Set<string>(valentinaOwnedSegments);
 
 export default async function BookDetailRoute({
   params,
@@ -31,6 +33,12 @@ export default async function BookDetailRoute({
   const themeVars = tenantThemeCssVars(tenant.theme);
 
   if (tenant.id === "valentina-orciuoli" && valentinaPages.has(bookId)) {
+    // Le sezioni che sono pagine del libro entrano nella shell già aperte al
+    // punto giusto; "autrice" è la quarta di copertina, quindi entra a volume
+    // chiuso e rigirato. Il linktree resta una landing a sé, fuori dal volume.
+    const spreadIndex = voSpreads.findIndex((entry) => entry.id === bookId);
+    const isBookRoute = spreadIndex >= 0 || bookId === "autrice";
+
     return (
       <TenantProvider tenant={tenant}>
         <div
@@ -38,7 +46,11 @@ export default async function BookDetailRoute({
           data-tenant-surface={tenant.id}
           style={themeVars as React.CSSProperties}
         >
-          <ValentinaOrciuoliStaticPage page={bookId as ValentinaPageKind} />
+          {isBookRoute ? (
+            <ValentinaOrciuoliBookSite initialSpread={Math.max(spreadIndex, 0)} />
+          ) : (
+            <ValentinaOrciuoliStaticPage page={bookId as ValentinaPageKind} />
+          )}
         </div>
       </TenantProvider>
     );

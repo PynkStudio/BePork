@@ -1,11 +1,12 @@
 "use client";
 
 /* eslint-disable @next/next/no-img-element */
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, BookOpen, Instagram, Mail, Music2, Send } from "lucide-react";
+import { ArrowRight, BookOpen, Instagram, Mail, Music2 } from "lucide-react";
 import { getTenantGestioneExternalHref } from "@/lib/gestione-routing";
 import { ValentinaOrciuoliHeader } from "@/components/tenants/valentina-orciuoli/vo-header";
+import { ValentinaContactForm } from "@/components/tenants/valentina-orciuoli/contact-form";
 import { TenantLinktreeView, type TenantLinktreeItem } from "@/components/modules/linktree/linktree-view";
 import { TenantBlogSection } from "@/components/modules/blog/blog-section";
 import type { TenantBlogPost } from "@/lib/tenant-blog";
@@ -271,61 +272,3 @@ export function ValentinaOrciuoliStaticPage({ page }: { page: ValentinaPageKind 
     </main>
   );
 }
-
-function ValentinaContactForm() {
-  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
-  const [error, setError] = useState<string | null>(null);
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const formData = new FormData(form);
-    setStatus("sending");
-    setError(null);
-    const res = await fetch("/api/tenant/valentina-orciuoli/contact", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: formData.get("name"),
-        email: formData.get("email"),
-        subject: formData.get("subject"),
-        message: formData.get("message"),
-      }),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      setStatus("error");
-      setError(data.error ?? "Non sono riuscito a inviare il messaggio.");
-      return;
-    }
-    form.reset();
-    setStatus("sent");
-  }
-
-  return (
-    <form className="vo-contact-form" onSubmit={handleSubmit}>
-      <label>
-        Nome
-        <input name="name" required autoComplete="name" />
-      </label>
-      <label>
-        Email
-        <input name="email" type="email" required autoComplete="email" />
-      </label>
-      <label>
-        Oggetto
-        <input name="subject" />
-      </label>
-      <label>
-        Messaggio
-        <textarea name="message" required rows={6} />
-      </label>
-      <button type="submit" disabled={status === "sending"}>
-        <Send size={16} /> {status === "sending" ? "Invio..." : "Invia messaggio"}
-      </button>
-      {status === "sent" && <small>Messaggio inviato. Ti risponderemo via email.</small>}
-      {status === "error" && <small>{error}</small>}
-    </form>
-  );
-}
-
