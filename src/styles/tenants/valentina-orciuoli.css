@@ -2472,6 +2472,12 @@
        dell'elemento per il background) mandando in pezzi la geometria.
        Le 12rem sottratte sono testatina, comandi e piede. */
     --vo-page-h: min(calc(100dvh - 13.5rem), 60vw);
+    /* Spessore del volume, ripartito fra il piatto anteriore (davanti al blocco
+       pagine) e quello posteriore (dietro). Il dorso copre l'intera distanza fra
+       i due: se questi tre valori non tornano, il libro girandosi si apre. */
+    --vo-cover-depth: 16px;
+    --vo-board-depth: 12px;
+    --vo-spine-w: calc(var(--vo-cover-depth) + var(--vo-board-depth));
     --vo-page-w: calc(var(--vo-page-h) / 1.44);
     --vo-cover-w: calc(var(--vo-page-w) * 1.02);
 
@@ -2834,6 +2840,7 @@
   .vo-cover-depth {
     position: absolute;
     inset: 0;
+    transform: translateZ(var(--vo-cover-depth));
     transform-style: preserve-3d;
   }
 
@@ -3527,7 +3534,7 @@
     left: 50%;
     width: var(--vo-cover-w);
     height: 102.4%;
-    transform: translateZ(-9px) rotateY(180deg);
+    transform: translateZ(calc(var(--vo-board-depth) * -1)) rotateY(180deg);
     transform-style: preserve-3d;
   }
 
@@ -4264,5 +4271,74 @@
       right: 12%;
       width: clamp(112px, 44%, 168px);
     }
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Il dorso.
+   È la faccia che chiude il volume sul lato della cucitura: parte dal piano del
+   piatto anteriore e arriva a quello posteriore, quindi copre tutto lo spessore.
+   A libro aperto sta di taglio e non si vede; si rivela mentre il volume ruota
+   sulla quarta, che è il momento in cui la sua assenza si notava.
+   ───────────────────────────────────────────────────────────────────────────── */
+@layer components {
+  .vo-book-spine {
+    position: absolute;
+    top: -1.2%;
+    left: 50%;
+    height: 102.4%;
+    width: var(--vo-spine-w);
+    /* Si parte dal piano del piatto anteriore: da lì la faccia ruotata scende
+       all'indietro per tutta la propria larghezza, fino al piatto posteriore. */
+    transform: translateZ(var(--vo-cover-depth));
+    transform-style: preserve-3d;
+    pointer-events: none;
+  }
+
+  .vo-book-spine-face {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1.1rem 0;
+    transform-origin: left center;
+    transform: rotateY(90deg);
+    /* Nessun `backface-visibility`: il dorso è una faccia opaca che sta in piedi
+       da sola, e va vista da qualunque lato resti esposto. */
+    background: linear-gradient(90deg, #0b0706 0%, #1a120d 38%, #241812 62%, #0e0908 100%);
+    border-radius: 2px;
+    box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.75);
+    overflow: hidden;
+  }
+
+  .vo-book-spine-rule {
+    flex: none;
+    width: 62%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(216, 173, 90, 0.72), transparent);
+  }
+
+  .vo-book-spine-text {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Il titolo corre lungo il dorso, come su uno scaffale. */
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    font-family: "The Seasons Light", "The Seasons", Georgia, serif;
+    font-size: clamp(0.42rem, calc(var(--vo-spine-w) * 0.4), 0.62rem);
+    letter-spacing: 0.24em;
+    white-space: nowrap;
+    color: rgba(242, 216, 148, 0.82);
+  }
+
+  .vo-book-spine-mark {
+    flex: none;
+    font-size: clamp(0.5rem, calc(var(--vo-spine-w) * 0.5), 0.75rem);
+    color: rgba(151, 31, 24, 0.9);
   }
 }

@@ -15,11 +15,6 @@ import type { ReactNode } from "react";
  */
 const STAVES = 5;
 const MAX_BEND_DEG = 22;
-/* Spessore del piatto. La z nel mondo vale `COVER_DEPTH * cos(angolo)`: serve
-   abbastanza margine perché, appena superata la verticale, la copertina finisca
-   nettamente dietro il blocco pagine invece di sfiorarlo — altrimenti si vede il
-   cartoncino passare davanti ai fogli che stanno venendo fuori. */
-const COVER_DEPTH = 14;
 const COVER_ART = "/valentina-orciuoli/hero-dragon-moon.png";
 
 function BentArt({ bend }: { bend: MotionValue<number> }) {
@@ -60,10 +55,11 @@ export function VoCover({ progress }: { progress: MotionValue<number> }) {
 
   return (
     <motion.div className="vo-cover" style={{ rotateY }} aria-hidden="true">
-      {/* La z resta costante: chiusa la copertina sta davanti al blocco, e la
-          rotazione di 180° da sola la porta dietro alle pagine una volta aperta —
-          che è esattamente dove deve stare il piatto di un libro aperto. */}
-      <div className="vo-cover-depth" style={{ transform: `translateZ(${COVER_DEPTH}px)` }}>
+      {/* La z resta costante (la detta `--vo-cover-depth`, che serve anche al
+          dorso): chiusa la copertina sta davanti al blocco, e la rotazione di 180°
+          da sola la porta dietro alle pagine una volta aperta — che è esattamente
+          dove deve stare il piatto di un libro aperto. */}
+      <div className="vo-cover-depth">
       <div className="vo-cover-face vo-cover-front">
         <BentArt bend={bend} />
         <div className="vo-cover-plate">

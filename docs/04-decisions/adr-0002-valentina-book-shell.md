@@ -98,6 +98,15 @@ Il motore del libro **non** è un modulo di piattaforma finché non serve a un s
   anche dopo essere atterrati; la copertina invece tiene la `z` costante, perché è la
   rotazione di 180° a portarla dietro al blocco pagine, che è dove sta il piatto di un
   libro aperto.
+- Il volume ha uno **spessore vero**: piatto anteriore, blocco pagine, piatto posteriore
+  e **dorso**. Il dorso è una faccia ruotata di 90° che parte dal piano del piatto
+  anteriore e arriva a quello posteriore, quindi ne copre tutta la distanza; a libro
+  aperto sta di taglio e non si vede, si rivela ruotando sulla quarta. Senza, girandosi
+  il libro mostrava due cartoncini piatti invece di un oggetto solido.
+- Per questo `--vo-cover-depth` e `--vo-board-depth` stanno **entrambi in CSS**: prima la
+  profondità del piatto anteriore era una costante JS e quella del posteriore una regola
+  CSS, e il dorso non avrebbe potuto misurarsi su nessuna delle due. Se i tre valori non
+  tornano, il volume girandosi si apre.
 - La copertina deve arrivare a **180° esatti**. Fermandosi a 178° il bordo esterno
   accumula abbastanza scarto in z da riemergere davanti alla pagina sinistra.
 - Il progresso della cerimonia è calcolato a mano invece che con `useScroll`: il

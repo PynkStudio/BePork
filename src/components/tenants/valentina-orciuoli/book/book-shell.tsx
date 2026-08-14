@@ -529,6 +529,17 @@ export function VoBookShell({
 
         <div className="vo-book-gutter" aria-hidden="true" />
 
+        {/* Il dorso: la faccia che tiene insieme i due piatti. Si vede solo
+            quando il volume è chiuso e ruota — a libro aperto è di taglio. */}
+        <div className="vo-book-spine" aria-hidden="true">
+          <div className="vo-book-spine-face">
+            <span className="vo-book-spine-rule" />
+            <span className="vo-book-spine-text">Valentina Orciuoli</span>
+            <span className="vo-book-spine-mark">龍</span>
+            <span className="vo-book-spine-rule" />
+          </div>
+        </div>
+
         {activeLeaves.map((leafIndex, order) => {
           const faces = leafFaces(leafIndex);
           return (
