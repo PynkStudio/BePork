@@ -118,7 +118,9 @@ export function VoBookShell({
   backCover,
   soundEnabled,
   bookmark,
+  insert,
   onBeforeFirstPage,
+  onPastLastPage,
 }: {
   initialSpread: number;
   renderFace: (spread: VoSpread, side: VoFaceSide) => ReactNode;
@@ -134,8 +136,12 @@ export function VoBookShell({
   soundEnabled: boolean;
   /** Nastro segnalibro: reso qui perché deve stare nel contesto 3D del volume. */
   bookmark: ReactNode;
+  /** Cedola infilata fra le pagine: come il segnalibro, appartiene al volume. */
+  insert: ReactNode;
   /** Chiamata quando si prova a tornare indietro dalla prima pagina: lì c'è la copertina. */
   onBeforeFirstPage?: () => void;
+  /** Chiamata sfogliando oltre l'ultima pagina: lì c'è la quarta di copertina. */
+  onPastLastPage?: () => void;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -334,9 +340,13 @@ export function VoBookShell({
       const direction = wheelAccRef.current > 0 ? 1 : -1;
       wheelAccRef.current = 0;
       wheelLockRef.current = now + WHEEL_COOLDOWN_MS;
-      // Prima della prima pagina non c'è una pagina: c'è la copertina.
+      // Ai due capi del volume non ci sono pagine: ci sono i piatti.
       if (direction === -1 && spread === 0) {
         onBeforeFirstPage?.();
+        return;
+      }
+      if (direction === 1 && spread === voSpreadCount - 1) {
+        onPastLastPage?.();
         return;
       }
       goTo(spread + direction);
@@ -344,7 +354,7 @@ export function VoBookShell({
 
     stage.addEventListener("wheel", onWheel, { passive: false });
     return () => stage.removeEventListener("wheel", onWheel);
-  }, [goTo, onBeforeFirstPage, open, reducedMotion, spread]);
+  }, [goTo, onBeforeFirstPage, onPastLastPage, open, reducedMotion, spread]);
 
   // ── Input: tastiera ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -354,7 +364,8 @@ export function VoBookShell({
       if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
       if (event.key === "ArrowRight" || event.key === "PageDown") {
         event.preventDefault();
-        goTo(spread + 1);
+        if (spread === voSpreadCount - 1) onPastLastPage?.();
+        else goTo(spread + 1);
       } else if (event.key === "ArrowLeft" || event.key === "PageUp") {
         event.preventDefault();
         if (spread === 0) onBeforeFirstPage?.();
@@ -363,7 +374,7 @@ export function VoBookShell({
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [goTo, onBeforeFirstPage, open, spread]);
+  }, [goTo, onBeforeFirstPage, onPastLastPage, open, spread]);
 
   // ── Input: hotspot sul taglio del foglio (hover → sollevamento, click → giro) ─
   const hintAt = useCallback(
@@ -536,6 +547,7 @@ export function VoBookShell({
         {cover}
         {backCover}
         {bookmark}
+        {insert}
 
         <button
           type="button"
@@ -546,9 +558,9 @@ export function VoBookShell({
           onPointerMove={onHotspotPointerMove}
           onPointerUp={onHotspotPointerUp}
           onPointerCancel={onHotspotPointerUp}
-          onClick={() => goTo(spread + 1)}
-          disabled={!canGoForward || !open}
-          aria-label="Pagina successiva"
+          onClick={() => (canGoForward ? goTo(spread + 1) : onPastLastPage?.())}
+          disabled={!open || (!canGoForward && !onPastLastPage)}
+          aria-label={canGoForward ? "Pagina successiva" : "Chi sono, sul retro del volume"}
         />
         <button
           type="button"

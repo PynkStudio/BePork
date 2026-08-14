@@ -2576,6 +2576,11 @@
   /* ── Il foglio di carta ───────────────────────────────────────────────────── */
   .vo-page-sheet {
     position: relative;
+    /* Il foglio è un contesto di impilamento a sé. Senza, lo `z-index` con cui la
+       foto si mette sopra la grana risalirebbe fino a `.vo-book` e la stampa
+       finirebbe sopra il foglio in volo: le pagine non coprirebbero più le foto.
+       Confina anche il `mix-blend-mode` della grana alla propria carta. */
+    isolation: isolate;
     display: flex;
     flex-direction: column;
     width: 100%;
@@ -4043,6 +4048,221 @@
   @media (max-width: 899px) {
     .vo-photo {
       max-width: 62%;
+    }
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   La cedola della newsletter.
+   Non è un popup che aggredisce: è un cartoncino infilato fra le prime pagine,
+   di cui sporge solo la linguetta. Premendola, la cedola viene tirata su e
+   portata in primo piano.
+   ───────────────────────────────────────────────────────────────────────────── */
+@layer components {
+  .vo-insert-tab {
+    position: absolute;
+    top: -2.5rem;
+    left: 56%;
+    z-index: 4;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.1rem;
+    width: clamp(124px, 27%, 196px);
+    padding: 0.5rem 0.75rem 1.6rem;
+    /* Dietro il blocco pagine: quel che si vede è solo la parte che sporge dal
+       taglio superiore, esattamente come un foglietto lasciato dentro un libro. */
+    transform: translateZ(-3px) rotate(-1.6deg);
+    backface-visibility: hidden;
+    border: 0;
+    border-radius: 2px 2px 0 0;
+    background: linear-gradient(180deg, #f6ecd2 0%, #ecdfbe 62%, #e2d3ad 100%);
+    box-shadow: 0 -3px 10px -4px rgba(28, 20, 12, 0.6);
+    font-family: Georgia, "Times New Roman", serif;
+    text-align: left;
+    cursor: pointer;
+    transition: transform 0.32s cubic-bezier(0.34, 1.3, 0.5, 1);
+  }
+
+  .vo-insert-tab:hover,
+  .vo-insert-tab:focus-visible {
+    transform: translateZ(-3px) translateY(-0.5rem) rotate(-1.6deg);
+  }
+
+  .vo-insert-tab-kicker {
+    font-size: 0.54rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--vo-book-accent);
+  }
+
+  .vo-insert-tab-label {
+    font-size: 0.8rem;
+    font-style: italic;
+    color: rgba(42, 33, 25, 0.78);
+  }
+
+  /* ── La cedola in primo piano ─────────────────────────────────────────────── */
+  .vo-insert-stage {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    display: grid;
+    place-items: center;
+    padding: 1.5rem;
+    background: rgba(6, 4, 3, 0.72);
+    perspective: 1200px;
+  }
+
+  .vo-insert-card {
+    position: relative;
+    width: min(100%, 30rem);
+    padding: clamp(1.6rem, 4vw, 2.4rem) clamp(1.4rem, 3.5vw, 2.2rem) clamp(1.4rem, 3vw, 1.9rem)
+      clamp(2.2rem, 5vw, 3rem);
+    background: linear-gradient(160deg, #f7efdb 0%, #eee2c6 58%, #e6d8b8 100%);
+    color: var(--vo-book-ink);
+    font-family: Georgia, "Times New Roman", serif;
+    box-shadow:
+      0 2px 2px rgba(20, 13, 8, 0.3),
+      0 30px 60px -24px rgba(0, 0, 0, 0.85);
+  }
+
+  /* Il lato da cui è stata staccata: perforazione, non taglio netto. */
+  .vo-insert-perf {
+    position: absolute;
+    inset: 0 auto 0 clamp(0.9rem, 2.2vw, 1.4rem);
+    width: 2px;
+    background-image: radial-gradient(
+      circle at 1px 4px,
+      rgba(42, 33, 25, 0.42) 0 1.4px,
+      transparent 1.6px
+    );
+    background-size: 2px 10px;
+  }
+
+  .vo-insert-close {
+    position: absolute;
+    top: 0.65rem;
+    right: 0.65rem;
+    display: grid;
+    place-items: center;
+    width: 1.9rem;
+    height: 1.9rem;
+    border: 1px solid rgba(42, 33, 25, 0.24);
+    border-radius: 50%;
+    background: transparent;
+    color: rgba(42, 33, 25, 0.62);
+    cursor: pointer;
+    transition: color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .vo-insert-close:hover {
+    color: var(--vo-book-accent);
+    border-color: var(--vo-book-accent);
+  }
+
+  .vo-insert-kicker {
+    display: block;
+    font-size: 0.58rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--vo-book-gilt);
+  }
+
+  .vo-insert-card h2 {
+    margin: 0.5rem 0 0.6rem;
+    font-family: "The Seasons Light", "The Seasons", Georgia, serif;
+    font-weight: 400;
+    font-size: clamp(1.3rem, 2.4vw, 1.75rem);
+    line-height: 1.14;
+  }
+
+  .vo-insert-card p {
+    margin: 0 0 1.1rem;
+    font-size: 0.88rem;
+    line-height: 1.68;
+    color: var(--vo-book-ink-soft);
+  }
+
+  .vo-insert-mark {
+    position: absolute;
+    right: clamp(1rem, 3vw, 1.8rem);
+    bottom: clamp(0.7rem, 2vw, 1.1rem);
+    font-size: 1.5rem;
+    color: rgba(151, 31, 24, 0.28);
+  }
+
+  /* Il form condiviso, rivestito da cedola. */
+  .vo-insert-card .vo-newsletter-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .vo-insert-card .vo-newsletter-form input[type="email"] {
+    flex: 1 1 12rem;
+    padding: 0.6rem 0.85rem;
+    border: 1px solid rgba(42, 33, 25, 0.34);
+    border-radius: 0;
+    background: rgba(255, 253, 246, 0.55);
+    color: var(--vo-book-ink);
+    font-family: inherit;
+    font-size: 0.92rem;
+  }
+
+  .vo-insert-card .vo-newsletter-form input[type="email"]:focus {
+    outline: none;
+    border-color: var(--vo-book-accent);
+  }
+
+  .vo-insert-card .vo-newsletter-form button {
+    flex: none;
+    padding: 0.6rem 1.3rem;
+    border: 1px solid var(--vo-book-accent);
+    border-radius: 0;
+    background: transparent;
+    color: var(--vo-book-accent);
+    font-family: inherit;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.25s ease, color 0.25s ease;
+  }
+
+  .vo-insert-card .vo-newsletter-form button:hover:not(:disabled) {
+    background: var(--vo-book-accent);
+    color: var(--vo-book-paper);
+  }
+
+  .vo-insert-card .vo-newsletter-consent {
+    flex: 1 1 100%;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    font-size: 0.68rem;
+    line-height: 1.5;
+    color: var(--vo-book-ink-soft);
+  }
+
+  .vo-insert-card .vo-newsletter-consent a {
+    color: var(--vo-book-accent);
+  }
+
+  .vo-insert-card .vo-newsletter-form small {
+    flex: 1 1 100%;
+    font-size: 0.74rem;
+    color: var(--vo-book-ink-soft);
+  }
+
+  @media (max-width: 899px) {
+    .vo-insert-tab {
+      left: auto;
+      right: 12%;
+      width: clamp(112px, 44%, 168px);
     }
   }
 }

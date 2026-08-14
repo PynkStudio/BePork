@@ -26,10 +26,11 @@ import {
   voSpreads,
   type VoSpread,
 } from "@/components/tenants/valentina-orciuoli/book/book-map";
+import { useValentinaNewsletter } from "@/components/tenants/valentina-orciuoli/newsletter";
 import {
-  useValentinaNewsletter,
-  ValentinaNewsletterPopup,
-} from "@/components/tenants/valentina-orciuoli/newsletter";
+  VoNewsletterInsert,
+  VoNewsletterTab,
+} from "@/components/tenants/valentina-orciuoli/book/newsletter-insert";
 import {
   valentinaCreativeWorks,
   type ValentinaCreativeWork,
@@ -100,6 +101,8 @@ export function ValentinaOrciuoliBookSite({ initialSpread }: { initialSpread: nu
   const turn = useMotionValue(entry.back ? 1 : 0);
   const openedRef = useRef(opened);
   openedRef.current = opened;
+
+  const [insertOpen, setInsertOpen] = useState(false);
 
   const [soundEnabled, setSoundEnabled] = useState(
     () => !voBookMemoryAvailable || voBookMemory.sound,
@@ -225,6 +228,11 @@ export function ValentinaOrciuoliBookSite({ initialSpread }: { initialSpread: nu
         if (cancelled) return;
         // Si torna nel libro: la quarta implica volume chiuso, quindi si riapre.
         await animate(coverProgress, 1, CLOSE_TRANSITION);
+        if (cancelled) return;
+        // Senza questo il volume tornava aperto *nell'aspetto* ma non nello stato:
+        // rotella, tagli e tastiera restavano morti finché non si ricaricava.
+        openedRef.current = true;
+        setOpened(true);
       }
       if (!cancelled) voBookMemory.back = showsBackCover;
     };
@@ -313,6 +321,36 @@ export function ValentinaOrciuoliBookSite({ initialSpread }: { initialSpread: nu
     [ctx],
   );
 
+  // Sulla quarta il libro è chiuso e nessuno dei due gestori della rotella è
+  // attivo. Senza questo, chi naviga scorrendo ci resterebbe intrappolato.
+  // Il ref segue la pagina da riprendere: il gestore della rotella vive in un
+  // effetto con dipendenze stabili e non deve richiudersi su un valore vecchio.
+  const resumeHrefRef = useRef("");
+  resumeHrefRef.current = spreadHref(resumeSpread, localePrefix);
+  useEffect(() => {
+    if (!showsBackCover) return;
+    const element = stageRef.current;
+    if (!element) return;
+
+    let lock = 0;
+    const onWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      if (event.deltaY >= 0) return;
+      const now = performance.now();
+      if (now < lock) return;
+      lock = now + 900;
+      router.push(resumeHrefRef.current, { scroll: false });
+    };
+
+    element.addEventListener("wheel", onWheel, { passive: false });
+    return () => element.removeEventListener("wheel", onWheel);
+  }, [router, showsBackCover]);
+
+  /** Sfogliare oltre l'ultima pagina porta alla quarta: è lì che il volume finisce. */
+  const goToBackCover = useCallback(() => {
+    router.push(backCoverHref(localePrefix), { scroll: false });
+  }, [localePrefix, router]);
+
   const closeBook = useCallback(() => {
     setOpened(false);
     openedRef.current = false;
@@ -365,7 +403,13 @@ export function ValentinaOrciuoliBookSite({ initialSpread }: { initialSpread: nu
               turn={turn}
               backCover={<VoBackCover hidden={!showsBackCover} />}
               soundEnabled={soundEnabled}
+              insert={
+                opened && !showsBackCover ? (
+                  <VoNewsletterTab onPick={() => setInsertOpen(true)} />
+                ) : null
+              }
               onBeforeFirstPage={closeBook}
+              onPastLastPage={goToBackCover}
               bookmark={
                 showsBackCover ? (
                   <Link
@@ -430,12 +474,12 @@ export function ValentinaOrciuoliBookSite({ initialSpread }: { initialSpread: nu
         </span>
       </footer>
 
-      <ValentinaNewsletterPopup
-        open={newsletter.showNewsletterPopup}
+      <VoNewsletterInsert
+        open={insertOpen}
         sent={newsletter.newsletterSent}
         pending={newsletter.newsletterPending}
         error={newsletter.newsletterError}
-        onClose={newsletter.closeNewsletterPopup}
+        onClose={() => setInsertOpen(false)}
         onSubmit={newsletter.handleNewsletterSubmit}
       />
     </main>

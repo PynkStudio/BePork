@@ -27,6 +27,10 @@ Il libro è la **shell di presentazione**, non il meccanismo di navigazione.
 - **`/it/autrice` non è una pagina del libro: è la quarta di copertina.** Per mostrarla
   il volume si chiude e poi si rigira — due movimenti in sequenza, non uno solo, perché
   un libro non ruota su se stesso da aperto. Vive fuori dall'array degli spread.
+- **Il volume è un circuito chiuso.** Ai due capi non ci sono pagine, ci sono i piatti:
+  risalendo dalla prima pagina il libro si chiude, sfogliando oltre l'ultima si arriva
+  alla quarta, e dalla quarta si rientra. Senza il seguito in avanti quella sezione
+  restava raggiungibile solo dal menu, e chi naviga sfogliando la perdeva.
 - Una route = una **doppia pagina** (spread). L'ordine è definito in
   `src/components/tenants/valentina-orciuoli/book/book-map.ts` e *è* l'ordine delle
   pagine nel volume: cambiarlo cambia quante pagine separano due sezioni.
@@ -164,11 +168,25 @@ Il motore del libro **non** è un modulo di piattaforma finché non serve a un s
   texture stampava la UI del vecchio sito dentro le pagine; e incrociare due direzioni
   di fibra dà carta a quadretti, quindi la fibra è una sola.
 
+**Una trappola dello stato aperto.** Tornando dalla quarta il volume si riapriva
+*nell'aspetto* — l'animazione riportava la copertina a posto — ma non nello stato: `opened`
+era rimasto `false` dal montaggio (la memoria diceva "rigirato"), quindi rotella, tagli e
+tastiera restavano morti finché non si ricaricava la pagina. Lo stato va richiuso alla fine
+del movimento, non lasciato all'aspetto.
+
 **Accessibilità.** I fogli in volo duplicano il contenuto delle pagine statiche: sono
 `aria-hidden` e `inert`, altrimenti link e campi resterebbero raggiungibili da tastiera.
 La navigazione funziona con `←`/`→` e `PageUp`/`PageDown`. Con
 `prefers-reduced-motion: reduce` la cerimonia e lo sfogliare sono disattivati e il libro
 resta un documento leggibile.
+
+**La cedola della newsletter.** Il popup a tempo — compariva da solo dopo quattro
+secondi — è stato sostituito da un oggetto fisico: un cartoncino infilato fra le prime
+pagine, di cui sporge solo la linguetta dal taglio superiore. Chi lo nota lo prende, chi
+non lo vuole non lo incontra mai. Premendolo la cedola viene tirata su e portata in primo
+piano, con il lato perforato di dove è stata staccata. Restano il fuoco intrappolato, la
+chiusura con `Esc` e il ritorno del fuoco al punto di partenza, che il popup già aveva.
+`useValentinaNewsletter` non ha più né timer né `localStorage`: espone solo l'invio.
 
 **Rifiniture presenti.** Fruscio della pagina sintetizzato (rumore bianco in un passa-banda
 discendente, variato a ogni giro così due sfogliate non suonano identiche), con interruttore
@@ -187,7 +205,11 @@ Le copertine dei libri sono **fotografie stampate e incollate**: bande bianche s
 ombra propria, nastro con i lembi strappati aggrappato agli angoli e una banda speculare
 obliqua. Il dettaglio che fa la differenza è lo `z-index`: la stampa sta **sopra** la grana
 della pagina, altrimenti la carta le passerebbe attraverso e tornerebbe opaca come il
-foglio.
+foglio. Ma perché quello `z-index` resti locale, `.vo-page-sheet` deve dichiararsi
+contesto di impilamento con `isolation: isolate` — `position: relative` da sola non ne
+crea uno. Senza, l'indice risaliva fino a `.vo-book` e la foto finiva **sopra il foglio in
+volo**: le pagine non coprivano più le stampe, che sparivano di colpo a fine animazione.
+L'isolamento confina anche il `mix-blend-mode` della grana alla propria carta.
 
 Nessuna di quelle imprecisioni è scritta a mano. `photoHand()` in `pages.tsx` ricava una
 sequenza deterministica dallo slug (FNV-1a per il seme, xorshift32 per la sequenza) e ne
