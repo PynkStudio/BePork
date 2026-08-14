@@ -30,6 +30,14 @@ Il libro è la **shell di presentazione**, non il meccanismo di navigazione.
 - Una route = una **doppia pagina** (spread). L'ordine è definito in
   `src/components/tenants/valentina-orciuoli/book/book-map.ts` e *è* l'ordine delle
   pagine nel volume: cambiarlo cambia quante pagine separano due sezioni.
+- **Ogni opera ha la sua doppia pagina** (`/it/anxiety`, `/it/fury`, …): copertina a
+  piena altezza a sinistra, testo e acquisto a destra. Prima stavano tutte in un elenco
+  unico che traboccava e obbligava a scorrere dentro la carta — dentro un libro non si
+  scorre, si gira pagina. `/it/libri` è diventato il sommario, con i puntini di guida e
+  il numero di pagina come in un indice stampato.
+- **Il sito non scorre mai.** È alto esattamente un viewport, con testatina e piede
+  ancorati: la rotella apre la copertina durante la cerimonia e poi gira le pagine, e
+  non esiste una barra di scorrimento da cui il libro possa sfuggire.
 - La navigazione interna passa sempre dall'URL. Nav, link nelle pagine, hotspot sul
   foglio, rotella, tastiera e back/forward del browser convergono tutti sullo stesso
   `pathname`; il libro insegue il pathname sfogliando.
@@ -57,7 +65,7 @@ era già in progetto).
 | File | Ruolo |
 |---|---|
 | `book-map.ts` | Registro degli spread, quarta di copertina, mapping route↔indice, prefisso lingua |
-| `book-session.ts` | Memoria che sopravvive al rimontaggio del segmento dinamico |
+| `book-memory.ts` | Memoria del volume che sopravvive al rimontaggio del segmento dinamico |
 | `book-site.tsx` | Componente di primo livello: cerimonia, chiusura e giro, dati, nav, piede |
 | `book-shell.tsx` | Scena, stato di navigazione, input (hotspot, rotella, tastiera) |
 | `leaf.tsx` | Il foglio in volo e i suoi tre strati di ombreggiatura |
@@ -103,6 +111,55 @@ Il motore del libro **non** è un modulo di piattaforma finché non serve a un s
   già lì invece di vedersela sfogliare addosso.
 - Un solo scrittore per `voBookSession.spread`: lo shell, che è l'unico a sapere a che
   punto è davvero il volume mentre sfoglia. Il resto legge.
+- La cerimonia d'apertura **non** usa lo scroll del documento: consuma la rotella come
+  valore virtuale. "Chiuso" è uno stato, non un modo d'ingresso: il gesto d'apertura
+  resta disponibile anche dopo un "chiudi il libro", e risalire con la rotella dalla
+  prima pagina richiude il volume. La versione a contenitore alto 320vh con sticky aveva quattro
+  difetti a cascata — la soglia d'apertura scattava prima della fine corsa e il volume
+  restava socchiuso per sempre; il blocco del `body` rendeva il piede irraggiungibile;
+  "Chiudi il libro" riapriva subito perché la soglia riscattava alla prima risalita; e
+  `min-height: 100vh` del contenitore di route eccedeva l'area visibile su mobile,
+  generando la barra di scorrimento.
+- **Non lanciare un'animazione dall'interno della callback del valore che quella
+  animazione muove**: è rientrante e framer finisce per non applicarla. La conclusione
+  dell'apertura stava nell'ascoltatore di `coverProgress`, e il risultato era che la
+  copertina si fermava a un passo dalla fine (`rotateY(-172.8°)`, pagina sinistra al 77%
+  di opacità) e lì restava per sempre, perché da quel punto nessun gesto la muoveva più.
+  Ora la decisione la prende il gesto, non l'ascoltatore.
+- `deltaY` **non è in pixel dappertutto**: `deltaMode` 1 conta righe (Firefox con una
+  rotella vera manda ~3) e 2 conta pagine. Senza normalizzare, su quei browser la
+  cerimonia avrebbe richiesto centinaia di scatti.
+- Il gesto detta il *bersaglio*, una molla ci arriva, e ogni evento è limitato a 160px:
+  l'inerzia di un trackpad manda colpi da oltre mille pixel, che senza tetto
+  teletrasportavano il libro aperto invece di aprirlo.
+- `--vo-page-h` deve restare una **lunghezza**, non una percentuale: larghezza della
+  pagina e fetta d'arte delle doghe derivano da lì con dei `calc`, e una percentuale
+  verrebbe risolta su assi diversi (altezza del genitore per l'altezza, larghezza
+  dell'elemento per il `background-size`).
+- `voBookMemory` è un modulo, e **sul server i moduli sono condivisi fra le richieste**:
+  leggerlo o scriverlo durante il render faceva finire lo stato di un visitatore
+  nell'HTML del successivo, con conseguente fallimento dell'idratazione. La memoria
+  esiste solo nel browser (`voBookMemoryAvailable`).
+- **Regola d'oro della memoria: ogni campo si scrive quando la cosa accade davvero** —
+  il libro si apre, il volume finisce di rigirarsi — mai al montaggio. Un flag scritto
+  al montaggio viene consumato dalla doppia invocazione di StrictMode, che rimonta sullo
+  stesso path senza che sia successo nulla, e la cerimonia non parte più.
+- Per lo stesso motivo **un latch su `useRef` dentro un effetto non funziona**: StrictMode
+  rigioca l'effetto sulla *stessa* istanza, quindi con il ref già scritto. La sequenza
+  chiudi-e-rigira non teneva conto di questo e il giro sulla quarta non partiva mai
+  (si vedeva solo la chiusura, poi uno scatto). L'effetto ora non tiene un latch: punta
+  sempre allo stato che l'URL chiede e salta i tratti già a posto, quindi è idempotente.
+- `PageTransitionShell` rimontava l'intero albero a ogni navigazione (`key={pathname}`)
+  e rigiocava un fade d'entrata: da lì lo scatto a metà sfogliata. Ora le *superfici
+  continue* dichiarate in `src/lib/page-transition.ts` condividono una chiave sola e
+  non rimontano; per ogni altra route il comportamento resta identico. Attenzione: la
+  home e le sezioni restano route file diversi (`[previewSlug]` contro
+  `[previewSlug]/[bookId]`), quindi su quel confine Next rimonta comunque — ed è per
+  questo che `book-memory.ts` continua a servire.
+- Oltre la verticale la copertina **arcua verso l'osservatore** prima di posarsi: è la
+  geometria di una rotazione attorno al dorso, non un errore. Perciò la pagina sinistra
+  si scopre solo a piatto posato (`0.86 → 0.99`), che è anche il comportamento fisico
+  giusto — in un libro vero il risguardo è incollato al piatto e viene giù con lui.
 - La grana della carta è generata in CSS. Usare un asset editoriale del tenant come
   texture stampava la UI del vecchio sito dentro le pagine; e incrociare due direzioni
   di fibra dà carta a quadretti, quindi la fibra è una sola.
@@ -119,6 +176,36 @@ visibile e preferenza che sopravvive alle navigazioni. Nastro segnalibro che cor
 del dorso: dalla quarta di copertina la sua coda è il modo per rientrare esattamente dove si
 stava leggendo. Taglio delle pagine con spessore che migra da destra a sinistra. Dedica che
 si scrive da sé sul risguardo.
+
+**Materiali.** La carta è rumore vero: un `feTurbulence` rasterizzato una volta come
+data-URI e ripetuto, non un reticolo di gradienti — un filtro SVG a runtime darebbe lo
+stesso risultato ma lo ricalcolerebbe a ogni frame, e su un foglio che ruota in 3D si
+paga caro. Sopra ci vanno fibra orientata e nuvolosità dell'impasto, e il testo porta un
+filo di luce sotto le lettere per restituire la stampa in rilievo.
+
+Le copertine dei libri sono **fotografie stampate e incollate**: bande bianche strette,
+ombra propria, nastro con i lembi strappati aggrappato agli angoli e una banda speculare
+obliqua. Il dettaglio che fa la differenza è lo `z-index`: la stampa sta **sopra** la grana
+della pagina, altrimenti la carta le passerebbe attraverso e tornerebbe opaca come il
+foglio.
+
+Nessuna di quelle imprecisioni è scritta a mano. `photoHand()` in `pages.tsx` ricava una
+sequenza deterministica dallo slug (FNV-1a per il seme, xorshift32 per la sequenza) e ne
+tira fuori inclinazione, scarto dal centro, angolo e lunghezza dei due pezzi di nastro; la
+**diagonale del nastro si alterna con l'ordinale** — alto-sinistra/basso-destra, poi il
+contrario — così una fila di schede non sembra timbrata con lo stesso stampo. Un libro
+aggiunto domani prende la sua variazione da sé, e resta sempre la stessa: un valore
+casuale vero cambierebbe a ogni render e la foto saltellerebbe a ogni sfogliata.
+
+**Movimento.** Molla morbida, massa alta, smorzamento quasi critico: una pagina di carta è
+leggera ma incontra l'aria, rallenta lunga e si posa senza rimbalzare (~1,3 s per giro).
+Il foglio si solleva **in proporzione a quanto il puntatore si avvicina al taglio**, con
+una punta di rotazione sul piano che fa staccare l'angolo esterno più del resto: è
+l'affordance — si capisce che è un foglio e che lo si può prendere — senza aggiungere UI.
+
+**Densità.** Le pagine sono progettate per stare dentro il foglio: se una eccede resta
+scorrevole ma senza barra, perché una scrollbar dentro un libro è l'artefatto che rompe
+l'illusione più di ogni altro.
 
 **Da completare.** La dedica usa un corsivo di sistema: per farla sembrare scritta a mano
 serve un font calligrafico da self-hostare in `public/valentina-orciuoli/`. Il compatto

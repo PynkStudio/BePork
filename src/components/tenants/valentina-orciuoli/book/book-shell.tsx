@@ -15,7 +15,10 @@ import {
 } from "react";
 import { VoLeaf } from "@/components/tenants/valentina-orciuoli/book/leaf";
 import { usePageSound } from "@/components/tenants/valentina-orciuoli/book/use-page-sound";
-import { voBookSession } from "@/components/tenants/valentina-orciuoli/book/book-session";
+import {
+  voBookMemory,
+  voBookMemoryAvailable,
+} from "@/components/tenants/valentina-orciuoli/book/book-memory";
 import {
   isBackCoverPathname,
   leafFaces,
@@ -28,12 +31,15 @@ import {
   type VoSpread,
 } from "@/components/tenants/valentina-orciuoli/book/book-map";
 
-const HINT_PROGRESS = 0.055;
+/** Quanto si solleva il foglio quando il puntatore è proprio sul taglio. */
+const HINT_MAX = 0.1;
+/** Entro quanti pixel dal taglio il foglio comincia a sollevarsi. */
+const HINT_PROXIMITY = 150;
 const DRAG_COMMIT_THRESHOLD = 0.32;
 const WHEEL_THRESHOLD = 90;
-const WHEEL_COOLDOWN_MS = 620;
+const WHEEL_COOLDOWN_MS = 760;
 const MAX_ANIMATED_LEAVES = 3;
-const LEAF_STAGGER_MS = 95;
+const LEAF_STAGGER_MS = 125;
 const LEAF_BASE_DEPTH = 1.2;
 const LEAF_DEPTH_STEP = 0.35;
 
@@ -49,8 +55,16 @@ type Gesture = {
   mode: GestureMode;
 };
 
-const flipSpring = { type: "spring", stiffness: 118, damping: 19, mass: 1.1 } as const;
-const hintSpring = { type: "spring", stiffness: 260, damping: 26 } as const;
+// Una pagina di carta è leggera ma incontra l'aria: rallenta lunga e si posa
+// senza rimbalzare. Molla morbida, massa alta, smorzamento quasi critico.
+const flipSpring = {
+  type: "spring",
+  stiffness: 76,
+  damping: 21,
+  mass: 1.4,
+  restDelta: 0.0008,
+} as const;
+const hintSpring = { type: "spring", stiffness: 150, damping: 20, mass: 0.9 } as const;
 
 /**
  * Quali fogli animare per andare da `from` a `to`. Oltre tre fogli l'occhio non
@@ -104,6 +118,7 @@ export function VoBookShell({
   backCover,
   soundEnabled,
   bookmark,
+  onBeforeFirstPage,
 }: {
   initialSpread: number;
   renderFace: (spread: VoSpread, side: VoFaceSide) => ReactNode;
@@ -119,6 +134,8 @@ export function VoBookShell({
   soundEnabled: boolean;
   /** Nastro segnalibro: reso qui perché deve stare nel contesto 3D del volume. */
   bookmark: ReactNode;
+  /** Chiamata quando si prova a tornare indietro dalla prima pagina: lì c'è la copertina. */
+  onBeforeFirstPage?: () => void;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -127,12 +144,16 @@ export function VoBookShell({
   const playPageSound = usePageSound(soundEnabled && !reducedMotion);
   const localePrefix = localePrefixFromPathname(pathname);
 
-  // Si riparte da dove eravamo, non dalla pagina d'arrivo: è la differenza fra le
-  // due che l'effetto sul pathname trasformerà in fogli che girano.
+  // Se il volume era già aperto si riparte da dove eravamo, non dalla pagina
+  // d'arrivo: è la differenza fra le due che l'effetto sul pathname trasforma in
+  // fogli che girano.
   const [spread, setSpread] = useState(() =>
-    voBookSession.started ? voBookSession.spread : initialSpread,
+    voBookMemoryAvailable && voBookMemory.opened ? voBookMemory.spread : initialSpread,
   );
-  voBookSession.spread = spread;
+
+  useEffect(() => {
+    voBookMemory.spread = spread;
+  }, [spread]);
   const [gesture, setGesture] = useState<Gesture | null>(null);
 
   const stageRef = useRef<HTMLDivElement | null>(null);
@@ -152,9 +173,15 @@ export function VoBookShell({
   // Da chiuso il volume mostra solo la copertina, quindi va centrato sulla metà
   // destra; si riallinea al centro reale mentre il cartoncino si apre. La pagina
   // sinistra compare solo quando la copertina ha passato la verticale.
-  const blockShift = useTransform(coverProgress, [0, 0.6], [compact ? "0%" : "-25%", "0%"]);
+  const blockShift = useTransform(coverProgress, [0, 0.55], [compact ? "0%" : "-25%", "0%"]);
   const volumeTurn = useTransform(turn, [0, 1], [0, 180]);
-  const leftPageOpacity = useTransform(coverProgress, [0.42, 0.6], [0, 1]);
+  // La pagina sinistra compare solo quando il piatto si è posato. Oltre la
+  // verticale la copertina non scende dritta: ruotando attorno al dorso il suo
+  // bordo libero arcua verso l'osservatore, quindi in quel tratto sta *davanti*
+  // alla metà sinistra — ed è giusto così, in un libro vero il risguardo è
+  // incollato al piatto e viene giù con lui. Scoprire la dedica prima significava
+  // vedersela coprire dal cartoncino ancora in volo.
+  const leftPageOpacity = useTransform(coverProgress, [0.86, 0.99], [0, 1]);
 
   const pageSheet = useCallback(
     (targetSpread: number, side: VoFaceSide) => {
@@ -307,12 +334,17 @@ export function VoBookShell({
       const direction = wheelAccRef.current > 0 ? 1 : -1;
       wheelAccRef.current = 0;
       wheelLockRef.current = now + WHEEL_COOLDOWN_MS;
+      // Prima della prima pagina non c'è una pagina: c'è la copertina.
+      if (direction === -1 && spread === 0) {
+        onBeforeFirstPage?.();
+        return;
+      }
       goTo(spread + direction);
     };
 
     stage.addEventListener("wheel", onWheel, { passive: false });
     return () => stage.removeEventListener("wheel", onWheel);
-  }, [goTo, open, reducedMotion, spread]);
+  }, [goTo, onBeforeFirstPage, open, reducedMotion, spread]);
 
   // ── Input: tastiera ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -325,31 +357,36 @@ export function VoBookShell({
         goTo(spread + 1);
       } else if (event.key === "ArrowLeft" || event.key === "PageUp") {
         event.preventDefault();
-        goTo(spread - 1);
+        if (spread === 0) onBeforeFirstPage?.();
+        else goTo(spread - 1);
       }
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [goTo, open, spread]);
+  }, [goTo, onBeforeFirstPage, open, spread]);
 
   // ── Input: hotspot sul taglio del foglio (hover → sollevamento, click → giro) ─
   const hintAt = useCallback(
-    (dir: 1 | -1) => {
-      if (!open || reducedMotion || gesture?.mode === "run") return;
+    (dir: 1 | -1, strength = 1) => {
+      if (!open || reducedMotion || gesture?.mode === "run" || gesture?.mode === "drag") return;
       const target = spread + dir;
       if (target < 0 || target >= voSpreadCount) return;
-      tokenRef.current += 1;
-      setGesture({
-        token: tokenRef.current,
-        from: spread,
-        to: target,
-        dir,
-        leaves: leavesForJump(spread, target),
-        mode: "hint",
-      });
-      animate(p0, dir === 1 ? HINT_PROGRESS : 1 - HINT_PROGRESS, hintSpring);
+
+      if (gesture?.mode !== "hint" || gesture.dir !== dir) {
+        tokenRef.current += 1;
+        setGesture({
+          token: tokenRef.current,
+          from: spread,
+          to: target,
+          dir,
+          leaves: leavesForJump(spread, target),
+          mode: "hint",
+        });
+      }
+      const lift = HINT_MAX * strength;
+      animate(p0, dir === 1 ? lift : 1 - lift, hintSpring);
     },
-    [gesture?.mode, open, p0, reducedMotion, spread],
+    [gesture, open, p0, reducedMotion, spread],
   );
 
   const dropHint = useCallback(() => {
@@ -359,6 +396,32 @@ export function VoBookShell({
       setGesture((current) => (current?.mode === "hint" ? null : current));
     });
   }, [gesture, p0]);
+
+  /**
+   * Il foglio non aspetta il clic: si solleva man mano che il puntatore si
+   * avvicina al taglio, in proporzione alla distanza. È l'affordance — si capisce
+   * che quello è un foglio e che lo si può prendere — senza aggiungere UI.
+   */
+  const onStagePointerMove = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      if (event.pointerType === "touch") return;
+      if (!open || reducedMotion || dragRef.current) return;
+      if (gesture?.mode === "run" || gesture?.mode === "drag") return;
+
+      const rect = event.currentTarget.getBoundingClientRect();
+      const fromRight = rect.right - event.clientX;
+      const fromLeft = event.clientX - rect.left;
+      const near = Math.min(fromRight, fromLeft);
+      const dir: 1 | -1 = fromRight <= fromLeft ? 1 : -1;
+
+      if (near > HINT_PROXIMITY || near < 0) {
+        dropHint();
+        return;
+      }
+      hintAt(dir, 1 - near / HINT_PROXIMITY);
+    },
+    [dropHint, gesture?.mode, hintAt, open, reducedMotion],
+  );
 
   const onHotspotPointerDown = useCallback(
     (event: ReactPointerEvent<HTMLButtonElement>, dir: 1 | -1) => {
@@ -403,12 +466,13 @@ export function VoBookShell({
       }
       // Sotto soglia il foglio ricade: se il puntatore è ancora sul taglio resta l'accenno.
       const stillHovering = event.currentTarget.matches(":hover");
-      animate(p0, gesture.dir === 1 ? (stillHovering ? HINT_PROGRESS : 0) : stillHovering ? 1 - HINT_PROGRESS : 1, hintSpring).then(
-        () => {
-          if (!stillHovering) setGesture((current) => (current?.mode === "drag" ? null : current));
-          else setGesture((current) => (current ? { ...current, mode: "hint" } : current));
-        },
-      );
+      const settled = gesture.dir === 1 ? (stillHovering ? HINT_MAX : 0) : stillHovering ? 1 - HINT_MAX : 1;
+      animate(p0, settled, hintSpring).then(() => {
+        setGesture((current) => {
+          if (current?.mode !== "drag") return current;
+          return stillHovering ? { ...current, mode: "hint" } : null;
+        });
+      });
     },
     [gesture, p0],
   );
@@ -428,6 +492,8 @@ export function VoBookShell({
       data-open={open || undefined}
       data-busy={busy || undefined}
       data-compact={compact || undefined}
+      onPointerMove={onStagePointerMove}
+      onPointerLeave={dropHint}
     >
       <div className="vo-book-ambient" aria-hidden="true" />
       <motion.div className="vo-book" style={{ x: blockShift, rotateX: 6, rotateY: volumeTurn }}>
@@ -474,8 +540,8 @@ export function VoBookShell({
         <button
           type="button"
           className="vo-leaf-hotspot vo-leaf-hotspot-next"
-          onPointerEnter={() => hintAt(1)}
-          onPointerLeave={dropHint}
+          onFocus={() => hintAt(1)}
+          onBlur={dropHint}
           onPointerDown={(event) => onHotspotPointerDown(event, 1)}
           onPointerMove={onHotspotPointerMove}
           onPointerUp={onHotspotPointerUp}
@@ -487,8 +553,8 @@ export function VoBookShell({
         <button
           type="button"
           className="vo-leaf-hotspot vo-leaf-hotspot-prev"
-          onPointerEnter={() => hintAt(-1)}
-          onPointerLeave={dropHint}
+          onFocus={() => hintAt(-1)}
+          onBlur={dropHint}
           onPointerDown={(event) => onHotspotPointerDown(event, -1)}
           onPointerMove={onHotspotPointerMove}
           onPointerUp={onHotspotPointerUp}

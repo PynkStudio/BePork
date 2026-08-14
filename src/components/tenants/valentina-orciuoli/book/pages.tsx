@@ -2,7 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 import { ArrowRight, BookOpen, Instagram, Mail, Music2 } from "lucide-react";
-import type { FormEvent, ReactNode } from "react";
+import type { CSSProperties, FormEvent, ReactNode } from "react";
 import { ValentinaContactForm } from "@/components/tenants/valentina-orciuoli/contact-form";
 import { ValentinaNewsletterPanel } from "@/components/tenants/valentina-orciuoli/newsletter";
 import {
@@ -33,6 +33,10 @@ export type VoBookContext = {
   goTo: (id: string) => void;
   /** Numero di pagina stampato, per il sommario. */
   folioFor: (id: string) => number;
+  /** false per le opere che esistono in gestione ma non hanno una pagina nel volume. */
+  hasPage: (id: string) => boolean;
+  /** La dedica si scrive da sé una volta per apertura del libro, non a ogni ritorno. */
+  writeDedication: boolean;
 };
 
 /** Link che resta un vero `<a href>` per crawler e "apri in nuova scheda", ma dentro il libro sfoglia. */
@@ -69,13 +73,75 @@ function formatPostDate(value: string | null) {
   return date.toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" });
 }
 
+const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
+
+/**
+ * Una "mano" deterministica ricavata dallo slug: FNV-1a per il seme, xorshift32
+ * per la sequenza. Serve a dare a ogni foto la sua imprecisione — inclinazione,
+ * scarto dal centro, angolo e lunghezza dei due pezzi di nastro — senza che
+ * nessuno debba deciderla a mano. Un libro aggiunto domani prende la sua da sé;
+ * un valore casuale vero, invece, cambierebbe a ogni render e la foto
+ * saltellerebbe a ogni sfogliata.
+ */
+function handOf(slug: string) {
+  let seed = 2166136261;
+  for (let i = 0; i < slug.length; i += 1) {
+    seed = Math.imul(seed ^ slug.charCodeAt(i), 16777619) >>> 0;
+  }
+  return () => {
+    seed ^= seed << 13;
+    seed ^= seed >>> 17;
+    seed ^= seed << 5;
+    seed >>>= 0;
+    return seed / 4294967296;
+  };
+}
+
+/**
+ * Le due strisce di nastro si alternano di diagonale libro dopo libro — alto a
+ * sinistra/basso a destra, poi il contrario — così una fila di schede non sembra
+ * timbrata con lo stesso stampo.
+ */
+function photoHand(slug: string, ordinal: number) {
+  const rand = handOf(slug);
+  const between = (min: number, max: number) => min + rand() * (max - min);
+  const mirrored = ordinal % 2 === 1;
+  const base = mirrored ? 36 : -38;
+
+  return {
+    diagonal: mirrored ? "b" : "a",
+    style: {
+      "--vo-photo-tilt": `${between(-2.6, 2.6).toFixed(2)}deg`,
+      "--vo-photo-x": `${between(-5.5, 5.5).toFixed(2)}%`,
+      "--vo-photo-y": `${between(-3.5, 3.5).toFixed(2)}%`,
+      "--vo-tape-a-rot": `${(base + between(-7, 7)).toFixed(2)}deg`,
+      "--vo-tape-a-len": `${between(52, 96).toFixed(0)}px`,
+      "--vo-tape-b-rot": `${(base + between(-7, 7)).toFixed(2)}deg`,
+      "--vo-tape-b-len": `${between(52, 96).toFixed(0)}px`,
+    } as CSSProperties,
+  };
+}
+
 /** La scheda di un'opera: copertina a sinistra, testo e acquisto a destra. */
-function renderWorkFace(work: ValentinaCreativeWork, side: VoFaceSide) {
+function renderWorkFace(work: ValentinaCreativeWork, side: VoFaceSide, ordinal: number) {
   if (side === "left") {
+    const hand = photoHand(work.slug, ordinal);
     return (
       <div className="vo-face vo-face-work-cover">
         {work.coverImageUrl ? (
-          <img src={work.coverImageUrl} alt={`Copertina di ${work.title}`} />
+          <figure
+            className="vo-photo"
+            data-diagonal={hand.diagonal}
+            style={hand.style}
+          >
+            <span className="vo-photo-tape vo-photo-tape-a" aria-hidden="true" />
+            <span className="vo-photo-tape vo-photo-tape-b" aria-hidden="true" />
+            <span className="vo-photo-print">
+              <img src={work.coverImageUrl} alt={`Copertina di ${work.title}`} />
+              <span className="vo-photo-gloss" aria-hidden="true" />
+            </span>
+            <figcaption>{ROMAN[ordinal] ?? work.title}</figcaption>
+          </figure>
         ) : (
           <div className="vo-face-cover-placeholder" aria-hidden="true">
             龍
@@ -109,8 +175,9 @@ function renderWorkFace(work: ValentinaCreativeWork, side: VoFaceSide) {
 export function renderVoFace(spread: VoSpread, side: VoFaceSide, ctx: VoBookContext): ReactNode {
   if (spread.kind === "work") {
     // Il contenuto vivo arriva dalla gestione; la struttura delle pagine no.
-    const work = ctx.works.find((entry) => entry.slug === spread.id);
-    return work ? renderWorkFace(work, side) : null;
+    const index = ctx.works.findIndex((entry) => entry.slug === spread.id);
+    const work = index === -1 ? undefined : ctx.works[index];
+    return work ? renderWorkFace(work, side, index) : null;
   }
 
   const key = `${spread.id as VoStaticSpreadId}-${side}`;
@@ -122,7 +189,7 @@ export function renderVoFace(spread: VoSpread, side: VoFaceSide, ctx: VoBookCont
           <span className="vo-face-glyph" aria-hidden="true">
             龍
           </span>
-          <p className="vo-dedication">
+          <p className="vo-dedication" data-writing={ctx.writeDedication || undefined}>
             A chi ha imparato a dare un nome
             <br />
             a ciò che lo attraversa.
@@ -137,7 +204,13 @@ export function renderVoFace(spread: VoSpread, side: VoFaceSide, ctx: VoBookCont
           <h1 className="vo-face-name">valentina orciuoli</h1>
           <span className="vo-face-rule" aria-hidden="true" />
           <div className="vo-face-announce">
-            <img src={darkNoirCoverSrc} alt="Copertina di Tra fumo e ombre" />
+            <span className="vo-photo vo-photo-inline" data-diagonal="a">
+              <span className="vo-photo-tape vo-photo-tape-a" aria-hidden="true" />
+              <span className="vo-photo-print">
+                <img src={darkNoirCoverSrc} alt="Copertina di Tra fumo e ombre" />
+                <span className="vo-photo-gloss" aria-hidden="true" />
+              </span>
+            </span>
             <h2>Una nuova storia sta per arrivare</h2>
             <p>
               Questo autunno Valentina torna con un thriller psicologico ancora avvolto nel
@@ -173,15 +246,30 @@ export function renderVoFace(spread: VoSpread, side: VoFaceSide, ctx: VoBookCont
           <ol>
             {ctx.works
               .filter((work) => work.enabled)
-              .map((work) => (
-                <li key={work.id}>
-                  <VoInternalLink ctx={ctx} to={work.slug}>
-                    <span className="vo-index-title">{work.title}</span>
-                    <span className="vo-index-dots" aria-hidden="true" />
-                    <span className="vo-index-folio">{ctx.folioFor(work.slug)}</span>
-                  </VoInternalLink>
-                </li>
-              ))}
+              .map((work) =>
+                ctx.hasPage(work.slug) ? (
+                  <li key={work.id}>
+                    <VoInternalLink ctx={ctx} to={work.slug}>
+                      <span className="vo-index-title">{work.title}</span>
+                      <span className="vo-index-dots" aria-hidden="true" />
+                      <span className="vo-index-folio">{ctx.folioFor(work.slug)}</span>
+                    </VoInternalLink>
+                  </li>
+                ) : (
+                  // Nessuna pagina nel volume: si manda dove il libro si compra.
+                  <li key={work.id}>
+                    <a
+                      href={work.ctaHref}
+                      target={work.ctaHref.startsWith("http") ? "_blank" : undefined}
+                      rel={work.ctaHref.startsWith("http") ? "noopener noreferrer" : undefined}
+                    >
+                      <span className="vo-index-title">{work.title}</span>
+                      <span className="vo-index-dots" aria-hidden="true" />
+                      <span className="vo-index-folio">→</span>
+                    </a>
+                  </li>
+                ),
+              )}
           </ol>
         </div>
       );
@@ -193,8 +281,7 @@ export function renderVoFace(spread: VoSpread, side: VoFaceSide, ctx: VoBookCont
           <span className="vo-face-kicker">Appunti</span>
           <h2>Dal taccuino</h2>
           <p className="vo-face-lead">
-            Note a margine, dietro le quinte della scrittura e piccole cronache dal mondo dei
-            draghi.
+            Note a margine e piccole cronache dal mondo dei draghi.
           </p>
           <ValentinaNewsletterPanel
             sent={ctx.newsletter.sent}

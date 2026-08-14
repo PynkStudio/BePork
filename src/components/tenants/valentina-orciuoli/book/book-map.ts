@@ -92,6 +92,11 @@ export function leafFaces(spread: number): { front: VoFaceRef; back: VoFaceRef }
   };
 }
 
+/** Un'opera aggiunta solo da gestione non ha una pagina nel volume: va saputo. */
+export function hasSpread(id: string) {
+  return voSpreads.some((spread) => spread.id === id);
+}
+
 export function spreadIndexById(id: string) {
   const index = voSpreads.findIndex((spread) => spread.id === id);
   return index === -1 ? 0 : index;

@@ -15,10 +15,11 @@ import type { ReactNode } from "react";
  */
 const STAVES = 5;
 const MAX_BEND_DEG = 22;
-/* Spessore del piatto. Deve restare maggiore dello sbandamento in z che la
-   copertina accumulerebbe se non arrivasse perfettamente piatta, altrimenti il
-   bordo esterno riemerge davanti alla pagina sinistra. */
-const COVER_DEPTH = 6;
+/* Spessore del piatto. La z nel mondo vale `COVER_DEPTH * cos(angolo)`: serve
+   abbastanza margine perché, appena superata la verticale, la copertina finisca
+   nettamente dietro il blocco pagine invece di sfiorarlo — altrimenti si vede il
+   cartoncino passare davanti ai fogli che stanno venendo fuori. */
+const COVER_DEPTH = 14;
 const COVER_ART = "/valentina-orciuoli/hero-dragon-moon.png";
 
 function BentArt({ bend }: { bend: MotionValue<number> }) {

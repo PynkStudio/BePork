@@ -49,7 +49,7 @@ export function ValentinaContactForm() {
       </label>
       <label>
         Messaggio
-        <textarea name="message" required rows={6} />
+        <textarea name="message" required rows={4} />
       </label>
       <button type="submit" disabled={status === "sending"}>
         <Send size={16} /> {status === "sending" ? "Invio..." : "Invia messaggio"}

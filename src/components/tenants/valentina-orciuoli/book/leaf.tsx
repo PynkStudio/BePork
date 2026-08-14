@@ -30,6 +30,10 @@ export function VoLeaf({
 }) {
   const rotateY = useTransform(progress, [0, 1], [0, -180]);
   const z = useTransform(progress, [0, 1], [depth, -depth]);
+  // Un angolo che si stacca, non un bordo che si alza in blocco: una punta di
+  // rotazione sul piano fa sollevare più l'angolo esterno che il resto del
+  // taglio. Vive solo agli estremi della corsa — a foglio in volo sparisce.
+  const tilt = useTransform(progress, [0, 0.1, 0.3, 0.7, 0.9, 1], [0, -2, 0, 0, 2, 0]);
 
   // Il recto guarda la luce all'inizio e le volta le spalle a metà corsa.
   const frontShade = useTransform(progress, [0, 0.32, 0.5, 1], [0, 0.16, 0.52, 0.62]);
@@ -43,7 +47,7 @@ export function VoLeaf({
   return (
     <motion.div
       className="vo-leaf"
-      style={{ rotateY }}
+      style={{ rotateY, rotateZ: tilt }}
       aria-hidden="true"
       // Le facce duplicano il contenuto delle pagine statiche: senza `inert`
       // link e campi del foglio in volo resterebbero raggiungibili da tastiera.

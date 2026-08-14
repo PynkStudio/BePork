@@ -1,6 +1,6 @@
 "use client";
 
-import { animate, useMotionValue, useMotionValueEvent } from "framer-motion";
+import { animate, useMotionValue } from "framer-motion";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -11,7 +11,12 @@ import { VoBackCover } from "@/components/tenants/valentina-orciuoli/book/back-c
 import { VoCover } from "@/components/tenants/valentina-orciuoli/book/cover";
 import { renderVoFace, type VoBookContext } from "@/components/tenants/valentina-orciuoli/book/pages";
 import {
+  voBookMemory,
+  voBookMemoryAvailable,
+} from "@/components/tenants/valentina-orciuoli/book/book-memory";
+import {
   backCoverHref,
+  hasSpread,
   isBackCoverPathname,
   localePrefixFromPathname,
   spreadHref,
@@ -25,7 +30,6 @@ import {
   useValentinaNewsletter,
   ValentinaNewsletterPopup,
 } from "@/components/tenants/valentina-orciuoli/newsletter";
-import { voBookSession } from "@/components/tenants/valentina-orciuoli/book/book-session";
 import {
   valentinaCreativeWorks,
   type ValentinaCreativeWork,
@@ -35,12 +39,25 @@ const COVER_OPEN_AT = 0.95;
 const CLOSE_TRANSITION = { duration: 0.75, ease: [0.5, 0.05, 0.2, 1] } as const;
 const TURN_TRANSITION = { duration: 0.95, ease: [0.55, 0.06, 0.24, 1] } as const;
 
-function hasCeremonyAtEntry(started: boolean, initialSpread: number, back: boolean) {
-  return !started && initialSpread === 0 && !back;
-}
-/** Quanta rotella serve per spalancare la copertina, in pixel di delta. */
-const CEREMONY_TRAVEL = 900;
+/**
+ * Quanta rotella serve per spalancare la copertina, in pixel di delta. Con il
+ * tetto per evento qui sotto sono circa sette scatti: abbastanza da farne un
+ * gesto deliberato, non tanti da diventare una manovella.
+ */
+const CEREMONY_TRAVEL = 700;
+/**
+ * `deltaY` non è in pixel dappertutto: `deltaMode` 1 conta righe (Firefox con una
+ * rotella vera manda ~3) e 2 conta pagine. Senza normalizzare, su quei browser la
+ * corsa richiederebbe centinaia di scatti e il libro non si aprirebbe mai.
+ */
+const WHEEL_LINE_PX = 16;
+/** Tetto per singolo evento: l'inerzia di un trackpad manda colpi enormi. */
+const WHEEL_MAX_STEP = 160;
+/** La copertina insegue il bersaglio con una molla, non salta di scatto in scatto. */
+const CEREMONY_FOLLOW = { type: "spring", stiffness: 210, damping: 30, mass: 0.7 } as const;
 const CEREMONY_OPEN_TRANSITION = { duration: 0.85, ease: [0.42, 0.02, 0.18, 1] } as const;
+/** Durata dell'inchiostro sulla dedica, allineata a `vo-inking` nel CSS. */
+const DEDICATION_MS = 3200;
 
 export function ValentinaOrciuoliBookSite({ initialSpread }: { initialSpread: number }) {
   const pathname = usePathname();
@@ -54,64 +71,103 @@ export function ValentinaOrciuoliBookSite({ initialSpread }: { initialSpread: nu
   // Da dove parte il volume in questo montaggio: se la scheda ha già visto il
   // libro si riprende il suo stato, altrimenti è un ingresso vero e lo stato lo
   // detta l'URL.
-  const [entry] = useState(() => ({
-    started: voBookSession.started,
-    back: voBookSession.started ? voBookSession.back : showsBackCover,
-  }));
+  /** Lo stato con cui il volume entra in scena, congelato al montaggio. */
+  const [entry] = useState(() => {
+    // In SSR la memoria non si legge: si rende l'ingresso pulito, che è anche
+    // ciò che il client produce al primo render, così l'idratazione torna.
+    const alreadyOpened = voBookMemoryAvailable && voBookMemory.opened;
+    return {
+      ceremony: !alreadyOpened && initialSpread === 0 && !showsBackCover,
+      back: alreadyOpened ? voBookMemory.back : showsBackCover,
+    };
+  });
 
-  // La cerimonia di apertura è un evento d'ingresso: si gioca solo entrando dalla
-  // home a scheda nuova. Chi arriva su /libri da un link condiviso trova il libro
+  // La cerimonia di apertura è un evento d'ingresso: si gioca solo arrivando sulla
+  // home a volume mai aperto. Chi apre un link diretto su /libri trova il libro
   // già aperto a quella pagina, e chi torna in home sfogliando non se la rivede.
-  const [hasCeremony] = useState(
-    () => !entry.started && initialSpread === 0 && !showsBackCover,
-  );
-  const [opened, setOpened] = useState(
-    () => !hasCeremonyAtEntry(entry.started, initialSpread, showsBackCover) && !entry.back,
-  );
+  const [opened, setOpened] = useState(() => !entry.ceremony && !entry.back);
+
+  // Il volume chiuso accetta il gesto d'apertura sempre, non solo all'ingresso:
+  // dopo un "chiudi il libro" si deve poter riaprire allo stesso modo.
+  const closed = !opened && !showsBackCover;
 
   const [works, setWorks] = useState<ValentinaCreativeWork[]>(valentinaCreativeWorks);
   const [posts, setPosts] = useState<TenantBlogPost[]>([]);
 
   const stageRef = useRef<HTMLDivElement | null>(null);
   const ceremonyAccRef = useRef(0);
-  const coverProgress = useMotionValue(hasCeremony || entry.back ? 0 : 1);
+  const coverProgress = useMotionValue(entry.ceremony || entry.back ? 0 : 1);
   const turn = useMotionValue(entry.back ? 1 : 0);
   const openedRef = useRef(opened);
   openedRef.current = opened;
 
-  const [soundEnabled, setSoundEnabled] = useState(() => voBookSession.sound);
-  voBookSession.sound = soundEnabled;
-
+  const [soundEnabled, setSoundEnabled] = useState(
+    () => !voBookMemoryAvailable || voBookMemory.sound,
+  );
   useEffect(() => {
-    voBookSession.started = true;
-  }, []);
+    voBookMemory.sound = soundEnabled;
+  }, [soundEnabled]);
 
+  // Si segna *quando il libro si apre davvero*, non al montaggio: un flag scritto
+  // al montaggio verrebbe consumato dal doppio montaggio di StrictMode e la
+  // cerimonia non si vedrebbe mai.
   useEffect(() => {
-    voBookSession.back = showsBackCover;
-  }, [showsBackCover]);
+    if (opened) voBookMemory.opened = true;
+  }, [opened]);
+
+  // La dedica si scrive quando il volume si apre, e poi resta scritta: tornando
+  // sul frontespizio sfogliando non deve ricominciare da capo.
+  const [writeDedication, setWriteDedication] = useState(false);
+  useEffect(() => {
+    if (!opened) return;
+    setWriteDedication(true);
+    const timer = window.setTimeout(() => setWriteDedication(false), DEDICATION_MS);
+    return () => window.clearTimeout(timer);
+  }, [opened]);
+
+  /**
+   * Porta a termine l'apertura. Sta qui e non dentro l'ascoltatore di
+   * `coverProgress`: lanciare un'animazione dall'interno della callback del
+   * valore che quell'animazione muove è rientrante, e framer finisce per non
+   * applicarla — la copertina restava socchiusa a un passo dalla fine.
+   */
+  const completeOpening = useCallback(() => {
+    if (openedRef.current) return;
+    openedRef.current = true;
+    ceremonyAccRef.current = CEREMONY_TRAVEL;
+    animate(coverProgress, 1, CEREMONY_OPEN_TRANSITION);
+    setOpened(true);
+  }, [coverProgress]);
 
   // La pagina non scorre mai: il documento è alto esattamente un viewport, con
   // testatina e piede ancorati. La cerimonia consuma la rotella come se fosse
   // scroll, ma è un valore virtuale — così non esiste una barra di scorrimento da
   // cui il libro possa sfuggire, ed è la stessa rotella che poi gira le pagine.
   useEffect(() => {
-    if (!hasCeremony) return;
+    if (!closed) return;
     const element = stageRef.current;
     if (!element) return;
 
     const advance = (delta: number) => {
       if (openedRef.current) return;
-      ceremonyAccRef.current = Math.min(
-        Math.max(ceremonyAccRef.current + delta, 0),
-        CEREMONY_TRAVEL,
-      );
-      coverProgress.set(ceremonyAccRef.current / CEREMONY_TRAVEL);
+      const next = Math.min(Math.max(ceremonyAccRef.current + delta, 0), CEREMONY_TRAVEL);
+      if (next / CEREMONY_TRAVEL >= COVER_OPEN_AT) {
+        completeOpening();
+        return;
+      }
+      ceremonyAccRef.current = next;
+      // Il gesto detta il *bersaglio*, la molla ci arriva: così l'apertura resta
+      // continua anche quando gli eventi arrivano a strappi, come dal trackpad.
+      animate(coverProgress, next / CEREMONY_TRAVEL, CEREMONY_FOLLOW);
     };
 
     const onWheel = (event: WheelEvent) => {
       if (openedRef.current) return;
       event.preventDefault();
-      advance(event.deltaY);
+      const unit =
+        event.deltaMode === 1 ? WHEEL_LINE_PX : event.deltaMode === 2 ? window.innerHeight : 1;
+      const step = event.deltaY * unit;
+      advance(Math.max(-WHEEL_MAX_STEP, Math.min(WHEEL_MAX_STEP, step)));
     };
 
     let lastTouch: number | null = null;
@@ -134,49 +190,43 @@ export function ValentinaOrciuoliBookSite({ initialSpread }: { initialSpread: nu
       element.removeEventListener("touchstart", onTouchStart);
       element.removeEventListener("touchmove", onTouchMove);
     };
-  }, [coverProgress, hasCeremony]);
+  }, [closed, completeOpening, coverProgress]);
 
   /** Scorciatoia: un clic sulla copertina chiusa vale l'intera cerimonia. */
-  const openBook = useCallback(() => {
-    if (openedRef.current) return;
-    ceremonyAccRef.current = CEREMONY_TRAVEL;
-    animate(coverProgress, 1, CEREMONY_OPEN_TRANSITION);
-  }, [coverProgress]);
-
-  // Chiudendo il libro si torna a scorrere verso l'alto: senza questa guardia la
-  // soglia di apertura scatterebbe di nuovo al primo evento di scroll e il volume
-  // si richiuderebbe e riaprirebbe di colpo.
-  const suppressOpenRef = useRef(false);
-
-  useMotionValueEvent(coverProgress, "change", (value) => {
-    if (suppressOpenRef.current) {
-      if (value < 0.05) suppressOpenRef.current = false;
-      return;
-    }
-    if (value < COVER_OPEN_AT) return;
-    ceremonyAccRef.current = CEREMONY_TRAVEL;
-    setOpened(true);
-  });
+  const openBook = completeOpening;
 
   // Per mostrare la quarta il volume deve prima chiudersi e poi rigirarsi: sono due
   // movimenti in sequenza, non uno solo, altrimenti si vedrebbero le pagine aperte
   // ruotare su se stesse — che è la cosa che i libri non fanno.
-  const wasBackRef = useRef(entry.back);
+  //
+  // L'effetto non tiene un latch di "già fatto": punta sempre allo stato che l'URL
+  // chiede e salta i tratti già a posto. Un latch su ref verrebbe consumato dalla
+  // doppia invocazione di StrictMode — che rigioca l'effetto sulla *stessa*
+  // istanza, quindi con il ref già scritto — e il giro non partirebbe mai.
   useEffect(() => {
-    if (showsBackCover === wasBackRef.current) return;
-    wasBackRef.current = showsBackCover;
     let cancelled = false;
+
+    // Lo stato di verità è `turn`, non un flag: dice dove il volume *è*. Così
+    // l'effetto non fa nulla quando è già a posto — in particolare non spalanca
+    // un libro che l'utente ha appena chiuso.
+    const alreadyThere = showsBackCover ? turn.get() === 1 : turn.get() === 0;
+    if (alreadyThere) {
+      voBookMemory.back = showsBackCover;
+      return;
+    }
 
     const run = async () => {
       if (showsBackCover) {
-        await animate(coverProgress, 0, CLOSE_TRANSITION);
+        if (coverProgress.get() !== 0) await animate(coverProgress, 0, CLOSE_TRANSITION);
         if (cancelled) return;
         await animate(turn, 1, TURN_TRANSITION);
       } else {
         await animate(turn, 0, TURN_TRANSITION);
         if (cancelled) return;
+        // Si torna nel libro: la quarta implica volume chiuso, quindi si riapre.
         await animate(coverProgress, 1, CLOSE_TRANSITION);
       }
+      if (!cancelled) voBookMemory.back = showsBackCover;
     };
     run();
 
@@ -206,10 +256,10 @@ export function ValentinaOrciuoliBookSite({ initialSpread }: { initialSpread: nu
 
   const currentSpread = spreadIndexByPathname(pathname);
 
-  // Il segnalibro ricorda dov'eri. `voBookSession.spread` lo tiene aggiornato lo
-  // shell, che è l'unico a sapere a che punto è davvero il volume mentre sfoglia;
-  // qui si legge soltanto.
-  const resumeSpread = voSpreads[voBookSession.spread] ?? voSpreads[0];
+  // Il segnalibro ricorda dov'eri: sulla quarta di copertina serve a rientrare
+  // esattamente alla pagina che si stava leggendo.
+  const resumeSpread =
+    (voBookMemoryAvailable ? voSpreads[voBookMemory.spread] : undefined) ?? voSpreads[0];
 
   const hrefFor = useCallback(
     (id: string) => spreadHref(voSpreads[spreadIndexById(id)], localePrefix),
@@ -241,6 +291,8 @@ export function ValentinaOrciuoliBookSite({ initialSpread }: { initialSpread: nu
       hrefFor,
       goTo,
       folioFor,
+      hasPage: hasSpread,
+      writeDedication,
     }),
     [
       folioFor,
@@ -252,6 +304,7 @@ export function ValentinaOrciuoliBookSite({ initialSpread }: { initialSpread: nu
       newsletter.newsletterSent,
       posts,
       works,
+      writeDedication,
     ],
   );
 
@@ -261,8 +314,8 @@ export function ValentinaOrciuoliBookSite({ initialSpread }: { initialSpread: nu
   );
 
   const closeBook = useCallback(() => {
-    suppressOpenRef.current = true;
     setOpened(false);
+    openedRef.current = false;
     ceremonyAccRef.current = 0;
     animate(coverProgress, 0, CEREMONY_OPEN_TRANSITION);
   }, [coverProgress]);
@@ -300,7 +353,7 @@ export function ValentinaOrciuoliBookSite({ initialSpread }: { initialSpread: nu
       <div
         className="vo-book-viewport"
         ref={stageRef}
-        data-ceremony={(hasCeremony && !opened) || undefined}
+        data-ceremony={closed || undefined}
       >
         <div className="vo-volume">
             <VoBookShell
@@ -312,6 +365,7 @@ export function ValentinaOrciuoliBookSite({ initialSpread }: { initialSpread: nu
               turn={turn}
               backCover={<VoBackCover hidden={!showsBackCover} />}
               soundEnabled={soundEnabled}
+              onBeforeFirstPage={closeBook}
               bookmark={
                 showsBackCover ? (
                   <Link
@@ -331,7 +385,7 @@ export function ValentinaOrciuoliBookSite({ initialSpread }: { initialSpread: nu
             />
         </div>
 
-        {hasCeremony && !opened && !showsBackCover ? (
+        {closed ? (
           <button type="button" className="vo-cover-prompt" onClick={openBook}>
             Scorri o tocca per aprire il libro
             <span aria-hidden="true" />
@@ -344,7 +398,7 @@ export function ValentinaOrciuoliBookSite({ initialSpread }: { initialSpread: nu
                 <Link href={hrefFor("home")} scroll={false}>
                   Rigira il libro
                 </Link>
-              ) : currentSpread === 0 && hasCeremony ? (
+              ) : currentSpread === 0 ? (
                 <button type="button" onClick={closeBook}>
                   Chiudi il libro
                 </button>
