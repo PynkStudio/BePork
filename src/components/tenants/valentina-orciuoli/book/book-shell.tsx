@@ -12,6 +12,7 @@ import {
   type CSSProperties,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
+  type RefObject,
 } from "react";
 import { VoLeaf } from "@/components/tenants/valentina-orciuoli/book/leaf";
 import { usePageSound } from "@/components/tenants/valentina-orciuoli/book/use-page-sound";
@@ -83,16 +84,50 @@ function leavesForJump(from: number, to: number) {
   return [all[0], all[Math.floor(all.length / 2)], all[all.length - 1]];
 }
 
-/** Sotto i 900px la doppia pagina è illeggibile: il libro diventa a pagina singola. */
-function useCompactBook() {
+/**
+ * Sotto il punto di rottura la doppia pagina è illeggibile e il libro passa a
+ * pagina singola.
+ *
+ * La soglia è dichiarata **una volta sola, qui**, e il foglio di stile la segue
+ * tramite `[data-compact]`. Prima era una media query nel CSS *e* una in
+ * JavaScript: due verità che possono divergere, e quando è successo si è ottenuto
+ * il peggio dei due modi — la pagina sinistra visibile per il CSS ma riempita con
+ * la stessa facciata della destra dal componente. Il modo è una decisione di
+ * comportamento, non di aspetto: deve appartenere a chi costruisce le pagine.
+ */
+const COMPACT_BREAKPOINT = "(max-width: 899px)";
+
+function useCompactBook(stageRef: RefObject<HTMLDivElement | null>) {
   const [compact, setCompact] = useState(false);
+
   useEffect(() => {
-    const query = window.matchMedia("(max-width: 899px)");
-    setCompact(query.matches);
-    const onChange = (event: MediaQueryListEvent) => setCompact(event.matches);
-    query.addEventListener("change", onChange);
-    return () => query.removeEventListener("change", onChange);
-  }, []);
+    const query = window.matchMedia(COMPACT_BREAKPOINT);
+    const read = () => setCompact(query.matches);
+
+    read();
+    query.addEventListener("change", read);
+
+    // Un `ResizeObserver` sull'elemento invece di un listener sulla finestra:
+    // osserva la cosa che conta davvero — la scatola del libro — e scatta anche
+    // quando l'evento `resize` non arriva, cosa che succede più spesso di quanto
+    // si creda (pannelli incorporati, cambi di zoom, barre che compaiono).
+    const observer = new ResizeObserver(read);
+    const element = stageRef.current;
+    if (element) observer.observe(element);
+    window.addEventListener("resize", read);
+    // `visualViewport` coglie i cambi che non passano da `resize` — barre del
+    // browser che compaiono, zoom, pannelli incorporati. Nessuno di questi tre
+    // inneschi ripete la soglia: la leggono tutti dallo stesso posto.
+    window.visualViewport?.addEventListener("resize", read);
+
+    return () => {
+      query.removeEventListener("change", read);
+      observer.disconnect();
+      window.removeEventListener("resize", read);
+      window.visualViewport?.removeEventListener("resize", read);
+    };
+  }, [stageRef]);
+
   return compact;
 }
 
@@ -121,6 +156,7 @@ export function VoBookShell({
   insert,
   onBeforeFirstPage,
   onPastLastPage,
+  onCompactChange,
 }: {
   initialSpread: number;
   renderFace: (spread: VoSpread, side: VoFaceSide) => ReactNode;
@@ -142,11 +178,18 @@ export function VoBookShell({
   onBeforeFirstPage?: () => void;
   /** Chiamata sfogliando oltre l'ultima pagina: lì c'è la quarta di copertina. */
   onPastLastPage?: () => void;
+  /** Riporta il modo alla radice del sito, che ne veste testatina, comandi e piede. */
+  onCompactChange?: (compact: boolean) => void;
 }) {
   const router = useRouter();
   const pathname = usePathname();
   const reducedMotion = usePrefersReducedMotion();
-  const compact = useCompactBook();
+  const stageRef = useRef<HTMLDivElement | null>(null);
+  const compact = useCompactBook(stageRef);
+
+  useEffect(() => {
+    onCompactChange?.(compact);
+  }, [compact, onCompactChange]);
   const playPageSound = usePageSound(soundEnabled && !reducedMotion);
   const localePrefix = localePrefixFromPathname(pathname);
 
@@ -160,9 +203,34 @@ export function VoBookShell({
   useEffect(() => {
     voBookMemory.spread = spread;
   }, [spread]);
+
+  /**
+   * Su schermo stretto la doppia pagina non esiste: si mostra una facciata alla
+   * volta, e girare la pagina avanza di *mezzo* spread. `half` dice quale delle
+   * due facciate è in vista; su schermo largo non ha significato e viene ignorato.
+   *
+   * Lo stato resta in unità di spread — è quello che l'URL, la memoria e i
+   * numeri di pagina conoscono — e la posizione si deriva dal modo corrente, così
+   * un cambio di larghezza non corrompe nulla.
+   */
+  const [half, setHalf] = useState(0);
+  const positionCount = compact ? voSpreadCount * 2 : voSpreadCount;
+  const toPos = useCallback(
+    (targetSpread: number, targetHalf: number) =>
+      compact ? targetSpread * 2 + targetHalf : targetSpread,
+    [compact],
+  );
+  const fromPos = useCallback(
+    (position: number) =>
+      compact
+        ? { spread: Math.floor(position / 2), half: position % 2 }
+        : { spread: position, half: 0 },
+    [compact],
+  );
+  const pos = toPos(spread, half);
+
   const [gesture, setGesture] = useState<Gesture | null>(null);
 
-  const stageRef = useRef<HTMLDivElement | null>(null);
   const tokenRef = useRef(0);
   const wheelAccRef = useRef(0);
   const wheelLockRef = useRef(0);
@@ -190,27 +258,24 @@ export function VoBookShell({
   const leftPageOpacity = useTransform(coverProgress, [0.86, 0.99], [0, 1]);
 
   const pageSheet = useCallback(
-    (targetSpread: number, side: VoFaceSide) => {
-      if (targetSpread < 0 || targetSpread >= voSpreadCount) {
+    (position: number, side: VoFaceSide) => {
+      if (position < 0 || position >= positionCount) {
         return <div className="vo-page-sheet vo-page-sheet-blank" />;
       }
+      const { spread: targetSpread, half: targetHalf } = fromPos(position);
+      // In compatto la posizione *è* la facciata: il lato richiesto dal chiamante
+      // vale solo quando le due pagine convivono.
+      const face: VoFaceSide = compact ? (targetHalf === 0 ? "left" : "right") : side;
       const meta = voSpreads[targetSpread];
-      const folio = targetSpread * 2 + (side === "right" ? 1 : 0);
+      const folio = targetSpread * 2 + (face === "right" ? 1 : 0);
       return (
-        <div className="vo-page-sheet" data-side={side} data-spread={meta.id}>
+        <div className="vo-page-sheet" data-side={face} data-spread={meta.id}>
           <div className="vo-page-grain" aria-hidden="true" />
           <div className="vo-page-running-head" aria-hidden="true">
-            <span>{side === "left" ? "Valentina Orciuoli" : meta.runningHead}</span>
+            <span>{face === "left" ? "Valentina Orciuoli" : meta.runningHead}</span>
           </div>
           <div className="vo-page-body" data-vo-scroll="">
-            {compact ? (
-              <>
-                {renderFace(meta, "left")}
-                {renderFace(meta, "right")}
-              </>
-            ) : (
-              renderFace(meta, side)
-            )}
+            {renderFace(meta, face)}
           </div>
           {folio > 0 ? (
             <span className="vo-page-folio" aria-hidden="true">
@@ -220,7 +285,7 @@ export function VoBookShell({
         </div>
       );
     },
-    [compact, renderFace],
+    [compact, fromPos, positionCount, renderFace],
   );
 
   const clearGesture = useCallback(() => {
@@ -232,18 +297,21 @@ export function VoBookShell({
 
   const commit = useCallback(
     (target: number) => {
-      setSpread(target);
+      const { spread: nextSpread, half: nextHalf } = fromPos(target);
+      setSpread(nextSpread);
+      setHalf(nextHalf);
       clearGesture();
-      const href = spreadHref(voSpreads[target], localePrefix);
-      router.push(href, { scroll: false });
+      // In compatto due posizioni consecutive possono appartenere allo stesso
+      // spread: l'URL cambia solo quando cambia la sezione.
+      router.push(spreadHref(voSpreads[nextSpread], localePrefix), { scroll: false });
     },
-    [clearGesture, localePrefix, router],
+    [clearGesture, fromPos, localePrefix, router],
   );
 
   const goTo = useCallback(
     (target: number) => {
       if (!open) return;
-      if (target < 0 || target >= voSpreadCount || target === spread) return;
+      if (target < 0 || target >= positionCount || target === pos) return;
       if (gesture?.mode === "run") return;
       if (reducedMotion) {
         commit(target);
@@ -252,14 +320,14 @@ export function VoBookShell({
       tokenRef.current += 1;
       setGesture({
         token: tokenRef.current,
-        from: spread,
+        from: pos,
         to: target,
-        dir: target > spread ? 1 : -1,
-        leaves: leavesForJump(spread, target),
+        dir: target > pos ? 1 : -1,
+        leaves: leavesForJump(pos, target),
         mode: "run",
       });
     },
-    [commit, gesture?.mode, open, reducedMotion, spread],
+    [commit, gesture?.mode, open, pos, positionCount, reducedMotion],
   );
 
   // Avvia le animazioni una volta che i fogli sono montati con lo stato di partenza.
@@ -299,19 +367,22 @@ export function VoBookShell({
   // Back/forward del browser: il libro insegue l'URL sfogliando davvero.
   useEffect(() => {
     if (isBackCoverPathname(pathname)) return;
-    const fromUrl = spreadIndexByPathname(pathname);
-    if (fromUrl === spread || gesture) return;
+    // Una sezione si apre sempre dalla sua prima facciata.
+    const fromUrl = toPos(spreadIndexByPathname(pathname), 0);
+    if (fromUrl === pos || gesture) return;
     if (reducedMotion) {
-      setSpread(fromUrl);
+      const landing = fromPos(fromUrl);
+      setSpread(landing.spread);
+      setHalf(landing.half);
       return;
     }
     tokenRef.current += 1;
     setGesture({
       token: tokenRef.current,
-      from: spread,
+      from: pos,
       to: fromUrl,
-      dir: fromUrl > spread ? 1 : -1,
-      leaves: leavesForJump(spread, fromUrl),
+      dir: fromUrl > pos ? 1 : -1,
+      leaves: leavesForJump(pos, fromUrl),
       mode: "run",
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -341,20 +412,20 @@ export function VoBookShell({
       wheelAccRef.current = 0;
       wheelLockRef.current = now + WHEEL_COOLDOWN_MS;
       // Ai due capi del volume non ci sono pagine: ci sono i piatti.
-      if (direction === -1 && spread === 0) {
+      if (direction === -1 && pos === 0) {
         onBeforeFirstPage?.();
         return;
       }
-      if (direction === 1 && spread === voSpreadCount - 1) {
+      if (direction === 1 && pos === positionCount - 1) {
         onPastLastPage?.();
         return;
       }
-      goTo(spread + direction);
+      goTo(pos + direction);
     };
 
     stage.addEventListener("wheel", onWheel, { passive: false });
     return () => stage.removeEventListener("wheel", onWheel);
-  }, [goTo, onBeforeFirstPage, onPastLastPage, open, reducedMotion, spread]);
+  }, [goTo, onBeforeFirstPage, onPastLastPage, open, pos, positionCount, reducedMotion]);
 
   // ── Input: tastiera ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -364,17 +435,17 @@ export function VoBookShell({
       if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
       if (event.key === "ArrowRight" || event.key === "PageDown") {
         event.preventDefault();
-        if (spread === voSpreadCount - 1) onPastLastPage?.();
-        else goTo(spread + 1);
+        if (pos === positionCount - 1) onPastLastPage?.();
+        else goTo(pos + 1);
       } else if (event.key === "ArrowLeft" || event.key === "PageUp") {
         event.preventDefault();
-        if (spread === 0) onBeforeFirstPage?.();
-        else goTo(spread - 1);
+        if (pos === 0) onBeforeFirstPage?.();
+        else goTo(pos - 1);
       }
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [goTo, onBeforeFirstPage, onPastLastPage, open, spread]);
+  }, [goTo, onBeforeFirstPage, onPastLastPage, open, pos, positionCount]);
 
   // ── Input: hotspot sul taglio del foglio (hover → sollevamento, click → giro) ─
   const hintAt = useCallback(
@@ -439,8 +510,8 @@ export function VoBookShell({
       if (!open || reducedMotion) return;
       const stage = stageRef.current;
       if (!stage) return;
-      const target = spread + dir;
-      if (target < 0 || target >= voSpreadCount) return;
+      const target = pos + dir;
+      if (target < 0 || target >= positionCount) return;
       if (gesture?.mode !== "hint" || gesture.dir !== dir) hintAt(dir);
       event.currentTarget.setPointerCapture(event.pointerId);
       dragRef.current = {
@@ -450,7 +521,7 @@ export function VoBookShell({
       };
       setGesture((current) => (current ? { ...current, mode: "drag" } : current));
     },
-    [gesture, hintAt, open, reducedMotion, spread],
+    [gesture, hintAt, open, pos, positionCount, reducedMotion],
   );
 
   const onHotspotPointerMove = useCallback(
@@ -490,11 +561,11 @@ export function VoBookShell({
 
   // Il gesto "run" riparte da capo: i motion value non usati vanno riportati a zero.
   const activeLeaves = gesture?.leaves ?? [];
-  const staticLeft = gesture ? (gesture.dir === 1 ? gesture.from : gesture.to) : spread;
-  const staticRight = gesture ? (gesture.dir === 1 ? gesture.to : gesture.from) : spread;
+  const staticLeft = gesture ? (gesture.dir === 1 ? gesture.from : gesture.to) : pos;
+  const staticRight = gesture ? (gesture.dir === 1 ? gesture.to : gesture.from) : pos;
 
-  const canGoBack = spread > 0;
-  const canGoForward = spread < voSpreadCount - 1;
+  const canGoBack = pos > 0;
+  const canGoForward = pos < positionCount - 1;
 
   return (
     <div
@@ -569,7 +640,7 @@ export function VoBookShell({
           onPointerMove={onHotspotPointerMove}
           onPointerUp={onHotspotPointerUp}
           onPointerCancel={onHotspotPointerUp}
-          onClick={() => (canGoForward ? goTo(spread + 1) : onPastLastPage?.())}
+          onClick={() => (canGoForward ? goTo(pos + 1) : onPastLastPage?.())}
           disabled={!open || (!canGoForward && !onPastLastPage)}
           aria-label={canGoForward ? "Pagina successiva" : "Chi sono, sul retro del volume"}
         />
@@ -582,8 +653,8 @@ export function VoBookShell({
           onPointerMove={onHotspotPointerMove}
           onPointerUp={onHotspotPointerUp}
           onPointerCancel={onHotspotPointerUp}
-          onClick={() => goTo(spread - 1)}
-          disabled={!canGoBack || !open}
+          onClick={() => (canGoBack ? goTo(pos - 1) : onBeforeFirstPage?.())}
+          disabled={!open || (!canGoBack && !onBeforeFirstPage)}
           aria-label="Pagina precedente"
         />
       </motion.div>

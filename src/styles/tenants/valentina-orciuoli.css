@@ -2828,6 +2828,9 @@
   /* ── Copertina ────────────────────────────────────────────────────────────── */
   .vo-cover {
     position: absolute;
+    /* Decorativa: aperta si distende sopra la pagina sinistra e, senza questo,
+       si mangia i clic dei link che ci stanno sotto. */
+    pointer-events: none;
     top: -1.2%;
     left: 50%;
     width: calc(var(--vo-cover-w));
@@ -3320,52 +3323,52 @@
   }
 
   /* ── Pagina singola sotto i 900px ─────────────────────────────────────────── */
-  @media (max-width: 899px) {
-    .vo-book-stage {
+  /* Modo compatto: lo decide il componente, non il CSS. */
+    .vo-book-site[data-compact] .vo-book-stage {
       --vo-page-h: min(calc(100dvh - 13rem), 128vw);
       --vo-page-w: calc(var(--vo-page-h) / 1.5);
       --vo-cover-w: calc(var(--vo-page-w) * 1.03);
       width: var(--vo-page-w);
     }
 
-    .vo-book {
+    .vo-book-site[data-compact] .vo-book {
       transform: none;
     }
 
     .vo-page-left,
-    .vo-book-gutter {
+    .vo-book-site[data-compact] .vo-book-gutter {
       display: none;
     }
 
-    .vo-page-right {
+    .vo-book-site[data-compact] .vo-page-right {
       left: 0;
       width: 100%;
     }
 
     .vo-leaf,
-    .vo-cover {
+    .vo-book-site[data-compact] .vo-cover {
       left: 0;
       width: 100%;
     }
 
-    .vo-page-sheet[data-side="right"] {
+    .vo-book-site[data-compact] .vo-page-sheet[data-side="right"] {
       box-shadow: inset 14px 0 26px -20px rgba(42, 33, 25, 0.8);
     }
 
-    .vo-leaf-hotspot {
+    .vo-book-site[data-compact] .vo-leaf-hotspot {
       width: 20%;
     }
 
-    .vo-face-glyph-watermark {
+    .vo-book-site[data-compact] .vo-face-glyph-watermark {
       display: none;
     }
 
-    .vo-book-nav {
+    .vo-book-site[data-compact] .vo-book-nav {
       gap: 0.9rem;
       padding: 0.7rem 0.9rem;
     }
 
-    .vo-book-nav nav {
+    .vo-book-site[data-compact] .vo-book-nav nav {
       flex-wrap: nowrap;
       gap: 0.95rem;
       overflow-x: auto;
@@ -3374,34 +3377,35 @@
       -webkit-overflow-scrolling: touch;
     }
 
-    .vo-book-nav nav::-webkit-scrollbar {
+    .vo-book-site[data-compact] .vo-book-nav nav::-webkit-scrollbar {
       display: none;
     }
 
-    .vo-book-nav nav a {
+    .vo-book-site[data-compact] .vo-book-nav nav a {
       white-space: nowrap;
     }
 
-    /* Testatina e numero di pagina sono convenzioni di stampa che su una pagina
-       sola non hanno più il loro mestiere: la testatina ripete l'occhiello della
-       faccia che segue, e il folio numera uno spread che qui non esiste. */
-    .vo-page-running-head,
-    .vo-page-folio {
-      display: none;
+    /* Una facciata per pagina: testatina e numero tornano a fare il loro
+       mestiere, perché ora numerano davvero la pagina che si sta leggendo. */
+    .vo-book-site[data-compact] .vo-page-body {
+      padding-top: clamp(1rem, 2.6vh, 1.5rem);
     }
 
-    .vo-page-body {
-      padding-top: clamp(1.4rem, 3.4vh, 2.1rem);
+    /* Il pannello newsletter è l'unico blocco che su una facciata stretta arriva
+       a sfiorare il bordo: qui vale la pena stringerlo, non farlo scorrere. */
+    .vo-book-site[data-compact] .vo-face .vo-newsletter-panel {
+      margin-top: 0.85rem;
+      padding-top: 0.85rem;
     }
 
-    /* In compatto la pagina raccoglie entrambe le facce dello spread: senza uno
-       stacco leggerebbero come un unico blocco di testo. */
-    .vo-page-body > .vo-face + .vo-face {
-      margin-top: 1.5rem;
-      padding-top: 1.3rem;
-      border-top: 1px solid var(--vo-book-rule);
+    .vo-book-site[data-compact] .vo-face .vo-newsletter-panel p {
+      font-size: 0.76rem !important;
+      line-height: 1.5 !important;
     }
-  }
+
+    .vo-book-site[data-compact] .vo-face .vo-newsletter-consent {
+      font-size: 0.58rem;
+    }
 
   /* ── Moto ridotto: il libro resta, lo sfogliare no ────────────────────────── */
   @media (prefers-reduced-motion: reduce) {
@@ -3530,6 +3534,7 @@
 @layer components {
   .vo-back-board {
     position: absolute;
+    pointer-events: none;
     top: -1.2%;
     left: 50%;
     width: var(--vo-cover-w);
@@ -3641,16 +3646,15 @@
     opacity: 0.72;
   }
 
-  @media (max-width: 899px) {
-    .vo-back-board {
+  /* Modo compatto: lo decide il componente, non il CSS. */
+    .vo-book-site[data-compact] .vo-back-board {
       left: 0;
       width: 100%;
     }
 
-    .vo-book {
+    .vo-book-site[data-compact] .vo-book {
       transform-origin: 50% 50%;
     }
-  }
 
   @media (prefers-reduced-motion: reduce) {
     .vo-back-board {
@@ -3668,6 +3672,8 @@
      rigirato quella coda diventa il modo per rientrare dove si stava leggendo. */
   .vo-bookmark {
     position: absolute;
+    /* Solo la coda cliccabile dalla quarta di copertina è interattiva. */
+    pointer-events: none;
     top: -3%;
     left: calc(50% + 0.5rem);
     width: clamp(9px, 1.4%, 15px);
@@ -3689,6 +3695,7 @@
   }
 
   a.vo-bookmark {
+    pointer-events: auto;
     cursor: pointer;
   }
 
@@ -3707,18 +3714,17 @@
     opacity: 1;
   }
 
-  @media (max-width: 899px) {
-    .vo-bookmark {
+  /* Modo compatto: lo decide il componente, non il CSS. */
+    .vo-book-site[data-compact] .vo-bookmark {
       left: auto;
       right: 1.4rem;
     }
 
-    .vo-book-controls {
+    .vo-book-site[data-compact] .vo-book-controls {
       flex-wrap: wrap;
       justify-content: center;
       padding: 0 1rem;
     }
-  }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -3824,12 +3830,11 @@
     color: var(--vo-book-accent);
   }
 
-  @media (max-width: 899px) {
-    .vo-face-work-cover .vo-photo img {
+  /* Modo compatto: lo decide il componente, non il CSS. */
+    .vo-book-site[data-compact] .vo-face-work-cover .vo-photo img {
       max-height: 40vh;
       width: auto;
     }
-  }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -4052,11 +4057,10 @@
     transform: rotate(-34deg);
   }
 
-  @media (max-width: 899px) {
-    .vo-photo {
+  /* Modo compatto: lo decide il componente, non il CSS. */
+    .vo-book-site[data-compact] .vo-photo {
       max-width: 62%;
     }
-  }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -4265,13 +4269,12 @@
     color: var(--vo-book-ink-soft);
   }
 
-  @media (max-width: 899px) {
-    .vo-insert-tab {
+  /* Modo compatto: lo decide il componente, non il CSS. */
+    .vo-book-site[data-compact] .vo-insert-tab {
       left: auto;
       right: 12%;
       width: clamp(112px, 44%, 168px);
     }
-  }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────

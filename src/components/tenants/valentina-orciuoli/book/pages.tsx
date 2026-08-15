@@ -4,7 +4,6 @@
 import { ArrowRight, BookOpen, Instagram, Mail, Music2 } from "lucide-react";
 import type { CSSProperties, FormEvent, ReactNode } from "react";
 import { ValentinaContactForm } from "@/components/tenants/valentina-orciuoli/contact-form";
-import { ValentinaNewsletterPanel } from "@/components/tenants/valentina-orciuoli/newsletter";
 import {
   amazonStoreHref,
   darkNoirCoverSrc,
@@ -283,12 +282,10 @@ export function renderVoFace(spread: VoSpread, side: VoFaceSide, ctx: VoBookCont
           <p className="vo-face-lead">
             Note a margine e piccole cronache dal mondo dei draghi.
           </p>
-          <ValentinaNewsletterPanel
-            sent={ctx.newsletter.sent}
-            pending={ctx.newsletter.pending}
-            error={ctx.newsletter.error}
-            onSubmit={ctx.newsletter.onSubmit}
-          />
+          <p>
+            Per riceverle in anticipo c&apos;è la cedola d&apos;iscrizione infilata fra le
+            pagine: sporge dal taglio in alto, basta prenderla.
+          </p>
         </div>
       );
     case "blog-right":

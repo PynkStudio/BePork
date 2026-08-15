@@ -234,6 +234,25 @@ Il foglio si solleva **in proporzione a quanto il puntatore si avvicina al tagli
 una punta di rotazione sul piano che fa staccare l'angolo esterno più del resto: è
 l'affordance — si capisce che è un foglio e che lo si può prendere — senza aggiungere UI.
 
+**Mobile.** Sotto il punto di rottura il libro passa a **una facciata per pagina**: si
+gira più spesso, ma non si scorre mai dentro la carta. Prima le due facce dello spread
+venivano impilate in un foglio solo, che è esattamente ciò che produceva lo scroll interno.
+
+Lo stato resta in unità di spread — è quello che URL, memoria e numeri di pagina conoscono
+— e la *posizione* si deriva dal modo corrente, così un cambio di larghezza non corrompe
+nulla. La soglia è dichiarata **una volta sola, nel componente**, e il foglio di stile la
+segue tramite `[data-compact]`: prima era una media query nel CSS *e* una in JavaScript, e
+quando le due sono divergute si è ottenuto il peggio dei due modi — pagina sinistra
+visibile per il CSS ma riempita dal componente con la stessa facciata della destra, quindi
+contenuto duplicato. Il modo di impaginazione è una decisione di comportamento, non di
+aspetto: appartiene a chi costruisce le pagine.
+
+**L'arredo 3D non intercetta i clic.** Copertina, piatto posteriore, tagli e nastro sono
+decorativi e portano `pointer-events: none`. La copertina aperta si distende sopra la
+pagina sinistra: senza, si mangiava i clic dei link che ci stanno sotto — ed è così che i
+contatti risultavano morti. Restano interattivi solo la linguetta della cedola, i tagli
+cliccabili e la coda del segnalibro sulla quarta.
+
 **Densità.** Le pagine sono progettate per stare dentro il foglio: se una eccede resta
 scorrevole ma senza barra, perché una scrollbar dentro un libro è l'artefatto che rompe
 l'illusione più di ogni altro.

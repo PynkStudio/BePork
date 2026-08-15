@@ -48,29 +48,6 @@ export function useValentinaNewsletter() {
   };
 }
 
-export function ValentinaNewsletterPanel({
-  sent,
-  pending,
-  error,
-  onSubmit,
-}: {
-  sent: boolean;
-  pending: boolean;
-  error: string | null;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
-}) {
-  return (
-    <div id="newsletter" className="vo-newsletter-panel">
-      <span className="vo-dragon-mark">Vuoi saperne di più su Valentina?</span>
-      <p>
-        Iscriviti con il tuo indirizzo email per ricevere notizie, aggiornamenti
-        e contenuti esclusivi.
-      </p>
-      <ValentinaNewsletterForm sent={sent} pending={pending} error={error} onSubmit={onSubmit} />
-    </div>
-  );
-}
-
 export function ValentinaNewsletterForm({
   compact = false,
   sent,

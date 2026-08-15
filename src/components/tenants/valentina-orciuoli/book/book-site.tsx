@@ -103,6 +103,9 @@ export function ValentinaOrciuoliBookSite({ initialSpread }: { initialSpread: nu
   openedRef.current = opened;
 
   const [insertOpen, setInsertOpen] = useState(false);
+  // Il modo lo decide lo shell, ma il flag serve alla radice: da lì il foglio di
+  // stile veste testatina, comandi e piede oltre al libro.
+  const [compact, setCompact] = useState(false);
 
   const [soundEnabled, setSoundEnabled] = useState(
     () => !voBookMemoryAvailable || voBookMemory.sound,
@@ -359,7 +362,11 @@ export function ValentinaOrciuoliBookSite({ initialSpread }: { initialSpread: nu
   }, [coverProgress]);
 
   return (
-    <main className="vo-site vo-book-site" data-opened={opened || undefined}>
+    <main
+      className="vo-site vo-book-site"
+      data-opened={opened || undefined}
+      data-compact={compact || undefined}
+    >
       <header className="vo-book-nav" aria-label="Sezioni del libro">
         <Link className="vo-book-nav-mark" href={hrefFor("home")}>
           v.o.
@@ -392,6 +399,7 @@ export function ValentinaOrciuoliBookSite({ initialSpread }: { initialSpread: nu
         className="vo-book-viewport"
         ref={stageRef}
         data-ceremony={closed || undefined}
+        onClick={closed ? openBook : undefined}
       >
         <div className="vo-volume">
             <VoBookShell
@@ -403,6 +411,7 @@ export function ValentinaOrciuoliBookSite({ initialSpread }: { initialSpread: nu
               turn={turn}
               backCover={<VoBackCover hidden={!showsBackCover} />}
               soundEnabled={soundEnabled}
+              onCompactChange={setCompact}
               insert={
                 opened && !showsBackCover ? (
                   <VoNewsletterTab onPick={() => setInsertOpen(true)} />
