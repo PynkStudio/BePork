@@ -4250,40 +4250,59 @@ export type Database = {
         Row: {
           author_email: string
           author_name: string
+          author_reply: boolean
           body: string
           created_at: string
           id: string
           ip_hash: string | null
+          locale: string | null
           moderated_at: string | null
+          parent_id: string | null
           post_id: string
+          spam_score: number
           status: string
           user_agent: string | null
         }
         Insert: {
           author_email: string
           author_name: string
+          author_reply?: boolean
           body: string
           created_at?: string
           id?: string
           ip_hash?: string | null
+          locale?: string | null
           moderated_at?: string | null
+          parent_id?: string | null
           post_id: string
+          spam_score?: number
           status?: string
           user_agent?: string | null
         }
         Update: {
           author_email?: string
           author_name?: string
+          author_reply?: boolean
           body?: string
           created_at?: string
           id?: string
           ip_hash?: string | null
+          locale?: string | null
           moderated_at?: string | null
+          parent_id?: string | null
           post_id?: string
+          spam_score?: number
           status?: string
           user_agent?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "tenant_blog_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_blog_comments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tenant_blog_comments_post_id_fkey"
             columns: ["post_id"]
@@ -4295,11 +4314,18 @@ export type Database = {
       }
       tenant_blog_posts: {
         Row: {
+          author_id: string | null
+          cover_focal_x: number
+          cover_focal_y: number
           cover_image_url: string | null
           created_at: string
+          editorial_type: string | null
           excerpt: string | null
+          featured: boolean
           id: string
+          like_count: number
           published_at: string | null
+          scheduled_at: string | null
           seo_description: string | null
           seo_title: string | null
           slug: string
@@ -4307,13 +4333,22 @@ export type Database = {
           tenant_id: string
           title: string
           updated_at: string
+          updated_by: string | null
+          view_count: number
         }
         Insert: {
+          author_id?: string | null
+          cover_focal_x?: number
+          cover_focal_y?: number
           cover_image_url?: string | null
           created_at?: string
+          editorial_type?: string | null
           excerpt?: string | null
+          featured?: boolean
           id?: string
+          like_count?: number
           published_at?: string | null
+          scheduled_at?: string | null
           seo_description?: string | null
           seo_title?: string | null
           slug: string
@@ -4321,13 +4356,22 @@ export type Database = {
           tenant_id: string
           title: string
           updated_at?: string
+          updated_by?: string | null
+          view_count?: number
         }
         Update: {
+          author_id?: string | null
+          cover_focal_x?: number
+          cover_focal_y?: number
           cover_image_url?: string | null
           created_at?: string
+          editorial_type?: string | null
           excerpt?: string | null
+          featured?: boolean
           id?: string
+          like_count?: number
           published_at?: string | null
+          scheduled_at?: string | null
           seo_description?: string | null
           seo_title?: string | null
           slug?: string
@@ -4335,10 +4379,344 @@ export type Database = {
           tenant_id?: string
           title?: string
           updated_at?: string
+          updated_by?: string | null
+          view_count?: number
         }
         Relationships: [
           {
+            foreignKeyName: "tenant_blog_posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_blog_authors"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "tenant_blog_posts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_blog_authors: {
+        Row: {
+          avatar_url: string | null
+          bio: Json
+          created_at: string
+          display_name: string
+          id: string
+          links: Json
+          position: number
+          role_label: string | null
+          slug: string
+          tenant_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: Json
+          created_at?: string
+          display_name: string
+          id?: string
+          links?: Json
+          position?: number
+          role_label?: string | null
+          slug: string
+          tenant_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: Json
+          created_at?: string
+          display_name?: string
+          id?: string
+          links?: Json
+          position?: number
+          role_label?: string | null
+          slug?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_blog_authors_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_blog_plan_slots: {
+        Row: {
+          created_at: string
+          editorial_type: string | null
+          id: string
+          post_id: string | null
+          slot_date: string
+          slot_time: string
+          tenant_id: string
+          theme_hint: string | null
+        }
+        Insert: {
+          created_at?: string
+          editorial_type?: string | null
+          id?: string
+          post_id?: string | null
+          slot_date: string
+          slot_time?: string
+          tenant_id: string
+          theme_hint?: string | null
+        }
+        Update: {
+          created_at?: string
+          editorial_type?: string | null
+          id?: string
+          post_id?: string | null
+          slot_date?: string
+          slot_time?: string
+          tenant_id?: string
+          theme_hint?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_blog_plan_slots_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_blog_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_blog_plan_slots_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_blog_post_likes: {
+        Row: {
+          created_at: string
+          post_id: string
+          visitor_hash: string
+        }
+        Insert: {
+          created_at?: string
+          post_id: string
+          visitor_hash: string
+        }
+        Update: {
+          created_at?: string
+          post_id?: string
+          visitor_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_blog_post_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_blog_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_blog_post_revisions: {
+        Row: {
+          author_label: string | null
+          created_at: string
+          id: string
+          locale: string
+          post_id: string
+          snapshot: Json
+        }
+        Insert: {
+          author_label?: string | null
+          created_at?: string
+          id?: string
+          locale: string
+          post_id: string
+          snapshot: Json
+        }
+        Update: {
+          author_label?: string | null
+          created_at?: string
+          id?: string
+          locale?: string
+          post_id?: string
+          snapshot?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_blog_post_revisions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_blog_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_blog_post_tags: {
+        Row: {
+          post_id: string
+          tag_id: string
+        }
+        Insert: {
+          post_id: string
+          tag_id: string
+        }
+        Update: {
+          post_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_blog_post_tags_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_blog_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_blog_post_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_blog_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_blog_post_translations: {
+        Row: {
+          content: Json
+          excerpt: string | null
+          id: string
+          locale: string
+          noindex: boolean
+          og_image_url: string | null
+          post_id: string
+          reading_minutes: number | null
+          seo_description: string | null
+          seo_title: string | null
+          slug: string
+          tenant_id: string
+          title: string
+          translation_status: string
+          updated_at: string
+        }
+        Insert: {
+          content?: Json
+          excerpt?: string | null
+          id?: string
+          locale: string
+          noindex?: boolean
+          og_image_url?: string | null
+          post_id: string
+          reading_minutes?: number | null
+          seo_description?: string | null
+          seo_title?: string | null
+          slug: string
+          tenant_id: string
+          title: string
+          translation_status?: string
+          updated_at?: string
+        }
+        Update: {
+          content?: Json
+          excerpt?: string | null
+          id?: string
+          locale?: string
+          noindex?: boolean
+          og_image_url?: string | null
+          post_id?: string
+          reading_minutes?: number | null
+          seo_description?: string | null
+          seo_title?: string | null
+          slug?: string
+          tenant_id?: string
+          title?: string
+          translation_status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_blog_post_translations_post_fkey"
+            columns: ["post_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_blog_posts"
+            referencedColumns: ["id", "tenant_id"]
+          },
+        ]
+      }
+      tenant_blog_slug_redirects: {
+        Row: {
+          created_at: string
+          from_slug: string
+          id: string
+          locale: string
+          post_id: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          from_slug: string
+          id?: string
+          locale: string
+          post_id: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          from_slug?: string
+          id?: string
+          locale?: string
+          post_id?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_blog_slug_redirects_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_blog_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_blog_slug_redirects_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_blog_tags: {
+        Row: {
+          created_at: string
+          id: string
+          labels: Json
+          position: number
+          slug: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          labels?: Json
+          position?: number
+          slug: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          labels?: Json
+          position?: number
+          slug?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_blog_tags_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -6356,6 +6734,10 @@ export type Database = {
       revoke_tenant_access: {
         Args: { p_employee_id: string; p_revoker_user_id: string }
         Returns: undefined
+      }
+      tenant_blog_post_is_public: {
+        Args: { target_post_id: string }
+        Returns: boolean
       }
     }
     Enums: {

@@ -156,6 +156,29 @@ I tenant **non comunicano tra loro direttamente**. L'unico canale di comunicazio
 
 ---
 
+## Regola fondamentale: progetti a fasi con bacheca di stato
+
+Alcune feature sono progetti lunghi, sviluppati in più sessioni e da chat diverse. Ognuno ha un documento in `docs/03-features/` con una **bacheca di avanzamento**: l'elenco dei lavori, ciascuno marcato con uno stato.
+
+Progetti attivi:
+
+| Progetto | Documento |
+|---|---|
+| Blog editoriale multilingua (rich text, media, SEO, MCP per tenant) | `docs/03-features/blog-editoriale.md` |
+
+Regole valide per ogni progetto con bacheca:
+
+- **Prima di toccare il codice di quel modulo, leggi la bacheca** e riparti dal primo lavoro non completato.
+- Stati ammessi: ⬜ **da iniziare**, 🟡 **in lavorazione**, 🔵 **in test**, ✅ **completata**.
+- **Aggiorna la bacheca nello stesso intervento in cui cambi il codice**, mai dopo.
+- `tsc` e `lint` puliti portano una voce a 🔵 **in test**, non a ✅. Il passaggio a ✅ richiede una verifica sul campo (migration applicata, pagina aperta, cron scattato, endpoint chiamato) e la documentazione aggiornata.
+- Se la verifica dipende da un'azione dell'utente, lascia 🔵 e scrivi nelle note cosa manca e a chi tocca.
+- Non inventare avanzamento: nel dubbio, lo stato più basso.
+- Una voce che si scopre incompleta torna indietro di stato.
+- Le istruzioni complete stanno nella sezione "Istruzioni per l'IA" in testa al documento del progetto: in caso di conflitto, vince quella.
+
+---
+
 ## Regola fondamentale: documentazione Obsidian sempre allineata
 
 La root della repo è una **vault Obsidian**. La documentazione vive in `docs/` (struttura `00-vision` … `09-meetings`, `templates`, più `docs/START-HERE.md`) e nei file di root (`README.md`, `ARCHITECTURE.md`, `PRODUCT.md`).

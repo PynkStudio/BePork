@@ -25,6 +25,7 @@ Documenti già popolati a partire dai file della repo:
 - [[tenant-e-verticali]] — `docs/01-business/`
 - [[panoramica-tecnica]] — `docs/02-architecture/`
 - [[moduli-piattaforma]] — `docs/03-features/`
+- [[blog-editoriale]] — `docs/03-features/` (progetto a fasi: blog multilingua, rich text, MCP per tenant). Contiene la **bacheca di avanzamento** con lo stato di ogni lavoro: consultala e aggiornala a ogni intervento sul modulo blog.
 - [[integrazioni-attive]] — `docs/06-integrations/`
 - [[endpoint-ia]] — `docs/07-prompts/`
 - [[cron-e-processi]] — `docs/08-processes/`
@@ -35,8 +36,8 @@ Documenti già popolati a partire dai file della repo:
 
 Non compilate perché **non deducibili con certezza** dalla repo (nessun contenuto inventato):
 
-- `04-decisions/` — [[adr-0001-route-module-gating]] (redirect alla home per route di modulo non attivo), [[adr-0002-valentina-book-shell]] (il sito `valentina-orciuoli` reso come libro sfogliabile). Usa [[adr-template]] per i futuri.
-- `05-roadmap/` — nessuna roadmap certa nel codice (non inventata).
+- `04-decisions/` — [[adr-0001-route-module-gating]] (redirect alla home per route di modulo non attivo), [[adr-0002-valentina-book-shell]] (il sito `valentina-orciuoli` reso come libro sfogliabile), [[adr-0003-blog-contenuto-tiptap-multilingua]] e [[adr-0004-mcp-tenant-blog]] (in stato *proposta*). Usa [[adr-template]] per i futuri.
+- `05-roadmap/` — nessuna roadmap certa nel codice (non inventata). L'unico piano a fasi scritto è quello di [[blog-editoriale]].
 - `09-meetings/` — nessun verbale presente. Usa [[meeting-template]].
 
 ## Mappa delle sezioni

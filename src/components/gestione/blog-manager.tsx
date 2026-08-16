@@ -110,6 +110,7 @@ export function BlogManager({
 }) {
   const [posts, setPosts] = useState<EditablePost[]>(() => toEditable(initialPosts));
   const [selectedId, setSelectedId] = useState<string>(() => initialPosts[0]?.id ?? "");
+  const [deletedPostIds, setDeletedPostIds] = useState<string[]>([]);
   const [deletedCommentIds, setDeletedCommentIds] = useState<string[]>([]);
   const [pending, setPending] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
@@ -193,6 +194,7 @@ export function BlogManager({
           slug: slugifyBlogPostTitle(post.slug || post.title),
           comments: post.comments.filter((comment) => !comment.deleted),
         })),
+        deletedPostIds,
         deletedCommentIds,
       }),
     });
@@ -202,6 +204,7 @@ export function BlogManager({
       setStatus(data.error ?? "Errore durante il salvataggio.");
       return;
     }
+    setDeletedPostIds([]);
     setDeletedCommentIds([]);
     setStatus("Blog aggiornato.");
   }
@@ -249,6 +252,12 @@ export function BlogManager({
                 className="ga-icon-button"
                 aria-label="Elimina articolo"
                 onClick={() => {
+                  const wasPersisted = initialPosts.some((post) => post.id === selected.id);
+                  if (wasPersisted) {
+                    setDeletedPostIds((current) =>
+                      current.includes(selected.id) ? current : [...current, selected.id],
+                    );
+                  }
                   setPosts((current) => current.filter((post) => post.localId !== selected.localId));
                   setSelectedId("");
                 }}

@@ -63,13 +63,19 @@ const CEREMONY_TRAVEL = 700;
 const WHEEL_LINE_PX = 16;
 /** Tetto per singolo evento: l'inerzia di un trackpad manda colpi enormi. */
 const WHEEL_MAX_STEP = 160;
+/**
+ * Quanto conta un pixel di pollice sulla corsa della copertina. A 2.2 servivano
+ * più di trecento pixel di trascinamento: su un telefono è quasi tutto lo schermo,
+ * e il gesto finiva prima del libro.
+ */
+const TOUCH_CEREMONY_GAIN = 3.1;
 /** La copertina insegue il bersaglio con una molla, non salta di scatto in scatto. */
 const CEREMONY_FOLLOW = { type: "spring", stiffness: 210, damping: 30, mass: 0.7 } as const;
 const CEREMONY_OPEN_TRANSITION = { duration: 0.85, ease: [0.42, 0.02, 0.18, 1] } as const;
 /** Durata dell'inchiostro sulla dedica, allineata a `vo-inking` nel CSS. */
 const DEDICATION_MS = 3200;
 /** La panoramica fra il volume e la scrivania: lenta, come girare la testa. */
-const PAN_TRANSITION = { duration: 1.05, ease: [0.65, 0.02, 0.2, 1] } as const;
+const PAN_TRANSITION = { duration: 1.15, ease: [0.62, 0.02, 0.16, 1] } as const;
 
 export function ValentinaOrciuoliBookSite({
   initialSpread,
@@ -99,12 +105,31 @@ export function ValentinaOrciuoliBookSite({
    * appunti stanno sullo stesso tavolo, e il gesto per passare dall'uno agli
    * altri è spostare lo sguardo, non girare una pagina.
    */
-  const pan = useMotionValue(onDesk ? 1 : 0);
+  const [cameraEntry] = useState(() =>
+    voBookMemoryAvailable && voBookMemory.opened ? voBookMemory.desk : onDesk,
+  );
+  const pan = useMotionValue(cameraEntry ? 1 : 0);
+
+  // Il carrello. La traslazione da sola è un carosello: una panoramica vera ha
+  // anche profondità, così la scena che si lascia arretra e quella che arriva
+  // viene incontro invece di scivolare di fianco.
   const worldX = useTransform(pan, [0, 1], ["0%", "-50%"]);
-  const bookFade = useTransform(pan, [0, 0.75], [1, 0.25]);
+  const bookScale = useTransform(pan, [0, 1], [1, 0.84]);
+  const bookTurn = useTransform(pan, [0, 1], [0, -13]);
+  // In una panoramica gli oggetti restano illuminati: cambia l'inquadratura, non
+  // la luce. Sfumare fino al nero apriva una valle buia a metà movimento.
+  const bookFade = useTransform(pan, [0, 1], [1, 0.42]);
+  const bookDrift = useTransform(pan, [0, 1], ["0%", "7%"]);
+  const deskScale = useTransform(pan, [0, 1], [0.86, 1]);
+  const deskTurn = useTransform(pan, [0, 1], [15, 0]);
+  const deskFade = useTransform(pan, [0, 0.8], [0.34, 1]);
+  const deskDrift = useTransform(pan, [0, 1], ["-7%", "0%"]);
 
   useEffect(() => {
     const controls = animate(pan, onDesk ? 1 : 0, PAN_TRANSITION);
+    controls.then(() => {
+      voBookMemory.desk = onDesk;
+    });
     return () => controls.stop();
   }, [onDesk, pan]);
 
@@ -195,17 +220,27 @@ export function ValentinaOrciuoliBookSite({
     const element = stageRef.current;
     if (!element) return;
 
-    const advance = (delta: number) => {
+    let follow: { stop: () => void } | null = null;
+
+    /**
+     * `direct` distingue i due gesti. La rotella manda impulsi staccati e ha
+     * bisogno di una molla che li unisca; il dito è già una posizione continua, e
+     * inseguirlo con una molla nuova a ogni evento — sessanta al secondo — voleva
+     * dire una rincorsa che parte da ferma sessanta volte: il cartoncino restava
+     * indietro rispetto al pollice e scattava.
+     */
+    const advance = (delta: number, direct: boolean) => {
       if (openedRef.current) return;
       const next = Math.min(Math.max(ceremonyAccRef.current + delta, 0), CEREMONY_TRAVEL);
       if (next / CEREMONY_TRAVEL >= COVER_OPEN_AT) {
+        follow?.stop();
         completeOpening();
         return;
       }
       ceremonyAccRef.current = next;
-      // Il gesto detta il *bersaglio*, la molla ci arriva: così l'apertura resta
-      // continua anche quando gli eventi arrivano a strappi, come dal trackpad.
-      animate(coverProgress, next / CEREMONY_TRAVEL, CEREMONY_FOLLOW);
+      follow?.stop();
+      follow = direct ? null : animate(coverProgress, next / CEREMONY_TRAVEL, CEREMONY_FOLLOW);
+      if (direct) coverProgress.set(next / CEREMONY_TRAVEL);
     };
 
     const onWheel = (event: WheelEvent) => {
@@ -214,7 +249,7 @@ export function ValentinaOrciuoliBookSite({
       const unit =
         event.deltaMode === 1 ? WHEEL_LINE_PX : event.deltaMode === 2 ? window.innerHeight : 1;
       const step = event.deltaY * unit;
-      advance(Math.max(-WHEEL_MAX_STEP, Math.min(WHEEL_MAX_STEP, step)));
+      advance(Math.max(-WHEEL_MAX_STEP, Math.min(WHEEL_MAX_STEP, step)), false);
     };
 
     let lastTouch: number | null = null;
@@ -225,17 +260,30 @@ export function ValentinaOrciuoliBookSite({
       if (openedRef.current || lastTouch === null) return;
       const y = event.touches[0]?.clientY ?? lastTouch;
       event.preventDefault();
-      advance((lastTouch - y) * 2.2);
+      advance((lastTouch - y) * TOUCH_CEREMONY_GAIN, true);
       lastTouch = y;
+    };
+    // Il dito che si stacca a metà: la copertina non resta socchiusa a caso, si
+    // posa dove il gesto l'ha lasciata con una molla sua.
+    const onTouchEnd = () => {
+      lastTouch = null;
+      if (openedRef.current) return;
+      follow?.stop();
+      follow = animate(coverProgress, ceremonyAccRef.current / CEREMONY_TRAVEL, CEREMONY_FOLLOW);
     };
 
     element.addEventListener("wheel", onWheel, { passive: false });
     element.addEventListener("touchstart", onTouchStart, { passive: true });
     element.addEventListener("touchmove", onTouchMove, { passive: false });
+    element.addEventListener("touchend", onTouchEnd, { passive: true });
+    element.addEventListener("touchcancel", onTouchEnd, { passive: true });
     return () => {
+      follow?.stop();
       element.removeEventListener("wheel", onWheel);
       element.removeEventListener("touchstart", onTouchStart);
       element.removeEventListener("touchmove", onTouchMove);
+      element.removeEventListener("touchend", onTouchEnd);
+      element.removeEventListener("touchcancel", onTouchEnd);
     };
   }, [closed, completeOpening, coverProgress]);
 
@@ -455,7 +503,18 @@ export function ValentinaOrciuoliBookSite({
         ref={stageRef}
         data-ceremony={closed || undefined}
         onClick={closed ? openBook : undefined}
-        style={{ opacity: bookFade }}
+        // Senza una fuga il `rotateY` è solo uno schiacciamento orizzontale: la
+        // panoramica sembrava un carosello che stringe le scene invece di una
+        // camera che gira. La prospettiva sta sulla trasformazione della scena
+        // stessa, non sul mondo — il mondo è largo due schermi e il suo centro
+        // cade sul bordo di quello che si sta guardando.
+        style={{
+          opacity: bookFade,
+          scale: bookScale,
+          rotateY: bookTurn,
+          x: bookDrift,
+          transformPerspective: 1500,
+        }}
         inert={onDesk || undefined}
       >
         <div className="vo-volume">
@@ -538,14 +597,24 @@ export function ValentinaOrciuoliBookSite({
         ) : null}
       </motion.div>
 
-        <div className="vo-desk-scene" inert={!onDesk || undefined}>
+        <motion.div
+          className="vo-desk-scene"
+          inert={!onDesk || undefined}
+          style={{
+            opacity: deskFade,
+            scale: deskScale,
+            rotateY: deskTurn,
+            x: deskDrift,
+            transformPerspective: 1500,
+          }}
+        >
           <VoDesk
             posts={deskPosts}
             current={article}
             onOpen={openArticle}
             onBackToBook={() => router.push(hrefFor("blog"), { scroll: false })}
           />
-        </div>
+        </motion.div>
       </motion.div>
 
       <footer className="vo-book-footer">

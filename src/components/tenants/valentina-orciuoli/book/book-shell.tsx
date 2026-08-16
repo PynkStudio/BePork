@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   useCallback,
   useEffect,
+  startTransition,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -38,11 +39,20 @@ import {
 const HINT_MAX = 0.1;
 /** Entro quanti pixel dal taglio il foglio comincia a sollevarsi. */
 const HINT_PROXIMITY = 150;
-const DRAG_COMMIT_THRESHOLD = 0.32;
+const DRAG_COMMIT_THRESHOLD = 0.3;
+/**
+ * Un colpetto veloce è un gesto compiuto anche se il pollice non arriva a metà
+ * corsa: sopra questa velocità (corse al secondo) il foglio parte comunque.
+ * Senza, sul telefono bisognava trascinare mezza pagina per girarla e il libro
+ * sembrava incollato.
+ */
+const FLICK_VELOCITY = 0.85;
+/** Pixel di traverso prima di decidere che il tocco è una sfogliata e non uno scorrimento. */
+const SWIPE_SLOP = 12;
 const WHEEL_THRESHOLD = 90;
-const WHEEL_COOLDOWN_MS = 760;
+const WHEEL_COOLDOWN_MS = 420;
 const MAX_ANIMATED_LEAVES = 3;
-const LEAF_STAGGER_MS = 125;
+const LEAF_STAGGER_MS = 110;
 const LEAF_BASE_DEPTH = 1.2;
 const LEAF_DEPTH_STEP = 0.35;
 
@@ -62,12 +72,17 @@ type Gesture = {
 // senza rimbalzare. Molla morbida, massa alta, smorzamento quasi critico.
 const flipSpring = {
   type: "spring",
-  stiffness: 76,
-  damping: 21,
-  mass: 1.4,
+  stiffness: 88,
+  damping: 22.5,
+  mass: 1.25,
   restDelta: 0.0008,
 } as const;
 const hintSpring = { type: "spring", stiffness: 150, damping: 20, mass: 0.9 } as const;
+/**
+ * Il foglio lasciato cadere sotto soglia: torna al suo posto più deciso della
+ * molla d'accenno, altrimenti resta a mezz'aria abbastanza da sembrare un bug.
+ */
+const releaseSpring = { type: "spring", stiffness: 190, damping: 24, mass: 0.85 } as const;
 
 /**
  * Quali fogli animare per andare da `from` a `to`. Oltre tre fogli l'occhio non
@@ -200,6 +215,20 @@ export function VoBookShell({
   useEffect(() => {
     onCompactChange?.(compact);
   }, [compact, onCompactChange]);
+
+  // La scatola misurata invecchia a ogni ridimensionamento: si butta e si rilegge.
+  useEffect(() => {
+    const forget = () => {
+      stageRectRef.current = null;
+    };
+    forget();
+    window.addEventListener("resize", forget);
+    window.visualViewport?.addEventListener("resize", forget);
+    return () => {
+      window.removeEventListener("resize", forget);
+      window.visualViewport?.removeEventListener("resize", forget);
+    };
+  }, [compact]);
   const playPageSound = usePageSound(soundEnabled && !reducedMotion);
   const localePrefix = localePrefixFromPathname(pathname);
 
@@ -261,7 +290,16 @@ export function VoBookShell({
   const tokenRef = useRef(0);
   const wheelAccRef = useRef(0);
   const wheelLockRef = useRef(0);
-  const dragRef = useRef<{ startX: number; width: number; pointerId: number } | null>(null);
+  const dragRef = useRef<{
+    startX: number;
+    /** Corsa in pixel che vale un giro pagina intero. */
+    span: number;
+    /** Da dove parte il foglio: un accenno già sollevato non ricomincia dal dorso. */
+    base: number;
+    pointerId: number;
+  } | null>(null);
+  /** La scatola del libro, letta una volta per passaggio del puntatore e non per evento. */
+  const stageRectRef = useRef<DOMRect | null>(null);
 
   // Tre fogli animabili al massimo: i motion value sono fissi, cambia chi li usa.
   const p0 = useMotionValue(0);
@@ -284,7 +322,36 @@ export function VoBookShell({
   // vedersela coprire dal cartoncino ancora in volo.
   const leftPageOpacity = useTransform(coverProgress, [0.86, 0.99], [0, 1]);
 
-  const pageSheet = useCallback(
+  /**
+   * Le facciate già costruite, per posizione. Un gesto rimonta lo shell almeno
+   * due volte — quando i fogli partono e quando si posano — e senza questa cache
+   * ogni render ricostruiva da zero l'albero di *tutte* le pagine in scena, fogli
+   * in volo compresi. Restituire lo stesso elemento fa uscire React dal sottoalbero
+   * senza toccarlo, ed è la differenza fra un giro pagina liscio e uno che perde
+   * fotogrammi proprio sul primo e sull'ultimo.
+   *
+   * `useMemo` è la scadenza: quando cambia una delle sorgenti la mappa è nuova.
+   */
+  const sheetCache = useMemo(
+    () => new Map<string, ReactNode>(),
+    [appendix, compact, positionCount, renderAppendix, renderFace],
+  );
+
+  /**
+   * La carta muta dei fogli intermedi di un salto. Di un riffle si vedono davvero
+   * solo due facciate — quella da cui si parte e quella su cui si atterra — e
+   * impaginare le altre costa quanto impaginarle tutte.
+   */
+  const fillerSheet = useMemo(
+    () => (
+      <div className="vo-page-sheet vo-page-sheet-blank">
+        <div className="vo-page-grain" aria-hidden="true" />
+      </div>
+    ),
+    [],
+  );
+
+  const buildSheet = useCallback(
     (position: number, side: VoFaceSide) => {
       if (position === appendixPos) {
         if (!appendix) return <div className="vo-page-sheet vo-page-sheet-blank" />;
@@ -330,6 +397,20 @@ export function VoBookShell({
     [appendix, appendixPos, compact, fromPos, positionCount, renderAppendix, renderFace],
   );
 
+  const pageSheet = useCallback(
+    (position: number, side: VoFaceSide) => {
+      // In compatto la facciata la detta la posizione, non il lato richiesto: due
+      // chiavi diverse per lo stesso foglio sprecherebbero la cache.
+      const key = compact ? `${position}` : `${position}:${side}`;
+      const cached = sheetCache.get(key);
+      if (cached !== undefined) return cached;
+      const node = buildSheet(position, side);
+      sheetCache.set(key, node);
+      return node;
+    },
+    [buildSheet, compact, sheetCache],
+  );
+
   const clearGesture = useCallback(() => {
     setGesture(null);
     p0.set(0);
@@ -352,10 +433,18 @@ export function VoBookShell({
       setHalf(nextHalf);
       clearGesture();
       // In compatto due posizioni consecutive possono appartenere allo stesso
-      // spread: l'URL cambia solo quando cambia la sezione.
-      router.push(spreadHref(voSpreads[nextSpread], localePrefix), { scroll: false });
+      // spread: l'URL cambia solo quando cambia la sezione. Ripubblicare lo stesso
+      // path non è gratis — è una navigazione RSC completa — e cadeva esattamente
+      // sull'ultimo fotogramma del giro, dove si vedeva tutta.
+      const href = spreadHref(voSpreads[nextSpread], localePrefix);
+      if (href === pathname) return;
+      // Il foglio si è già posato: la navigazione è lavoro che può aspettare il
+      // fotogramma dopo, invece di contendere quello che sta ancora disegnando.
+      startTransition(() => {
+        router.push(href, { scroll: false });
+      });
     },
-    [appendixPos, clearGesture, fromPos, localePrefix, router],
+    [appendixPos, clearGesture, fromPos, localePrefix, pathname, router],
   );
 
   const goTo = useCallback(
@@ -387,6 +476,7 @@ export function VoBookShell({
     const { dir, leaves, to } = gesture;
     const start = dir === 1 ? 0 : 1;
     const end = dir === 1 ? 1 : 0;
+    const timers: number[] = [];
     const controls = leaves.map((_, index) => {
       const value = progressValues[index];
       // Il primo foglio può arrivare da un accenno o da un trascinamento già in
@@ -398,7 +488,10 @@ export function VoBookShell({
         ...flipSpring,
         delay: (index * LEAF_STAGGER_MS) / 1000,
       });
-      window.setTimeout(playPageSound, index * LEAF_STAGGER_MS);
+      // Il fruscio del primo foglio è già dovuto: farlo partire subito lo aggancia
+      // al gesto invece che al fotogramma successivo.
+      if (index === 0) playPageSound();
+      else timers.push(window.setTimeout(playPageSound, index * LEAF_STAGGER_MS));
       return control;
     });
     const last = controls[controls.length - 1];
@@ -408,6 +501,9 @@ export function VoBookShell({
     });
     return () => {
       cancelled = true;
+      // Un gesto annullato non deve continuare a frusciare: i timer sopravvivono
+      // all'animazione che li aveva programmati.
+      timers.forEach((timer) => window.clearTimeout(timer));
       controls.forEach((control) => control.stop());
     };
     // `commit` cambia identità a ogni spread: la dipendenza dal token basta a
@@ -443,6 +539,56 @@ export function VoBookShell({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appendix, pathname]);
 
+  /**
+   * Il passo chiesto mentre un foglio era ancora in volo. Prima veniva scartato:
+   * chi sfogliava svelto vedeva il libro ignorare un gesto su due. Uno solo si
+   * mette in coda — due sarebbero l'inerzia del trackpad, non una volontà.
+   */
+  const queuedRef = useRef(0);
+
+  useEffect(() => {
+    if (gesture || queuedRef.current === 0) return;
+    const step = queuedRef.current;
+    queuedRef.current = 0;
+    const target = pos + step;
+    if (target < 0 || target >= positionCount) return;
+    goTo(target);
+  }, [gesture, goTo, pos, positionCount]);
+
+  /** Un passo avanti o indietro da qualunque input, code e capi del volume inclusi. */
+  const step = useCallback(
+    (direction: 1 | -1) => {
+      if (pos === appendixPos) {
+        if (direction === -1) onLeaveAppendix?.();
+        return;
+      }
+      // Ai due capi del volume non ci sono pagine: ci sono i piatti.
+      if (direction === -1 && pos === 0) {
+        onBeforeFirstPage?.();
+        return;
+      }
+      if (direction === 1 && pos === positionCount - 1) {
+        onPastLastPage?.();
+        return;
+      }
+      if (gesture?.mode === "run") {
+        queuedRef.current = direction;
+        return;
+      }
+      goTo(pos + direction);
+    },
+    [
+      appendixPos,
+      gesture?.mode,
+      goTo,
+      onBeforeFirstPage,
+      onLeaveAppendix,
+      onPastLastPage,
+      pos,
+      positionCount,
+    ],
+  );
+
   // ── Input: rotella ─────────────────────────────────────────────────────────
   useEffect(() => {
     const stage = stageRef.current;
@@ -461,40 +607,22 @@ export function VoBookShell({
       event.preventDefault();
       const now = performance.now();
       if (now < wheelLockRef.current) return;
+      // Un colpo nella direzione opposta non deve prima consumare quello di prima:
+      // cambiare idea è immediato, non è una frenata.
+      if (wheelAccRef.current !== 0 && Math.sign(event.deltaY) !== Math.sign(wheelAccRef.current)) {
+        wheelAccRef.current = 0;
+      }
       wheelAccRef.current += event.deltaY;
       if (Math.abs(wheelAccRef.current) < WHEEL_THRESHOLD) return;
       const direction = wheelAccRef.current > 0 ? 1 : -1;
       wheelAccRef.current = 0;
       wheelLockRef.current = now + WHEEL_COOLDOWN_MS;
-      if (pos === appendixPos) {
-        if (direction === -1) onLeaveAppendix?.();
-        return;
-      }
-      // Ai due capi del volume non ci sono pagine: ci sono i piatti.
-      if (direction === -1 && pos === 0) {
-        onBeforeFirstPage?.();
-        return;
-      }
-      if (direction === 1 && pos === positionCount - 1) {
-        onPastLastPage?.();
-        return;
-      }
-      goTo(pos + direction);
+      step(direction);
     };
 
     stage.addEventListener("wheel", onWheel, { passive: false });
     return () => stage.removeEventListener("wheel", onWheel);
-  }, [
-    appendixPos,
-    goTo,
-    onBeforeFirstPage,
-    onLeaveAppendix,
-    onPastLastPage,
-    open,
-    pos,
-    positionCount,
-    reducedMotion,
-  ]);
+  }, [open, reducedMotion, step]);
 
   // ── Input: tastiera ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -504,64 +632,212 @@ export function VoBookShell({
       if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
       if (event.key === "ArrowRight" || event.key === "PageDown") {
         event.preventDefault();
-        if (pos === appendixPos) return;
-        if (pos === positionCount - 1) onPastLastPage?.();
-        else goTo(pos + 1);
+        step(1);
       } else if (event.key === "ArrowLeft" || event.key === "PageUp") {
         event.preventDefault();
-        if (pos === appendixPos) onLeaveAppendix?.();
-        else if (pos === 0) onBeforeFirstPage?.();
-        else goTo(pos - 1);
+        step(-1);
       }
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [appendixPos, goTo, onBeforeFirstPage, onLeaveAppendix, onPastLastPage, open, pos, positionCount]);
+  }, [open, step]);
 
-  // ── Input: hotspot sul taglio del foglio (hover → sollevamento, click → giro) ─
-  const hintAt = useCallback(
-    (dir: 1 | -1, strength = 1) => {
-      if (!open || reducedMotion || gesture?.mode === "run" || gesture?.mode === "drag") return;
-      const target = spread + dir;
-      if (target < 0 || target >= voSpreadCount) return;
+  // ── Input: accenno, presa e trascinamento ──────────────────────────────────
+  /**
+   * La molla dell'accenno, tenuta per poterla fermare. Un accenno che insegue il
+   * puntatore *non* deve essere animato — la distanza dal taglio è già una
+   * posizione continua — ma quello da tastiera sì, e i due non possono scrivere
+   * sullo stesso valore insieme.
+   */
+  const hintAnimRef = useRef<{ stop: () => void } | null>(null);
+  const stopHintAnim = useCallback(() => {
+    hintAnimRef.current?.stop();
+    hintAnimRef.current = null;
+  }, []);
 
-      if (gesture?.mode !== "hint" || gesture.dir !== dir) {
+  /**
+   * Apre (o riusa) il gesto sul foglio in direzione `dir`. Torna `false` quando da
+   * quella parte non c'è un foglio da prendere.
+   *
+   * Lavora in *posizioni*, non in spread: su schermo stretto un giro pagina è
+   * mezzo spread, e misurare qui in spread faceva saltare la facciata mostrata a
+   * ogni tocco e atterrare a metà libro dopo un trascinamento.
+   */
+  const armGesture = useCallback(
+    (dir: 1 | -1, mode: "hint" | "drag") => {
+      const target = pos + dir;
+      if (target < 0 || target >= positionCount) return false;
+      setGesture((current) => {
+        if (current && current.dir === dir && current.from === pos && current.to === target) {
+          return current.mode === mode ? current : { ...current, mode };
+        }
         tokenRef.current += 1;
-        setGesture({
+        return {
           token: tokenRef.current,
-          from: spread,
+          from: pos,
           to: target,
           dir,
-          leaves: leavesForJump(spread, target),
-          mode: "hint",
-        });
-      }
-      const lift = HINT_MAX * strength;
-      animate(p0, dir === 1 ? lift : 1 - lift, hintSpring);
+          leaves: leavesForJump(pos, target),
+          mode,
+        };
+      });
+      return true;
     },
-    [gesture, open, p0, reducedMotion, spread],
+    [pos, positionCount],
   );
-
-  const dropHint = useCallback(() => {
-    if (gesture?.mode !== "hint") return;
-    const dir = gesture.dir;
-    animate(p0, dir === 1 ? 0 : 1, hintSpring).then(() => {
-      setGesture((current) => (current?.mode === "hint" ? null : current));
-    });
-  }, [gesture, p0]);
 
   /**
    * Il foglio non aspetta il clic: si solleva man mano che il puntatore si
    * avvicina al taglio, in proporzione alla distanza. È l'affordance — si capisce
    * che quello è un foglio e che lo si può prendere — senza aggiungere UI.
    */
+  const hintAt = useCallback(
+    (dir: 1 | -1, strength = 1, smooth = false) => {
+      if (!open || reducedMotion || gesture?.mode === "run" || gesture?.mode === "drag") return;
+      if (!armGesture(dir, "hint")) return;
+      const lift = HINT_MAX * Math.min(1, Math.max(0, strength));
+      const settled = dir === 1 ? lift : 1 - lift;
+      stopHintAnim();
+      // Il puntatore è già una posizione continua: seguirlo di pari passo è più
+      // fluido di una molla nuova a ogni evento, che è quel che rendeva l'accenno
+      // scattoso e teneva il processore occupato per nulla.
+      if (smooth) hintAnimRef.current = animate(p0, settled, hintSpring);
+      else p0.set(settled);
+    },
+    [armGesture, gesture?.mode, open, p0, reducedMotion, stopHintAnim],
+  );
+
+  const dropHint = useCallback(() => {
+    if (gesture?.mode !== "hint") return;
+    const dir = gesture.dir;
+    stopHintAnim();
+    const control = animate(p0, dir === 1 ? 0 : 1, hintSpring);
+    hintAnimRef.current = control;
+    control.then(() => {
+      setGesture((current) => (current?.mode === "hint" ? null : current));
+    });
+  }, [gesture, p0, stopHintAnim]);
+
+  /** Prende il foglio dove si trova: un accenno già sollevato non ricade sul dorso. */
+  const beginDrag = useCallback(
+    (dir: 1 | -1, startX: number, pointerId: number) => {
+      if (!open || reducedMotion || gesture?.mode === "run") return false;
+      const stage = stageRef.current;
+      if (!stage) return false;
+      if (!armGesture(dir, "drag")) return false;
+      stopHintAnim();
+      const rect = stage.getBoundingClientRect();
+      dragRef.current = {
+        startX,
+        // Su schermo largo la scatola contiene due facciate, su schermo stretto
+        // una: la corsa utile è sempre *una* facciata, non metà scatola.
+        span: Math.max((compact ? rect.width : rect.width * 0.5) || 1, 1),
+        base: p0.get(),
+        pointerId,
+      };
+      return true;
+    },
+    [armGesture, compact, gesture?.mode, open, p0, reducedMotion, stopHintAnim],
+  );
+
+  const updateDrag = useCallback(
+    (clientX: number) => {
+      const drag = dragRef.current;
+      if (!drag) return;
+      const travelled = (drag.startX - clientX) / drag.span;
+      p0.set(Math.min(1, Math.max(0, drag.base + travelled)));
+    },
+    [p0],
+  );
+
+  const endDrag = useCallback(
+    (stillHovering: boolean) => {
+      const drag = dragRef.current;
+      if (!drag || !gesture) return;
+      dragRef.current = null;
+      const travelled = gesture.dir === 1 ? p0.get() : 1 - p0.get();
+      // La velocità del pollice conta quanto la distanza percorsa.
+      const flick = p0.getVelocity() * gesture.dir;
+      if (travelled >= DRAG_COMMIT_THRESHOLD || flick >= FLICK_VELOCITY) {
+        tokenRef.current += 1;
+        setGesture({ ...gesture, token: tokenRef.current, mode: "run" });
+        return;
+      }
+      // Sotto soglia il foglio ricade: se il puntatore è ancora sul taglio resta l'accenno.
+      const settled =
+        gesture.dir === 1 ? (stillHovering ? HINT_MAX : 0) : stillHovering ? 1 - HINT_MAX : 1;
+      stopHintAnim();
+      const control = animate(p0, settled, releaseSpring);
+      hintAnimRef.current = control;
+      control.then(() => {
+        setGesture((current) => {
+          if (current?.mode !== "drag") return current;
+          return stillHovering ? { ...current, mode: "hint" } : null;
+        });
+      });
+    },
+    [gesture, p0, stopHintAnim],
+  );
+
+  /**
+   * La sfogliata a dito, su tutta la pagina. Prima l'unica presa era la striscia
+   * sul taglio: su un telefono è una mira che nessuno ha voglia di prendere, e il
+   * gesto che tutti provano — trascinare la pagina di lato — non faceva nulla.
+   *
+   * Lo scorrimento verticale resta della carta: `touch-action: pan-y` lascia
+   * decidere al browser, e se sceglie di scorrere ci arriva un `pointercancel`.
+   */
+  const swipeRef = useRef<{ pointerId: number; startX: number; startY: number } | null>(null);
+
+  const onStagePointerDown = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      if (event.pointerType === "mouse") return;
+      if (!open || reducedMotion || dragRef.current || gesture?.mode === "run") return;
+      swipeRef.current = {
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+      };
+    },
+    [gesture?.mode, open, reducedMotion],
+  );
+
   const onStagePointerMove = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
+      const drag = dragRef.current;
+      if (drag) {
+        if (drag.pointerId === event.pointerId) updateDrag(event.clientX);
+        return;
+      }
+
+      const swipe = swipeRef.current;
+      if (swipe && swipe.pointerId === event.pointerId) {
+        const dx = event.clientX - swipe.startX;
+        const dy = event.clientY - swipe.startY;
+        if (Math.abs(dx) < SWIPE_SLOP) return;
+        if (Math.abs(dx) <= Math.abs(dy)) {
+          swipeRef.current = null;
+          return;
+        }
+        const dir: 1 | -1 = dx < 0 ? 1 : -1;
+        // Il gesto comincia dove la soglia è stata superata, non dove il dito si è
+        // posato: altrimenti il foglio scatta in avanti dei pixel di tolleranza.
+        const originX = swipe.startX + (dir === 1 ? -SWIPE_SLOP : SWIPE_SLOP);
+        if (!beginDrag(dir, originX, event.pointerId)) {
+          swipeRef.current = null;
+          return;
+        }
+        event.currentTarget.setPointerCapture(event.pointerId);
+        updateDrag(event.clientX);
+        return;
+      }
+
       if (event.pointerType === "touch") return;
-      if (!open || reducedMotion || dragRef.current) return;
+      if (!open || reducedMotion) return;
       if (gesture?.mode === "run" || gesture?.mode === "drag") return;
 
-      const rect = event.currentTarget.getBoundingClientRect();
+      const rect = stageRectRef.current ?? event.currentTarget.getBoundingClientRect();
+      stageRectRef.current = rect;
       const fromRight = rect.right - event.clientX;
       const fromLeft = event.clientX - rect.left;
       const near = Math.min(fromRight, fromLeft);
@@ -573,61 +849,56 @@ export function VoBookShell({
       }
       hintAt(dir, 1 - near / HINT_PROXIMITY);
     },
-    [dropHint, gesture?.mode, hintAt, open, reducedMotion],
+    [beginDrag, dropHint, gesture?.mode, hintAt, open, reducedMotion, updateDrag],
+  );
+
+  const onStagePointerUp = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      if (swipeRef.current?.pointerId === event.pointerId) swipeRef.current = null;
+      const drag = dragRef.current;
+      if (!drag || drag.pointerId !== event.pointerId) return;
+      endDrag(false);
+    },
+    [endDrag],
+  );
+
+  const onStagePointerLeave = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      stageRectRef.current = null;
+      if (dragRef.current?.pointerId === event.pointerId) {
+        endDrag(false);
+        return;
+      }
+      dropHint();
+    },
+    [dropHint, endDrag],
   );
 
   const onHotspotPointerDown = useCallback(
     (event: ReactPointerEvent<HTMLButtonElement>, dir: 1 | -1) => {
-      if (!open || reducedMotion) return;
-      const stage = stageRef.current;
-      if (!stage) return;
-      const target = pos + dir;
-      if (target < 0 || target >= positionCount) return;
-      if (gesture?.mode !== "hint" || gesture.dir !== dir) hintAt(dir);
+      if (event.pointerType === "touch") return;
+      if (!beginDrag(dir, event.clientX, event.pointerId)) return;
       event.currentTarget.setPointerCapture(event.pointerId);
-      dragRef.current = {
-        startX: event.clientX,
-        width: stage.getBoundingClientRect().width,
-        pointerId: event.pointerId,
-      };
-      setGesture((current) => (current ? { ...current, mode: "drag" } : current));
     },
-    [gesture, hintAt, open, pos, positionCount, reducedMotion],
+    [beginDrag],
   );
 
   const onHotspotPointerMove = useCallback(
     (event: ReactPointerEvent<HTMLButtonElement>) => {
       const drag = dragRef.current;
-      if (!drag || drag.pointerId !== event.pointerId || !gesture) return;
-      const travelled = (drag.startX - event.clientX) / Math.max(drag.width * 0.5, 1);
-      const raw = gesture.dir === 1 ? travelled : 1 + travelled;
-      p0.set(Math.min(1, Math.max(0, raw)));
+      if (!drag || drag.pointerId !== event.pointerId) return;
+      updateDrag(event.clientX);
     },
-    [gesture, p0],
+    [updateDrag],
   );
 
   const onHotspotPointerUp = useCallback(
     (event: ReactPointerEvent<HTMLButtonElement>) => {
       const drag = dragRef.current;
-      if (!drag || drag.pointerId !== event.pointerId || !gesture) return;
-      dragRef.current = null;
-      const travelled = gesture.dir === 1 ? p0.get() : 1 - p0.get();
-      if (travelled >= DRAG_COMMIT_THRESHOLD) {
-        tokenRef.current += 1;
-        setGesture({ ...gesture, token: tokenRef.current, mode: "run" });
-        return;
-      }
-      // Sotto soglia il foglio ricade: se il puntatore è ancora sul taglio resta l'accenno.
-      const stillHovering = event.currentTarget.matches(":hover");
-      const settled = gesture.dir === 1 ? (stillHovering ? HINT_MAX : 0) : stillHovering ? 1 - HINT_MAX : 1;
-      animate(p0, settled, hintSpring).then(() => {
-        setGesture((current) => {
-          if (current?.mode !== "drag") return current;
-          return stillHovering ? { ...current, mode: "hint" } : null;
-        });
-      });
+      if (!drag || drag.pointerId !== event.pointerId) return;
+      endDrag(event.currentTarget.matches(":hover"));
     },
-    [gesture, p0],
+    [endDrag],
   );
 
   // Il gesto "run" riparte da capo: i motion value non usati vanno riportati a zero.
@@ -645,8 +916,11 @@ export function VoBookShell({
       data-open={open || undefined}
       data-busy={busy || undefined}
       data-compact={compact || undefined}
+      onPointerDown={onStagePointerDown}
       onPointerMove={onStagePointerMove}
-      onPointerLeave={dropHint}
+      onPointerUp={onStagePointerUp}
+      onPointerCancel={onStagePointerUp}
+      onPointerLeave={onStagePointerLeave}
     >
       <div className="vo-book-ambient" aria-hidden="true" />
       <motion.div className="vo-book" style={{ x: blockShift, rotateX: 6, rotateY: volumeTurn }}>
@@ -684,6 +958,16 @@ export function VoBookShell({
 
         {activeLeaves.map((leafIndex, order) => {
           const faces = leafFaces(leafIndex);
+          // Di un salto si leggono due sole facciate: quella da cui il gesto parte
+          // e quella su cui si posa. Andando avanti sono il recto del primo foglio
+          // e il verso dell'ultimo; tornando indietro le due si scambiano. Le altre
+          // passano davanti agli occhi in un decimo di secondo, e impaginarle
+          // costava il primo fotogramma di ogni salto lungo.
+          const first = order === 0;
+          const last = order === activeLeaves.length - 1;
+          const forward = gesture?.dir === 1;
+          const frontReal = forward ? first : last;
+          const backReal = forward ? last : first;
           return (
             <VoLeaf
               key={`${gesture?.token}-${leafIndex}`}
@@ -691,8 +975,12 @@ export function VoBookShell({
               // Il primo foglio a muoversi è quello in cima alla pila: parte più
               // vicino all'osservatore e ci resta anche dopo essere atterrato.
               depth={LEAF_BASE_DEPTH - order * LEAF_DEPTH_STEP}
-              front={pageSheet(faces.front.spread, faces.front.side)}
-              back={pageSheet(faces.back.spread, compact ? "right" : faces.back.side)}
+              front={frontReal ? pageSheet(faces.front.spread, faces.front.side) : fillerSheet}
+              back={
+                backReal
+                  ? pageSheet(faces.back.spread, compact ? "right" : faces.back.side)
+                  : fillerSheet
+              }
             />
           );
         })}
@@ -705,30 +993,26 @@ export function VoBookShell({
         <button
           type="button"
           className="vo-leaf-hotspot vo-leaf-hotspot-next"
-          onFocus={() => hintAt(1)}
+          onFocus={() => hintAt(1, 1, true)}
           onBlur={dropHint}
           onPointerDown={(event) => onHotspotPointerDown(event, 1)}
           onPointerMove={onHotspotPointerMove}
           onPointerUp={onHotspotPointerUp}
           onPointerCancel={onHotspotPointerUp}
-          onClick={() => (canGoForward ? goTo(pos + 1) : onPastLastPage?.())}
+          onClick={() => step(1)}
           disabled={!open || pos === appendixPos || (!canGoForward && !onPastLastPage)}
           aria-label={canGoForward ? "Pagina successiva" : "Chi sono, sul retro del volume"}
         />
         <button
           type="button"
           className="vo-leaf-hotspot vo-leaf-hotspot-prev"
-          onFocus={() => hintAt(-1)}
+          onFocus={() => hintAt(-1, 1, true)}
           onBlur={dropHint}
           onPointerDown={(event) => onHotspotPointerDown(event, -1)}
           onPointerMove={onHotspotPointerMove}
           onPointerUp={onHotspotPointerUp}
           onPointerCancel={onHotspotPointerUp}
-          onClick={() => {
-            if (pos === appendixPos) onLeaveAppendix?.();
-            else if (canGoBack) goTo(pos - 1);
-            else onBeforeFirstPage?.();
-          }}
+          onClick={() => step(-1)}
           disabled={!open || (!canGoBack && !onBeforeFirstPage)}
           aria-label="Pagina precedente"
         />

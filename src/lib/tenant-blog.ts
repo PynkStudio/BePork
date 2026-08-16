@@ -77,6 +77,8 @@ type BlogCommentRow = {
 type BlogSelectQuery<T> = {
   eq(column: string, value: string | boolean): BlogSelectQuery<T>;
   in(column: string, values: string[]): BlogSelectQuery<T>;
+  lte(column: string, value: string): BlogSelectQuery<T>;
+  not(column: string, operator: string, value: null): BlogSelectQuery<T>;
   order(column: string, options?: { ascending?: boolean }): BlogSelectQuery<T>;
   then<TResult1 = { data: T[] | null; error: { message: string } | null }, TResult2 = never>(
     onfulfilled?: ((value: { data: T[] | null; error: { message: string } | null }) => TResult1 | PromiseLike<TResult1>) | null,
@@ -165,7 +167,14 @@ export async function getTenantBlogPosts(
     .order("published_at", { ascending: false })
     .order("created_at", { ascending: false });
 
-  if (options.publishedOnly) postsQuery = postsQuery.eq("status", "published");
+  // La RLS pubblica filtra già published_at <= now(), ma il service client la
+  // bypassa: senza questo vincolo un articolo programmato sarebbe online subito.
+  if (options.publishedOnly) {
+    postsQuery = postsQuery
+      .eq("status", "published")
+      .not("published_at", "is", null)
+      .lte("published_at", new Date().toISOString());
+  }
 
   const { data: postRows, error } = await postsQuery;
   if (error || !postRows?.length) return [];

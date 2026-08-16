@@ -35,7 +35,7 @@ I moduli sono abilitati per tenant tramite i feature-flag in `tenant-registry.ts
 | `fanbaseCommunity` | Community / fanbase (creative) |
 | `gallery` | Galleria |
 | `linktree` | Linktree |
-| `blog` | Blog |
+| `blog` | Blog — evoluzione in corso di progettazione: [[blog-editoriale]] |
 | `favorites` | Preferiti / wishlist |
 | `inventoryFoodCost` | Magazzino / food cost |
 | `staffRoles` | Staff e ruoli |

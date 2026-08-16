@@ -77,8 +77,8 @@ type BlogBlockMutationRow = {
 type BlogMutationClient = {
   from(table: "tenant_blog_posts"): {
     delete(): {
-      eq(column: string, value: string): Promise<{ error: { message: string } | null }> & {
-        not(column: string, operator: string, value: string): Promise<{ error: { message: string } | null }>;
+      eq(column: string, value: string): {
+        in(column: string, values: string[]): Promise<{ error: { message: string } | null }>;
       };
     };
     upsert(rows: BlogPostMutationRow[], options?: { onConflict?: string }): Promise<{ error: { message: string } | null }>;
@@ -90,7 +90,7 @@ type BlogMutationClient = {
   from(table: "tenant_blog_comments"): {
     delete(): { in(column: string, values: string[]): Promise<{ error: { message: string } | null }> };
     update(row: { status: TenantBlogCommentStatus; moderated_at: string }): {
-      eq(column: string, value: string): Promise<{ error: { message: string } | null }>;
+      in(column: string, values: string[]): Promise<{ error: { message: string } | null }>;
     };
   };
 };
@@ -188,7 +188,12 @@ function sanitizePosts(raw: unknown): SanitizedPost[] {
 }
 
 export async function PUT(request: Request) {
-  let body: { tenantId?: string; posts?: unknown; deletedCommentIds?: unknown };
+  let body: {
+    tenantId?: string;
+    posts?: unknown;
+    deletedPostIds?: unknown;
+    deletedCommentIds?: unknown;
+  };
   try {
     body = await request.json();
   } catch {
@@ -202,6 +207,9 @@ export async function PUT(request: Request) {
   if (!auth.ok) return NextResponse.json({ error: "Non autorizzato." }, { status: 403 });
 
   const posts = sanitizePosts(body.posts);
+  const deletedPostIds = Array.isArray(body.deletedPostIds)
+    ? body.deletedPostIds.filter((id): id is string => typeof id === "string")
+    : [];
   const deletedCommentIds = Array.isArray(body.deletedCommentIds)
     ? body.deletedCommentIds.filter((id): id is string => typeof id === "string")
     : [];
@@ -214,11 +222,17 @@ export async function PUT(request: Request) {
   const now = new Date().toISOString();
   const postIds = posts.map((post) => post.id);
 
-  const deletePostQuery = mutation.from("tenant_blog_posts").delete().eq("tenant_id", tenantId);
-  const { error: deletePostError } = postIds.length
-    ? await deletePostQuery.not("id", "in", `(${postIds.join(",")})`)
-    : await deletePostQuery;
-  if (deletePostError) return NextResponse.json({ error: deletePostError.message }, { status: 500 });
+  // Si cancella solo ciò che il client ha chiesto esplicitamente di cancellare:
+  // un payload parziale (due schede aperte, salvataggio concorrente) non deve
+  // poter far sparire gli articoli che non contiene.
+  if (deletedPostIds.length) {
+    const { error: deletePostError } = await mutation
+      .from("tenant_blog_posts")
+      .delete()
+      .eq("tenant_id", tenantId)
+      .in("id", deletedPostIds);
+    if (deletePostError) return NextResponse.json({ error: deletePostError.message }, { status: 500 });
+  }
 
   if (posts.length) {
     const { error: upsertError } = await mutation.from("tenant_blog_posts").upsert(
@@ -264,11 +278,17 @@ export async function PUT(request: Request) {
     if (deleteCommentsError) return NextResponse.json({ error: deleteCommentsError.message }, { status: 500 });
   }
 
+  const commentIdsByStatus = new Map<TenantBlogCommentStatus, string[]>();
   for (const comment of posts.flatMap((post) => post.comments)) {
+    const current = commentIdsByStatus.get(comment.status) ?? [];
+    current.push(comment.id);
+    commentIdsByStatus.set(comment.status, current);
+  }
+  for (const [commentStatus, ids] of commentIdsByStatus) {
     const { error: commentError } = await mutation
       .from("tenant_blog_comments")
-      .update({ status: comment.status, moderated_at: now })
-      .eq("id", comment.id);
+      .update({ status: commentStatus, moderated_at: now })
+      .in("id", ids);
     if (commentError) return NextResponse.json({ error: commentError.message }, { status: 500 });
   }
 

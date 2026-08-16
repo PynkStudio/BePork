@@ -185,6 +185,20 @@ Il motore del libro **non** è un modulo di piattaforma finché non serve a un s
   home e le sezioni restano route file diversi (`[previewSlug]` contro
   `[previewSlug]/[bookId]`), quindi su quel confine Next rimonta comunque — ed è per
   questo che `book-memory.ts` continua a servire.
+- **Anche la camera va ricordata, non solo la pagina.** `/it/blog` e `/it/blog/<slug>`
+  sono route file diversi: aprendo un appunto il componente si rimonta, e un
+  `useMotionValue(sulTavolo ? 1 : 0)` nasce **già a destinazione**. Il risultato non era
+  una panoramica ma uno stacco: campionando la `transform` di `.vo-world` durante la
+  navigazione si ottenevano 187 campioni con **due soli valori distinti**
+  (`none` → `translateX(-50%)`). La posizione della camera sta in `voBookMemory.desk` e si
+  scrive **a movimento finito**, come tutti gli altri campi; il valore parte da lì e la
+  strada la deve ancora fare. Dopo la correzione lo stesso campionamento dà ~60 fotogrammi
+  distinti per verso, con l'accelerazione visibile in coda (`-0,02%`, `-0,07%`, `-0,15%`…).
+- Una traslazione sola resta un cambio di diapositiva: la panoramica muove anche
+  **scala, rotazione, luce e deriva** dei due oggetti in senso opposto, con `perspective`
+  sui figli di `.vo-world` — è quello che la fa leggere come una macchina da presa che si
+  sposta sul tavolo invece che come due scene che si sostituiscono. Le opacità non scendono
+  mai insieme sotto la soglia in cui il centro corsa diventa una valle scura.
 - Oltre la verticale la copertina **arcua verso l'osservatore** prima di posarsi: è la
   geometria di una rotazione attorno al dorso, non un errore. Perciò la pagina sinistra
   si scopre solo a piatto posato (`0.86 → 0.99`), che è anche il comportamento fisico

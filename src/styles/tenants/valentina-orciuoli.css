@@ -2486,6 +2486,11 @@
     height: var(--vo-page-h);
     perspective: 2800px;
     perspective-origin: 50% 46%;
+    /* Il dito sfoglia di traverso, la carta scorre per il lungo: si dichiara al
+       browser quale dei due è suo, così lo scorrimento verticale resta immediato
+       e non passa da JavaScript. Quando decide di scorrere ci manda un
+       `pointercancel` e il gesto orizzontale si annulla da sé. */
+    touch-action: pan-y;
   }
 
   .vo-book-ambient {
@@ -2601,8 +2606,11 @@
     text-shadow: 0 0.5px 0 rgba(255, 252, 242, 0.55);
   }
 
+  /* Le facciate intermedie di un riffle e le posizioni fuori dal volume: carta e
+     basta. Deve *sembrare* uno dei fogli, non un rettangolo beige, perché passa
+     accanto a quelli veri. */
   .vo-page-sheet-blank {
-    background: var(--vo-book-paper-2);
+    background: linear-gradient(158deg, var(--vo-book-paper-2) 0%, #d9c9a8 100%);
   }
 
   /* Il foglio non è piatto: si incurva verso il dorso e si schiarisce sul taglio,
@@ -2672,6 +2680,10 @@
     /* Se una pagina eccede resta scorrevole, ma senza barra: dentro un libro una
        scrollbar è l'artefatto che rompe l'illusione più di ogni altro. */
     scrollbar-width: none;
+    /* Arrivata in fondo, la carta smette: senza questo il gesto proseguiva sul
+       documento e sul telefono si vedeva rimbalzare tutta la scena. */
+    overscroll-behavior: contain;
+    touch-action: pan-y;
   }
 
   .vo-page-body::-webkit-scrollbar {
@@ -2733,6 +2745,9 @@
     position: absolute;
     inset: 0;
     pointer-events: none;
+    /* Tre veli la cui opacità cambia a ogni fotogramma: promossi, il compositore
+       li fonde senza ridisegnare la carta che hanno sotto. */
+    will-change: opacity;
   }
 
   /* Il dorso resta il bordo di rotazione: sul verso, ruotato di 180°, è a destra. */
@@ -2769,7 +2784,9 @@
     border: 0;
     background: transparent;
     cursor: pointer;
-    touch-action: none;
+    /* A dito la presa è tutta la pagina, non questa striscia: qui basta non
+       rubare lo scorrimento verticale alla carta che sta sotto. */
+    touch-action: pan-y;
   }
 
   .vo-leaf-hotspot::before {
@@ -3329,10 +3346,17 @@
       --vo-page-w: calc(var(--vo-page-h) / 1.5);
       --vo-cover-w: calc(var(--vo-page-w) * 1.03);
       width: var(--vo-page-w);
+      /* La fuga va tenuta in proporzione alla scatola, non in valore assoluto:
+         2800px su una facciata sola sono quasi una proiezione ortogonale, e il
+         foglio girava piatto come una carta da gioco vista di fronte. */
+      perspective: 1500px;
+      perspective-origin: 50% 48%;
     }
 
+    /* Su una facciata sola il perno del volume è il suo centro: quello a 75% è la
+       posizione del libro chiuso *dentro* la doppia pagina, che qui non esiste. */
     .vo-book-site[data-compact] .vo-book {
-      transform: none;
+      transform-origin: 50% 50%;
     }
 
     .vo-book-site[data-compact] .vo-page-left,
@@ -4717,5 +4741,23 @@
 
   .vo-book-site[data-compact] .vo-desk-pile {
     display: none;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   La camera. La prospettiva sul mondo è ciò che trasforma la traslazione in una
+   panoramica: senza, le due scene scivolerebbero di fianco come un carosello.
+   ───────────────────────────────────────────────────────────────────────────── */
+@layer components {
+  .vo-world {
+    perspective: 1800px;
+    perspective-origin: 50% 50%;
+  }
+
+  .vo-world > * {
+    /* Il perno sta al centro dello schermo, non della scena: è lo sguardo che
+       ruota, e le due scene gli passano davanti. */
+    transform-origin: 50% 50%;
+    will-change: transform, opacity;
   }
 }
