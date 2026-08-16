@@ -2711,6 +2711,11 @@
     transform-origin: left center;
     transform-style: preserve-3d;
     will-change: transform;
+    /* Il foglio in volo è una figura, non un bersaglio: le sue facce duplicano
+       pagine che esistono già sotto. Essendo `inert` si mangiava i tocchi senza
+       farne nulla, e chi sfogliava a raffica trovava il libro sordo finché il
+       foglio non si posava. */
+    pointer-events: none;
   }
 
   .vo-leaf-depth {

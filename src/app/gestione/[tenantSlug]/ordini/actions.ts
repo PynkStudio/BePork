@@ -7,10 +7,12 @@ import { authorizeGestione } from "@/lib/gestione-auth";
 import { pushOrderStatusToHubrise } from "@/lib/hubrise/push-status";
 import { sendOrderConfirmationEmail } from "@/lib/orders/send-confirmation-email";
 import { notifyCustomerOrderStatus, type OrderNotificationKind } from "@/lib/orders/order-notifications";
-import type { Database } from "@/lib/database.types";
+import type { OrderStatus } from "@/lib/types";
 import { getActiveGestioneLocation, requireActiveGestioneLocation } from "@/lib/gestione-location";
 
-type Status = Database["public"]["Enums"]["order_status"];
+// L'enum order_status del DB contiene anche valori legacy mai scritti dall'app
+// (accettato, rifiutato, consegna_fallita): qui si usano solo gli stati gestiti.
+type Status = OrderStatus;
 const DEFAULT_LOCATION_SCOPE = "__tenant_default__";
 
 function notificationKindForStatus(status: Status): OrderNotificationKind {

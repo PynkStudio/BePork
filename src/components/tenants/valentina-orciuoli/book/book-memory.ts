@@ -18,6 +18,15 @@ export const voBookMemory = {
   opened: false,
   /** Ultimo spread mostrato. */
   spread: 0,
+  /**
+   * Quale delle due facciate dello spread era in vista, su schermo stretto.
+   *
+   * Sta qui per lo stesso motivo dello spread: senza, un rimontaggio riportava la
+   * facciata a zero, e siccome l'URL nomina la sezione e non la pagina il libro
+   * *tornava indietro da solo* di una facciata ogni volta che un giro finiva su
+   * quella di destra. Su schermo largo non ha significato e resta zero.
+   */
+  half: 0,
   /** true se il volume è rigirato sulla quarta di copertina. */
   back: false,
   /** true se la camera era sulla scrivania invece che sul volume. */

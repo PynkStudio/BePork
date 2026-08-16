@@ -114,10 +114,19 @@ function leavesForJump(from: number, to: number) {
  */
 const COMPACT_BREAKPOINT = "(max-width: 899px)";
 
+/**
+ * Prima della pittura sul client, dopo il montaggio sul server. Il modo del libro
+ * deve essere deciso *prima* che il fotogramma esca: cambiare sezione rimonta il
+ * componente, e con un `useEffect` normale il primo fotogramma dopo il rimontaggio
+ * usciva a doppia pagina anche su un telefono — un lampo di libro spalancato in
+ * mezzo a ogni giro. `useLayoutEffect` sul server non ha senso e avviserebbe.
+ */
+const useBeforePaint = typeof window === "undefined" ? useEffect : useLayoutEffect;
+
 function useCompactBook(stageRef: RefObject<HTMLDivElement | null>) {
   const [compact, setCompact] = useState(false);
 
-  useEffect(() => {
+  useBeforePaint(() => {
     const query = window.matchMedia(COMPACT_BREAKPOINT);
     const read = () => setCompact(query.matches);
 
@@ -251,8 +260,18 @@ export function VoBookShell({
    * Lo stato resta in unità di spread — è quello che l'URL, la memoria e i
    * numeri di pagina conoscono — e la posizione si deriva dal modo corrente, così
    * un cambio di larghezza non corrompe nulla.
+   *
+   * Come lo spread, la facciata sopravvive a un rimontaggio: cambiare sezione
+   * rimonta il componente, e ripartire da zero riportava indietro di una pagina
+   * chi aveva appena girato sulla facciata destra.
    */
-  const [half, setHalf] = useState(0);
+  const [half, setHalf] = useState(() =>
+    voBookMemoryAvailable && voBookMemory.opened ? voBookMemory.half : 0,
+  );
+
+  useEffect(() => {
+    voBookMemory.half = half;
+  }, [half]);
   const positionCount = compact ? voSpreadCount * 2 : voSpreadCount;
   const toPos = useCallback(
     (targetSpread: number, targetHalf: number) =>
@@ -284,8 +303,30 @@ export function VoBookShell({
     () => Boolean(appendix) && !(voBookMemoryAvailable && voBookMemory.opened),
   );
   const pos = atAppendix ? appendixPos : toPos(spread, half);
+  /** Come `gestureRef`: la posizione che vale per un input arrivato prima del render. */
+  const posRef = useRef(pos);
+  posRef.current = pos;
 
-  const [gesture, setGesture] = useState<Gesture | null>(null);
+  const [gesture, setGestureState] = useState<Gesture | null>(null);
+
+  /**
+   * Il gesto in corso, leggibile *subito*.
+   *
+   * Lo stato React arriva al render dopo, e tre frecce premute nello stesso
+   * fotogramma leggevano tutte "nessun gesto in corso": ognuna ripartiva dalla
+   * stessa pagina e le tre insieme ne giravano una. Chi sfoglia in fretta lo
+   * vedeva come un libro che perde i colpi. Ogni scrittura passa di qui, quindi
+   * il riferimento è la verità e lo stato serve solo a ridisegnare.
+   */
+  const gestureRef = useRef<Gesture | null>(null);
+  const setGesture = useCallback(
+    (next: Gesture | null | ((current: Gesture | null) => Gesture | null)) => {
+      const value = typeof next === "function" ? next(gestureRef.current) : next;
+      gestureRef.current = value;
+      setGestureState(value);
+    },
+    [],
+  );
 
   const tokenRef = useRef(0);
   const wheelAccRef = useRef(0);
@@ -416,7 +457,32 @@ export function VoBookShell({
     p0.set(0);
     p1.set(0);
     p2.set(0);
-  }, [p0, p1, p2]);
+  }, [p0, p1, p2, setGesture]);
+
+  /**
+   * Il passo chiesto mentre un foglio era ancora in volo. Prima veniva scartato:
+   * chi sfogliava svelto vedeva il libro ignorare un gesto su due. Uno solo si
+   * mette in coda — due sarebbero l'inerzia del trackpad, non una volontà.
+   */
+  const queuedRef = useRef(0);
+
+  /** Porta l'URL sulla sezione, se non ci è già. */
+  const publish = useCallback(
+    (targetSpread: number) => {
+      // In compatto due posizioni consecutive appartengono allo stesso spread:
+      // l'URL cambia solo quando cambia la sezione. Ripubblicare lo stesso path
+      // non è gratis — è una navigazione RSC completa — e cadeva esattamente
+      // sull'ultimo fotogramma del giro, dove si vedeva tutta.
+      const href = spreadHref(voSpreads[targetSpread], localePrefix);
+      if (href === pathname) return;
+      // Il foglio si è già posato: la navigazione è lavoro che può aspettare il
+      // fotogramma dopo, invece di contendere quello che sta ancora disegnando.
+      startTransition(() => {
+        router.push(href, { scroll: false });
+      });
+    },
+    [localePrefix, pathname, router],
+  );
 
   const commit = useCallback(
     (target: number) => {
@@ -428,31 +494,35 @@ export function VoBookShell({
         return;
       }
       const { spread: nextSpread, half: nextHalf } = fromPos(target);
+      // Si scrive qui, non nell'effetto: il foglio è atterrato *adesso*. La
+      // navigazione che parte due righe sotto rimonta il componente, e l'effetto
+      // che avrebbe salvato la pagina appartiene all'istanza che sta per sparire —
+      // non gira mai. Il libro rileggeva così la pagina precedente e tornava
+      // indietro da solo di un giro ogni volta che si cambiava sezione.
+      voBookMemory.spread = nextSpread;
+      voBookMemory.half = nextHalf;
       setAtAppendix(false);
       setSpread(nextSpread);
       setHalf(nextHalf);
       clearGesture();
-      // In compatto due posizioni consecutive possono appartenere allo stesso
-      // spread: l'URL cambia solo quando cambia la sezione. Ripubblicare lo stesso
-      // path non è gratis — è una navigazione RSC completa — e cadeva esattamente
-      // sull'ultimo fotogramma del giro, dove si vedeva tutta.
-      const href = spreadHref(voSpreads[nextSpread], localePrefix);
-      if (href === pathname) return;
-      // Il foglio si è già posato: la navigazione è lavoro che può aspettare il
-      // fotogramma dopo, invece di contendere quello che sta ancora disegnando.
-      startTransition(() => {
-        router.push(href, { scroll: false });
-      });
+      // Cambiare sezione rimonta il libro: è lo stesso file di route con un
+      // parametro diverso, e il router ricrea il segmento. Se c'è ancora un passo
+      // in coda, navigare adesso significherebbe rimontare mentre il foglio
+      // successivo è già in volo — e quel foglio sparirebbe a metà giro. La
+      // navigazione aspetta la fine della rincorsa: una sola, alla pagina d'arrivo.
+      if (queuedRef.current !== 0) return;
+      publish(nextSpread);
     },
-    [appendixPos, clearGesture, fromPos, localePrefix, pathname, router],
+    [appendixPos, clearGesture, fromPos, publish],
   );
 
   const goTo = useCallback(
     (target: number) => {
       if (!open) return;
+      const from = posRef.current;
       if (target < 0 || (target >= positionCount && target !== appendixPos)) return;
-      if (target === pos) return;
-      if (gesture?.mode === "run") return;
+      if (target === from) return;
+      if (gestureRef.current?.mode === "run") return;
       if (reducedMotion) {
         commit(target);
         return;
@@ -460,14 +530,14 @@ export function VoBookShell({
       tokenRef.current += 1;
       setGesture({
         token: tokenRef.current,
-        from: pos,
+        from,
         to: target,
-        dir: target > pos ? 1 : -1,
-        leaves: leavesForJump(pos, target),
+        dir: target > from ? 1 : -1,
+        leaves: leavesForJump(from, target),
         mode: "run",
       });
     },
-    [appendixPos, commit, gesture?.mode, open, pos, positionCount, reducedMotion],
+    [appendixPos, commit, open, positionCount, reducedMotion, setGesture],
   );
 
   // Avvia le animazioni una volta che i fogli sono montati con lo stato di partenza.
@@ -521,6 +591,11 @@ export function VoBookShell({
     // posizione virtuale in fondo, così raggiungerla è comunque uno sfogliare.
     const fromUrl = appendix ? appendixPos : toPos(spreadIndexByPathname(pathname), 0);
     if (fromUrl === pos || gesture) return;
+    // L'URL nomina la *sezione*, non la facciata. Su schermo stretto una sezione
+    // ne occupa due, e se si è già dentro quella giusta non c'è niente da
+    // inseguire: pretenderne la prima rimandava indietro di una pagina ogni giro
+    // che atterrava sulla facciata destra — il libro tornava sui suoi passi da solo.
+    if (!appendix && !atAppendix && fromPos(pos).spread === spreadIndexByPathname(pathname)) return;
     if (reducedMotion) {
       const landing = fromPos(fromUrl);
       setSpread(landing.spread);
@@ -539,54 +614,45 @@ export function VoBookShell({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appendix, pathname]);
 
-  /**
-   * Il passo chiesto mentre un foglio era ancora in volo. Prima veniva scartato:
-   * chi sfogliava svelto vedeva il libro ignorare un gesto su due. Uno solo si
-   * mette in coda — due sarebbero l'inerzia del trackpad, non una volontà.
-   */
-  const queuedRef = useRef(0);
-
   useEffect(() => {
     if (gesture || queuedRef.current === 0) return;
-    const step = queuedRef.current;
+    const queued = queuedRef.current;
     queuedRef.current = 0;
-    const target = pos + step;
-    if (target < 0 || target >= positionCount) return;
+    const target = pos + queued;
+    if (target < 0 || target >= positionCount || atAppendix) {
+      // La rincorsa è finita contro un capo del volume. Il commit precedente
+      // aveva ceduto la navigazione al passo che non c'è più: la si onora qui,
+      // altrimenti l'URL resterebbe indietro di una sezione.
+      publish(fromPos(pos).spread);
+      return;
+    }
     goTo(target);
-  }, [gesture, goTo, pos, positionCount]);
+  }, [atAppendix, fromPos, gesture, goTo, pos, positionCount, publish]);
 
   /** Un passo avanti o indietro da qualunque input, code e capi del volume inclusi. */
   const step = useCallback(
     (direction: 1 | -1) => {
-      if (pos === appendixPos) {
+      const from = posRef.current;
+      if (from === appendixPos) {
         if (direction === -1) onLeaveAppendix?.();
         return;
       }
       // Ai due capi del volume non ci sono pagine: ci sono i piatti.
-      if (direction === -1 && pos === 0) {
+      if (direction === -1 && from === 0) {
         onBeforeFirstPage?.();
         return;
       }
-      if (direction === 1 && pos === positionCount - 1) {
+      if (direction === 1 && from === positionCount - 1) {
         onPastLastPage?.();
         return;
       }
-      if (gesture?.mode === "run") {
+      if (gestureRef.current?.mode === "run") {
         queuedRef.current = direction;
         return;
       }
-      goTo(pos + direction);
+      goTo(from + direction);
     },
-    [
-      appendixPos,
-      gesture?.mode,
-      goTo,
-      onBeforeFirstPage,
-      onLeaveAppendix,
-      onPastLastPage,
-      pos,
-      positionCount,
-    ],
+    [appendixPos, goTo, onBeforeFirstPage, onLeaveAppendix, onPastLastPage, positionCount],
   );
 
   // ── Input: rotella ─────────────────────────────────────────────────────────
@@ -721,11 +787,19 @@ export function VoBookShell({
   /** Prende il foglio dove si trova: un accenno già sollevato non ricade sul dorso. */
   const beginDrag = useCallback(
     (dir: 1 | -1, startX: number, pointerId: number) => {
-      if (!open || reducedMotion || gesture?.mode === "run") return false;
+      if (!open || reducedMotion || gestureRef.current?.mode === "run") return false;
       const stage = stageRef.current;
       if (!stage) return false;
+      // Un foglio già accennato si prende dov'è; uno preso da fermo parte dal suo
+      // capo della corsa — e per il gesto all'indietro quel capo è 1, non 0.
+      // Leggerlo e basta faceva partire il ritorno da foglio già girato, quindi
+      // qualunque trascinamento all'indietro risultava "compiuto" appena iniziato.
+      const held = gestureRef.current;
+      const resuming =
+        held?.mode === "hint" && held.dir === dir && held.from === pos && held.to === pos + dir;
       if (!armGesture(dir, "drag")) return false;
       stopHintAnim();
+      if (!resuming) p0.set(dir === 1 ? 0 : 1);
       const rect = stage.getBoundingClientRect();
       dragRef.current = {
         startX,
@@ -737,7 +811,7 @@ export function VoBookShell({
       };
       return true;
     },
-    [armGesture, compact, gesture?.mode, open, p0, reducedMotion, stopHintAnim],
+    [armGesture, compact, open, p0, pos, reducedMotion, stopHintAnim],
   );
 
   const updateDrag = useCallback(
@@ -789,17 +863,33 @@ export function VoBookShell({
    */
   const swipeRef = useRef<{ pointerId: number; startX: number; startY: number } | null>(null);
 
+  /**
+   * La cattura è un di più: serve a non perdere il dito che esce dalla scatola.
+   * Se il browser la rifiuta — succede quando il puntatore è già stato rilasciato
+   * fra un evento e l'altro — il trascinamento deve proseguire lo stesso, non
+   * morire con un'eccezione a metà gesto.
+   */
+  const capture = (element: Element, pointerId: number) => {
+    try {
+      element.setPointerCapture(pointerId);
+    } catch {
+      // Senza cattura il gesto vale finché il puntatore resta sulla scatola.
+    }
+  };
+
   const onStagePointerDown = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
       if (event.pointerType === "mouse") return;
-      if (!open || reducedMotion || dragRef.current || gesture?.mode === "run") return;
+      if (!open || reducedMotion || dragRef.current) return;
+      // Si registra anche con un foglio in volo: il gesto non potrà prendere
+      // *questo* foglio, ma vale come richiesta del prossimo giro.
       swipeRef.current = {
         pointerId: event.pointerId,
         startX: event.clientX,
         startY: event.clientY,
       };
     },
-    [gesture?.mode, open, reducedMotion],
+    [open, reducedMotion],
   );
 
   const onStagePointerMove = useCallback(
@@ -820,6 +910,14 @@ export function VoBookShell({
           return;
         }
         const dir: 1 | -1 = dx < 0 ? 1 : -1;
+        // Un foglio è ancora in volo: questo dito non può prenderlo, ma la sua
+        // intenzione non va persa — vale il prossimo giro, come per rotella e
+        // frecce. Senza, sfogliare a raffica col pollice mangiava un gesto su due.
+        if (gestureRef.current?.mode === "run") {
+          swipeRef.current = null;
+          queuedRef.current = dir;
+          return;
+        }
         // Il gesto comincia dove la soglia è stata superata, non dove il dito si è
         // posato: altrimenti il foglio scatta in avanti dei pixel di tolleranza.
         const originX = swipe.startX + (dir === 1 ? -SWIPE_SLOP : SWIPE_SLOP);
@@ -827,7 +925,7 @@ export function VoBookShell({
           swipeRef.current = null;
           return;
         }
-        event.currentTarget.setPointerCapture(event.pointerId);
+        capture(event.currentTarget, event.pointerId);
         updateDrag(event.clientX);
         return;
       }
@@ -878,7 +976,7 @@ export function VoBookShell({
     (event: ReactPointerEvent<HTMLButtonElement>, dir: 1 | -1) => {
       if (event.pointerType === "touch") return;
       if (!beginDrag(dir, event.clientX, event.pointerId)) return;
-      event.currentTarget.setPointerCapture(event.pointerId);
+      capture(event.currentTarget, event.pointerId);
     },
     [beginDrag],
   );

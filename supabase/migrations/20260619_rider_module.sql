@@ -47,20 +47,17 @@ COMMENT ON COLUMN public.orders.delivered_at         IS 'Quando la consegna è a
 -- ── RLS rider_profiles ────────────────────────────────────────────────────────
 ALTER TABLE public.rider_profiles ENABLE ROW LEVEL SECURITY;
 
--- Gestione (autenticati con ruolo tenantadmin/siteadmin/employee): lettura completa.
-CREATE POLICY "rider_profiles_select_gestione"
-  ON public.rider_profiles FOR SELECT
-  USING (true);
+-- access_code è la credenziale di login del rider: nessun accesso da anon/authenticated,
+-- nemmeno in lettura. Tutte le route (gestione e /api/rider/auth) usano il service client,
+-- che bypassa RLS.
+DROP POLICY IF EXISTS "rider_profiles_select_gestione" ON public.rider_profiles;
+DROP POLICY IF EXISTS "rider_profiles_insert_service"  ON public.rider_profiles;
+DROP POLICY IF EXISTS "rider_profiles_update_service"  ON public.rider_profiles;
+DROP POLICY IF EXISTS "rider_profiles_delete_service"  ON public.rider_profiles;
+DROP POLICY IF EXISTS "rider_profiles_service"         ON public.rider_profiles;
 
--- Solo service role può inserire/modificare/eliminare (le API usano service client).
-CREATE POLICY "rider_profiles_insert_service"
-  ON public.rider_profiles FOR INSERT
-  WITH CHECK (false);
-
-CREATE POLICY "rider_profiles_update_service"
-  ON public.rider_profiles FOR UPDATE
-  USING (false);
-
-CREATE POLICY "rider_profiles_delete_service"
-  ON public.rider_profiles FOR DELETE
-  USING (false);
+CREATE POLICY "rider_profiles_service"
+  ON public.rider_profiles
+  FOR ALL
+  USING (auth.role() = 'service_role')
+  WITH CHECK (auth.role() = 'service_role');

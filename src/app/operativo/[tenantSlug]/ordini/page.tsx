@@ -217,6 +217,8 @@ function statusBadge(status: OrderRow["status"], t: GestioneMessages["orders"]):
     case "consegnato": return { label: t.status.delivered, tone: "muted" };
     case "annullato": return { label: t.status.cancelled, tone: "error" };
     case "expired": return { label: t.status.expired, tone: "error" };
+    // Valori legacy dell'enum DB mai scritti dall'app (accettato, rifiutato, consegna_fallita).
+    default: return { label: status, tone: "muted" };
   }
 }
 

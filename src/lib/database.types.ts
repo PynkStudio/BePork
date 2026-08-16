@@ -341,68 +341,28 @@ export type Database = {
           },
         ]
       }
-      pynkstudio_crm: {
+      clients: {
         Row: {
-          id: string
-          name: string
-          email: string
-          phone: string
-          company: string | null
-          employees_count: number | null
-          industry: string | null
-          address: string | null
-          work_hours: string | null
-          notes: string | null
-          tags: string[]
-          status: string
-          source: string
-          last_booking_id: string | null
-          last_booking_at: string | null
-          bookings_count: number
           created_at: string
-          updated_at: string
+          user_id: string
         }
         Insert: {
-          id?: string
-          name: string
-          email: string
-          phone?: string
-          company?: string | null
-          employees_count?: number | null
-          industry?: string | null
-          address?: string | null
-          work_hours?: string | null
-          notes?: string | null
-          tags?: string[]
-          status?: string
-          source?: string
-          last_booking_id?: string | null
-          last_booking_at?: string | null
-          bookings_count?: number
           created_at?: string
-          updated_at?: string
+          user_id: string
         }
         Update: {
-          id?: string
-          name?: string
-          email?: string
-          phone?: string
-          company?: string | null
-          employees_count?: number | null
-          industry?: string | null
-          address?: string | null
-          work_hours?: string | null
-          notes?: string | null
-          tags?: string[]
-          status?: string
-          source?: string
-          last_booking_id?: string | null
-          last_booking_at?: string | null
-          bookings_count?: number
           created_at?: string
-          updated_at?: string
+          user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "clients_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       consultation_bookings: {
         Row: {
@@ -445,29 +405,6 @@ export type Database = {
           topic?: string
         }
         Relationships: []
-      }
-      clients: {
-        Row: {
-          created_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "clients_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "users"
-            referencedColumns: ["user_id"]
-          },
-        ]
       }
       customer_events: {
         Row: {
@@ -938,6 +875,53 @@ export type Database = {
           tenant_id?: string
         }
         Relationships: []
+      }
+      hubrise_connections: {
+        Row: {
+          access_token: string
+          account_id: string | null
+          callback_registered: boolean
+          created_at: string
+          id: string
+          location_id: string
+          location_name: string | null
+          status: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          access_token: string
+          account_id?: string | null
+          callback_registered?: boolean
+          created_at?: string
+          id?: string
+          location_id: string
+          location_name?: string | null
+          status?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string
+          account_id?: string | null
+          callback_registered?: boolean
+          created_at?: string
+          id?: string
+          location_id?: string
+          location_name?: string | null
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hubrise_connections_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       hubrise_inbound_log: {
         Row: {
@@ -1875,6 +1859,57 @@ export type Database = {
           },
         ]
       }
+      operational_portal_presence: {
+        Row: {
+          created_at: string
+          id: string
+          last_seen_at: string
+          location_id: string | null
+          portal: string
+          tenant_id: string
+          user_agent: string | null
+          user_id: string | null
+          visible: boolean
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_seen_at?: string
+          location_id?: string | null
+          portal: string
+          tenant_id: string
+          user_agent?: string | null
+          user_id?: string | null
+          visible?: boolean
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_seen_at?: string
+          location_id?: string | null
+          portal?: string
+          tenant_id?: string
+          user_agent?: string | null
+          user_id?: string | null
+          visible?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operational_portal_presence_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operational_portal_presence_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_lines: {
         Row: {
           added_extras: Json
@@ -1953,57 +1988,107 @@ export type Database = {
           },
         ]
       }
+      order_status_history: {
+        Row: {
+          changed_by: string | null
+          created_at: string
+          id: string
+          new_status: string
+          notes: string | null
+          order_id: string
+          previous_status: string | null
+        }
+        Insert: {
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          new_status: string
+          notes?: string | null
+          order_id: string
+          previous_status?: string | null
+        }
+        Update: {
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          new_status?: string
+          notes?: string | null
+          order_id?: string
+          previous_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_status_history_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           application_fee_amount_cents: number | null
+          assigned_at: string | null
           auto_accepted: boolean
           code: string
+          collection_code: string | null
           comanda_printed_at: string | null
           comanda_update_printed_at: string | null
-          payment_method: string | null
-          payment_method_changed_at: string | null
           confirmation_expires_at: string | null
           confirmed_at: string | null
+          confirmed_time: string | null
+          coupon_codes: Json | null
           created_at: string
+          customer_email: string | null
           customer_id: string | null
           customer_name: string | null
           customer_phone: string | null
+          delivered_at: string | null
           delivery_address: string | null
+          delivery_address_text: string | null
           delivery_doorbell: string | null
           delivery_floor: string | null
           delivery_notes: string | null
+          delivery_pin_lat: number | null
+          delivery_pin_lng: number | null
           desired_time: string | null
           dine_option: string | null
           diner_client_id: string | null
           diner_nickname: string | null
+          expected_time: string | null
           external_order_id: string | null
           external_payload: Json | null
           external_platform: string | null
           fulfillment_type: string
+          hubrise_location_id: string | null
+          hubrise_order_id: string | null
           id: string
           location_id: string | null
           menuary_user_id: string | null
           notes: string | null
           paid_at: string | null
           payment_link_url: string | null
+          payment_method: string | null
+          payment_method_changed_at: string | null
           payment_provider: string | null
           payment_status: string
+          picked_up_at: string | null
           pickup_time: string | null
+          platform_charges: Json | null
+          platform_discounts: Json | null
+          platform_payments: Json | null
           public_token: string
+          rider_id: string | null
+          seller_notes: string | null
           session_code: string | null
           session_id: string | null
-          assigned_at: string | null
-          delivered_at: string | null
-          delivery_address_text: string | null
-          delivery_pin_lat: number | null
-          delivery_pin_lng: number | null
-          picked_up_at: string | null
-          rider_id: string | null
           source: string
           status: Database["public"]["Enums"]["order_status"]
           stripe_account_id: string | null
           stripe_checkout_session_id: string | null
           stripe_payment_intent_id: string | null
+          subtotal: number | null
           table_id: string | null
           table_label: string | null
           tenant_id: string
@@ -2014,44 +2099,58 @@ export type Database = {
         }
         Insert: {
           application_fee_amount_cents?: number | null
+          assigned_at?: string | null
           auto_accepted?: boolean
           code: string
+          collection_code?: string | null
           comanda_printed_at?: string | null
+          comanda_update_printed_at?: string | null
           confirmation_expires_at?: string | null
           confirmed_at?: string | null
+          confirmed_time?: string | null
+          coupon_codes?: Json | null
           created_at?: string
+          customer_email?: string | null
           customer_id?: string | null
           customer_name?: string | null
           customer_phone?: string | null
+          delivered_at?: string | null
           delivery_address?: string | null
+          delivery_address_text?: string | null
           delivery_doorbell?: string | null
           delivery_floor?: string | null
           delivery_notes?: string | null
+          delivery_pin_lat?: number | null
+          delivery_pin_lng?: number | null
           desired_time?: string | null
           dine_option?: string | null
           diner_client_id?: string | null
           diner_nickname?: string | null
+          expected_time?: string | null
           external_order_id?: string | null
           external_payload?: Json | null
           external_platform?: string | null
           fulfillment_type?: string
+          hubrise_location_id?: string | null
+          hubrise_order_id?: string | null
           id?: string
           location_id?: string | null
           menuary_user_id?: string | null
           notes?: string | null
           paid_at?: string | null
           payment_link_url?: string | null
+          payment_method?: string | null
+          payment_method_changed_at?: string | null
           payment_provider?: string | null
           payment_status?: string
-          pickup_time?: string | null
-          public_token?: string
-          assigned_at?: string | null
-          delivered_at?: string | null
-          delivery_address_text?: string | null
-          delivery_pin_lat?: number | null
-          delivery_pin_lng?: number | null
           picked_up_at?: string | null
+          pickup_time?: string | null
+          platform_charges?: Json | null
+          platform_discounts?: Json | null
+          platform_payments?: Json | null
+          public_token?: string
           rider_id?: string | null
+          seller_notes?: string | null
           session_code?: string | null
           session_id?: string | null
           source?: string
@@ -2059,6 +2158,7 @@ export type Database = {
           stripe_account_id?: string | null
           stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null
+          subtotal?: number | null
           table_id?: string | null
           table_label?: string | null
           tenant_id: string
@@ -2069,54 +2169,66 @@ export type Database = {
         }
         Update: {
           application_fee_amount_cents?: number | null
+          assigned_at?: string | null
           auto_accepted?: boolean
           code?: string
+          collection_code?: string | null
           comanda_printed_at?: string | null
           comanda_update_printed_at?: string | null
-          payment_method?: string | null
-          payment_method_changed_at?: string | null
           confirmation_expires_at?: string | null
           confirmed_at?: string | null
+          confirmed_time?: string | null
+          coupon_codes?: Json | null
           created_at?: string
+          customer_email?: string | null
           customer_id?: string | null
           customer_name?: string | null
           customer_phone?: string | null
+          delivered_at?: string | null
           delivery_address?: string | null
+          delivery_address_text?: string | null
           delivery_doorbell?: string | null
           delivery_floor?: string | null
           delivery_notes?: string | null
+          delivery_pin_lat?: number | null
+          delivery_pin_lng?: number | null
           desired_time?: string | null
           dine_option?: string | null
           diner_client_id?: string | null
           diner_nickname?: string | null
+          expected_time?: string | null
           external_order_id?: string | null
           external_payload?: Json | null
           external_platform?: string | null
           fulfillment_type?: string
+          hubrise_location_id?: string | null
+          hubrise_order_id?: string | null
           id?: string
           location_id?: string | null
           menuary_user_id?: string | null
           notes?: string | null
           paid_at?: string | null
           payment_link_url?: string | null
+          payment_method?: string | null
+          payment_method_changed_at?: string | null
           payment_provider?: string | null
           payment_status?: string
-          pickup_time?: string | null
-          public_token?: string
-          session_code?: string | null
-          assigned_at?: string | null
-          delivered_at?: string | null
-          delivery_address_text?: string | null
-          delivery_pin_lat?: number | null
-          delivery_pin_lng?: number | null
           picked_up_at?: string | null
+          pickup_time?: string | null
+          platform_charges?: Json | null
+          platform_discounts?: Json | null
+          platform_payments?: Json | null
+          public_token?: string
           rider_id?: string | null
+          seller_notes?: string | null
+          session_code?: string | null
           session_id?: string | null
           source?: string
           status?: Database["public"]["Enums"]["order_status"]
           stripe_account_id?: string | null
           stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null
+          subtotal?: number | null
           table_id?: string | null
           table_label?: string | null
           tenant_id?: string
@@ -2138,6 +2250,13 @@ export type Database = {
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_rider_id_fkey"
+            columns: ["rider_id"]
+            isOneToOne: false
+            referencedRelation: "rider_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -2351,10 +2470,10 @@ export type Database = {
           brand: string
           clause_overrides: Json
           contract_data: Json
+          counterparty_signing_url: string | null
           created_at: string
           documenso_envelope_id: string | null
           documenso_item_id: string | null
-          counterparty_signing_url: string | null
           expires_at: string | null
           id: string
           lead_id: string | null
@@ -2379,10 +2498,10 @@ export type Database = {
           brand?: string
           clause_overrides?: Json
           contract_data: Json
+          counterparty_signing_url?: string | null
           created_at?: string
           documenso_envelope_id?: string | null
           documenso_item_id?: string | null
-          counterparty_signing_url?: string | null
           expires_at?: string | null
           id?: string
           lead_id?: string | null
@@ -2407,10 +2526,10 @@ export type Database = {
           brand?: string
           clause_overrides?: Json
           contract_data?: Json
+          counterparty_signing_url?: string | null
           created_at?: string
           documenso_envelope_id?: string | null
           documenso_item_id?: string | null
-          counterparty_signing_url?: string | null
           expires_at?: string | null
           id?: string
           lead_id?: string | null
@@ -2448,6 +2567,114 @@ export type Database = {
           },
           {
             foreignKeyName: "platform_contracts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_error_events: {
+        Row: {
+          actor_id: string | null
+          actor_type: string | null
+          assigned_to_siteadmin_id: string | null
+          created_at: string
+          device_id: string | null
+          environment: string
+          error_code: string | null
+          external_ref: string | null
+          fingerprint: string
+          flow: string
+          http_status: number | null
+          id: string
+          last_seen_at: string
+          location_id: string | null
+          message: string
+          metadata: Json
+          occurrence_count: number
+          operation: string | null
+          order_id: string | null
+          request_id: string | null
+          resolved_at: string | null
+          severity: string
+          source: string
+          stack: string | null
+          status: string
+          tenant_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_type?: string | null
+          assigned_to_siteadmin_id?: string | null
+          created_at?: string
+          device_id?: string | null
+          environment?: string
+          error_code?: string | null
+          external_ref?: string | null
+          fingerprint: string
+          flow: string
+          http_status?: number | null
+          id?: string
+          last_seen_at?: string
+          location_id?: string | null
+          message?: string
+          metadata?: Json
+          occurrence_count?: number
+          operation?: string | null
+          order_id?: string | null
+          request_id?: string | null
+          resolved_at?: string | null
+          severity?: string
+          source?: string
+          stack?: string | null
+          status?: string
+          tenant_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          actor_id?: string | null
+          actor_type?: string | null
+          assigned_to_siteadmin_id?: string | null
+          created_at?: string
+          device_id?: string | null
+          environment?: string
+          error_code?: string | null
+          external_ref?: string | null
+          fingerprint?: string
+          flow?: string
+          http_status?: number | null
+          id?: string
+          last_seen_at?: string
+          location_id?: string | null
+          message?: string
+          metadata?: Json
+          occurrence_count?: number
+          operation?: string | null
+          order_id?: string | null
+          request_id?: string | null
+          resolved_at?: string | null
+          severity?: string
+          source?: string
+          stack?: string | null
+          status?: string
+          tenant_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_error_events_assigned_to_siteadmin_id_fkey"
+            columns: ["assigned_to_siteadmin_id"]
+            isOneToOne: false
+            referencedRelation: "siteadmin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_error_events_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -2514,6 +2741,9 @@ export type Database = {
       platform_leads: {
         Row: {
           address: string | null
+          attention_for_user_id: string | null
+          attention_kind: string | null
+          attention_updated_at: string | null
           billing_address: string | null
           billing_cf: string | null
           billing_city: string | null
@@ -2544,6 +2774,7 @@ export type Database = {
           has_google_maps: boolean | null
           has_website: boolean | null
           id: string
+          last_updated_by_user_id: string | null
           last_whatsapp_at: string | null
           maps_ownership_claimed: boolean | null
           maps_profile_complete: boolean | null
@@ -2570,6 +2801,7 @@ export type Database = {
           status: string
           temperature: string
           tenant_id: string | null
+          update_actor_at: string | null
           updated_at: string
           website_score_beauty: number | null
           website_score_clarity: number | null
@@ -2582,6 +2814,9 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          attention_for_user_id?: string | null
+          attention_kind?: string | null
+          attention_updated_at?: string | null
           billing_address?: string | null
           billing_cf?: string | null
           billing_city?: string | null
@@ -2612,6 +2847,7 @@ export type Database = {
           has_google_maps?: boolean | null
           has_website?: boolean | null
           id?: string
+          last_updated_by_user_id?: string | null
           last_whatsapp_at?: string | null
           maps_ownership_claimed?: boolean | null
           maps_profile_complete?: boolean | null
@@ -2638,6 +2874,7 @@ export type Database = {
           status?: string
           temperature?: string
           tenant_id?: string | null
+          update_actor_at?: string | null
           updated_at?: string
           website_score_beauty?: number | null
           website_score_clarity?: number | null
@@ -2650,6 +2887,9 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          attention_for_user_id?: string | null
+          attention_kind?: string | null
+          attention_updated_at?: string | null
           billing_address?: string | null
           billing_cf?: string | null
           billing_city?: string | null
@@ -2680,6 +2920,7 @@ export type Database = {
           has_google_maps?: boolean | null
           has_website?: boolean | null
           id?: string
+          last_updated_by_user_id?: string | null
           last_whatsapp_at?: string | null
           maps_ownership_claimed?: boolean | null
           maps_profile_complete?: boolean | null
@@ -2706,6 +2947,7 @@ export type Database = {
           status?: string
           temperature?: string
           tenant_id?: string | null
+          update_actor_at?: string | null
           updated_at?: string
           website_score_beauty?: number | null
           website_score_clarity?: number | null
@@ -2867,7 +3109,11 @@ export type Database = {
           currency: string
           due_date: string | null
           id: string
+          invoice_date: string | null
+          invoice_file_name: string | null
+          invoice_file_path: string | null
           invoice_number: string | null
+          invoice_uploaded_at: string | null
           kind: string
           lead_id: string
           notes: string | null
@@ -2890,7 +3136,11 @@ export type Database = {
           currency?: string
           due_date?: string | null
           id?: string
+          invoice_date?: string | null
+          invoice_file_name?: string | null
+          invoice_file_path?: string | null
           invoice_number?: string | null
+          invoice_uploaded_at?: string | null
           kind?: string
           lead_id: string
           notes?: string | null
@@ -2913,7 +3163,11 @@ export type Database = {
           currency?: string
           due_date?: string | null
           id?: string
+          invoice_date?: string | null
+          invoice_file_name?: string | null
+          invoice_file_path?: string | null
           invoice_number?: string | null
+          invoice_uploaded_at?: string | null
           kind?: string
           lead_id?: string
           notes?: string | null
@@ -3266,6 +3520,77 @@ export type Database = {
           },
         ]
       }
+      pynkstudio_crm: {
+        Row: {
+          address: string | null
+          bookings_count: number
+          company: string | null
+          created_at: string
+          email: string
+          employees_count: number | null
+          id: string
+          industry: string | null
+          last_booking_at: string | null
+          last_booking_id: string | null
+          name: string
+          notes: string | null
+          phone: string
+          source: string
+          status: string
+          tags: string[]
+          updated_at: string
+          work_hours: string | null
+        }
+        Insert: {
+          address?: string | null
+          bookings_count?: number
+          company?: string | null
+          created_at?: string
+          email: string
+          employees_count?: number | null
+          id?: string
+          industry?: string | null
+          last_booking_at?: string | null
+          last_booking_id?: string | null
+          name: string
+          notes?: string | null
+          phone?: string
+          source?: string
+          status?: string
+          tags?: string[]
+          updated_at?: string
+          work_hours?: string | null
+        }
+        Update: {
+          address?: string | null
+          bookings_count?: number
+          company?: string | null
+          created_at?: string
+          email?: string
+          employees_count?: number | null
+          id?: string
+          industry?: string | null
+          last_booking_at?: string | null
+          last_booking_id?: string | null
+          name?: string
+          notes?: string | null
+          phone?: string
+          source?: string
+          status?: string
+          tags?: string[]
+          updated_at?: string
+          work_hours?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pynkstudio_crm_last_booking_id_fkey"
+            columns: ["last_booking_id"]
+            isOneToOne: false
+            referencedRelation: "consultation_bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reservation_requests: {
         Row: {
           assigned_area: string | null
@@ -3371,41 +3696,6 @@ export type Database = {
           },
         ]
       }
-      rider_profiles: {
-        Row: {
-          access_code: string
-          active: boolean
-          created_at: string
-          id: string
-          name: string
-          tenant_id: string
-        }
-        Insert: {
-          access_code: string
-          active?: boolean
-          created_at?: string
-          id?: string
-          name: string
-          tenant_id: string
-        }
-        Update: {
-          access_code?: string
-          active?: boolean
-          created_at?: string
-          id?: string
-          name?: string
-          tenant_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "rider_profiles_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       reviews: {
         Row: {
           author: string
@@ -3483,6 +3773,41 @@ export type Database = {
           },
           {
             foreignKeyName: "reviews_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rider_profiles: {
+        Row: {
+          access_code: string
+          active: boolean
+          created_at: string
+          id: string
+          name: string
+          tenant_id: string
+        }
+        Insert: {
+          access_code: string
+          active?: boolean
+          created_at?: string
+          id?: string
+          name: string
+          tenant_id: string
+        }
+        Update: {
+          access_code?: string
+          active?: boolean
+          created_at?: string
+          id?: string
+          name?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rider_profiles_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -4202,6 +4527,53 @@ export type Database = {
           },
         ]
       }
+      tenant_blog_authors: {
+        Row: {
+          avatar_url: string | null
+          bio: Json
+          created_at: string
+          display_name: string
+          id: string
+          links: Json
+          position: number
+          role_label: string | null
+          slug: string
+          tenant_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: Json
+          created_at?: string
+          display_name: string
+          id?: string
+          links?: Json
+          position?: number
+          role_label?: string | null
+          slug: string
+          tenant_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: Json
+          created_at?: string
+          display_name?: string
+          id?: string
+          links?: Json
+          position?: number
+          role_label?: string | null
+          slug?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_blog_authors_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_blog_blocks: {
         Row: {
           caption: string | null
@@ -4308,140 +4680,6 @@ export type Database = {
             columns: ["post_id"]
             isOneToOne: false
             referencedRelation: "tenant_blog_posts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      tenant_blog_posts: {
-        Row: {
-          author_id: string | null
-          cover_focal_x: number
-          cover_focal_y: number
-          cover_image_url: string | null
-          created_at: string
-          editorial_type: string | null
-          excerpt: string | null
-          featured: boolean
-          id: string
-          like_count: number
-          published_at: string | null
-          scheduled_at: string | null
-          seo_description: string | null
-          seo_title: string | null
-          slug: string
-          status: string
-          tenant_id: string
-          title: string
-          updated_at: string
-          updated_by: string | null
-          view_count: number
-        }
-        Insert: {
-          author_id?: string | null
-          cover_focal_x?: number
-          cover_focal_y?: number
-          cover_image_url?: string | null
-          created_at?: string
-          editorial_type?: string | null
-          excerpt?: string | null
-          featured?: boolean
-          id?: string
-          like_count?: number
-          published_at?: string | null
-          scheduled_at?: string | null
-          seo_description?: string | null
-          seo_title?: string | null
-          slug: string
-          status?: string
-          tenant_id: string
-          title: string
-          updated_at?: string
-          updated_by?: string | null
-          view_count?: number
-        }
-        Update: {
-          author_id?: string | null
-          cover_focal_x?: number
-          cover_focal_y?: number
-          cover_image_url?: string | null
-          created_at?: string
-          editorial_type?: string | null
-          excerpt?: string | null
-          featured?: boolean
-          id?: string
-          like_count?: number
-          published_at?: string | null
-          scheduled_at?: string | null
-          seo_description?: string | null
-          seo_title?: string | null
-          slug?: string
-          status?: string
-          tenant_id?: string
-          title?: string
-          updated_at?: string
-          updated_by?: string | null
-          view_count?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tenant_blog_posts_author_id_fkey"
-            columns: ["author_id"]
-            isOneToOne: false
-            referencedRelation: "tenant_blog_authors"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tenant_blog_posts_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      tenant_blog_authors: {
-        Row: {
-          avatar_url: string | null
-          bio: Json
-          created_at: string
-          display_name: string
-          id: string
-          links: Json
-          position: number
-          role_label: string | null
-          slug: string
-          tenant_id: string
-        }
-        Insert: {
-          avatar_url?: string | null
-          bio?: Json
-          created_at?: string
-          display_name: string
-          id?: string
-          links?: Json
-          position?: number
-          role_label?: string | null
-          slug: string
-          tenant_id: string
-        }
-        Update: {
-          avatar_url?: string | null
-          bio?: Json
-          created_at?: string
-          display_name?: string
-          id?: string
-          links?: Json
-          position?: number
-          role_label?: string | null
-          slug?: string
-          tenant_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tenant_blog_authors_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -4644,6 +4882,93 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tenant_blog_posts"
             referencedColumns: ["id", "tenant_id"]
+          },
+        ]
+      }
+      tenant_blog_posts: {
+        Row: {
+          author_id: string | null
+          cover_focal_x: number
+          cover_focal_y: number
+          cover_image_url: string | null
+          created_at: string
+          editorial_type: string | null
+          excerpt: string | null
+          featured: boolean
+          id: string
+          like_count: number
+          published_at: string | null
+          scheduled_at: string | null
+          seo_description: string | null
+          seo_title: string | null
+          slug: string
+          status: string
+          tenant_id: string
+          title: string
+          updated_at: string
+          updated_by: string | null
+          view_count: number
+        }
+        Insert: {
+          author_id?: string | null
+          cover_focal_x?: number
+          cover_focal_y?: number
+          cover_image_url?: string | null
+          created_at?: string
+          editorial_type?: string | null
+          excerpt?: string | null
+          featured?: boolean
+          id?: string
+          like_count?: number
+          published_at?: string | null
+          scheduled_at?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          slug: string
+          status?: string
+          tenant_id: string
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+          view_count?: number
+        }
+        Update: {
+          author_id?: string | null
+          cover_focal_x?: number
+          cover_focal_y?: number
+          cover_image_url?: string | null
+          created_at?: string
+          editorial_type?: string | null
+          excerpt?: string | null
+          featured?: boolean
+          id?: string
+          like_count?: number
+          published_at?: string | null
+          scheduled_at?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          slug?: string
+          status?: string
+          tenant_id?: string
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_blog_posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_blog_authors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_blog_posts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -5630,13 +5955,97 @@ export type Database = {
           },
         ]
       }
+      tenant_newsletter_automations: {
+        Row: {
+          config: Json
+          enabled: boolean
+          key: string
+          last_run_at: string | null
+          last_sent_at: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          config?: Json
+          enabled?: boolean
+          key: string
+          last_run_at?: string | null
+          last_sent_at?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          config?: Json
+          enabled?: boolean
+          key?: string
+          last_run_at?: string | null
+          last_sent_at?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_newsletter_automations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_newsletter_confirmation_tokens: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          last_sent_at: string | null
+          preferred_language: string | null
+          profile_id: string | null
+          source: string | null
+          tenant_id: string
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          last_sent_at?: string | null
+          preferred_language?: string | null
+          profile_id?: string | null
+          source?: string | null
+          tenant_id: string
+          token: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          last_sent_at?: string | null
+          preferred_language?: string | null
+          profile_id?: string | null
+          source?: string | null
+          tenant_id?: string
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_newsletter_confirmation_tokens_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_newsletter_deliveries: {
         Row: {
           click_count: number
           created_at: string
-          delivered_at: string | null
+          delivery_type: string
           error_message: string | null
-          failed_at: string | null
           first_clicked_at: string | null
           first_opened_at: string | null
           id: string
@@ -5644,22 +6053,23 @@ export type Database = {
           last_clicked_url: string | null
           last_opened_at: string | null
           message_id: string
-          metadata: Json
+          metadata: Json | null
+          newsletter_event_id: string | null
+          newsletter_message_id: string
           open_count: number
           provider_message_id: string | null
           recipient_email: string
-          sent_at: string | null
+          recipient_language: string
           status: string
           subscriber_id: string | null
           tenant_id: string
-          trigger_event_id: string | null
+          tracker_token: string
         }
         Insert: {
           click_count?: number
           created_at?: string
-          delivered_at?: string | null
+          delivery_type: string
           error_message?: string | null
-          failed_at?: string | null
           first_clicked_at?: string | null
           first_opened_at?: string | null
           id?: string
@@ -5667,22 +6077,23 @@ export type Database = {
           last_clicked_url?: string | null
           last_opened_at?: string | null
           message_id: string
-          metadata?: Json
+          metadata?: Json | null
+          newsletter_event_id?: string | null
+          newsletter_message_id: string
           open_count?: number
           provider_message_id?: string | null
           recipient_email: string
-          sent_at?: string | null
-          status?: string
+          recipient_language: string
+          status: string
           subscriber_id?: string | null
           tenant_id: string
-          trigger_event_id?: string | null
+          tracker_token: string
         }
         Update: {
           click_count?: number
           created_at?: string
-          delivered_at?: string | null
+          delivery_type?: string
           error_message?: string | null
-          failed_at?: string | null
           first_clicked_at?: string | null
           first_opened_at?: string | null
           id?: string
@@ -5690,20 +6101,29 @@ export type Database = {
           last_clicked_url?: string | null
           last_opened_at?: string | null
           message_id?: string
-          metadata?: Json
+          metadata?: Json | null
+          newsletter_event_id?: string | null
+          newsletter_message_id?: string
           open_count?: number
           provider_message_id?: string | null
           recipient_email?: string
-          sent_at?: string | null
+          recipient_language?: string
           status?: string
           subscriber_id?: string | null
           tenant_id?: string
-          trigger_event_id?: string | null
+          tracker_token?: string
         }
         Relationships: [
           {
-            foreignKeyName: "tenant_newsletter_deliveries_message_id_fkey"
-            columns: ["message_id"]
+            foreignKeyName: "tenant_newsletter_deliveries_newsletter_event_id_fkey"
+            columns: ["newsletter_event_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_newsletter_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_newsletter_deliveries_newsletter_message_id_fkey"
+            columns: ["newsletter_message_id"]
             isOneToOne: false
             referencedRelation: "tenant_newsletter_messages"
             referencedColumns: ["id"]
@@ -5722,71 +6142,124 @@ export type Database = {
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      tenant_newsletter_events: {
+        Row: {
+          email: string
+          event_type: string
+          id: string
+          occurred_at: string
+          preferred_language: string | null
+          processed_at: string | null
+          processing_note: string | null
+          subscriber_id: string | null
+          tenant_id: string
+        }
+        Insert: {
+          email: string
+          event_type: string
+          id?: string
+          occurred_at?: string
+          preferred_language?: string | null
+          processed_at?: string | null
+          processing_note?: string | null
+          subscriber_id?: string | null
+          tenant_id: string
+        }
+        Update: {
+          email?: string
+          event_type?: string
+          id?: string
+          occurred_at?: string
+          preferred_language?: string | null
+          processed_at?: string | null
+          processing_note?: string | null
+          subscriber_id?: string | null
+          tenant_id?: string
+        }
+        Relationships: [
           {
-            foreignKeyName: "tenant_newsletter_deliveries_trigger_event_id_fkey"
-            columns: ["trigger_event_id"]
+            foreignKeyName: "tenant_newsletter_events_subscriber_id_fkey"
+            columns: ["subscriber_id"]
             isOneToOne: false
-            referencedRelation: "tenant_newsletter_trigger_events"
+            referencedRelation: "tenant_newsletter_subscribers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_newsletter_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
       }
       tenant_newsletter_messages: {
         Row: {
-          body_html: string
+          automation_delay_minutes: number
+          automation_trigger: string | null
+          body_html_translations: Json
+          body_json_translations: Json
+          body_mode_translations: Json
           created_at: string
           created_by: string | null
-          delay_minutes: number
           from_name: string | null
           id: string
           kind: string
+          last_queued_at: string | null
           name: string
-          preheader: string | null
+          preheader_translations: Json
           reply_to: string | null
           scheduled_at: string | null
           sent_at: string | null
           status: string
-          subject: string
+          subject_translations: Json
           tenant_id: string
-          trigger_key: string | null
           updated_at: string
         }
         Insert: {
-          body_html?: string
+          automation_delay_minutes?: number
+          automation_trigger?: string | null
+          body_html_translations?: Json
+          body_json_translations?: Json
+          body_mode_translations?: Json
           created_at?: string
           created_by?: string | null
-          delay_minutes?: number
           from_name?: string | null
           id?: string
-          kind?: string
+          kind: string
+          last_queued_at?: string | null
           name: string
-          preheader?: string | null
+          preheader_translations?: Json
           reply_to?: string | null
           scheduled_at?: string | null
           sent_at?: string | null
           status?: string
-          subject?: string
+          subject_translations?: Json
           tenant_id: string
-          trigger_key?: string | null
           updated_at?: string
         }
         Update: {
-          body_html?: string
+          automation_delay_minutes?: number
+          automation_trigger?: string | null
+          body_html_translations?: Json
+          body_json_translations?: Json
+          body_mode_translations?: Json
           created_at?: string
           created_by?: string | null
-          delay_minutes?: number
           from_name?: string | null
           id?: string
           kind?: string
+          last_queued_at?: string | null
           name?: string
-          preheader?: string | null
+          preheader_translations?: Json
           reply_to?: string | null
           scheduled_at?: string | null
           sent_at?: string | null
           status?: string
-          subject?: string
+          subject_translations?: Json
           tenant_id?: string
-          trigger_key?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -5799,51 +6272,136 @@ export type Database = {
           },
         ]
       }
-      tenant_newsletter_subscribers: {
+      tenant_newsletter_preferences: {
         Row: {
-          consent_at: string
-          created_at: string
+          article_notifications_enabled: boolean
+          comment_notifications_frequency: string
+          digest_enabled: boolean
           email: string
-          id: string
-          locale: string
-          name: string | null
-          source: string
-          status: string
-          tags: string[]
+          like_notifications_frequency: string
+          newsletter_enabled: boolean
+          story_notifications_enabled: boolean
           tenant_id: string
-          unsubscribe_token: string
-          unsubscribed_at: string | null
           updated_at: string
         }
         Insert: {
-          consent_at?: string
-          created_at?: string
+          article_notifications_enabled?: boolean
+          comment_notifications_frequency?: string
+          digest_enabled?: boolean
           email: string
-          id?: string
-          locale?: string
-          name?: string | null
-          source?: string
-          status?: string
-          tags?: string[]
+          like_notifications_frequency?: string
+          newsletter_enabled?: boolean
+          story_notifications_enabled?: boolean
           tenant_id: string
-          unsubscribe_token?: string
-          unsubscribed_at?: string | null
           updated_at?: string
         }
         Update: {
-          consent_at?: string
+          article_notifications_enabled?: boolean
+          comment_notifications_frequency?: string
+          digest_enabled?: boolean
+          email?: string
+          like_notifications_frequency?: string
+          newsletter_enabled?: boolean
+          story_notifications_enabled?: boolean
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_newsletter_preferences_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_newsletter_send_log: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          message_id: string | null
+          metadata: Json | null
+          recipient_email: string
+          status: string
+          template_name: string | null
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          message_id?: string | null
+          metadata?: Json | null
+          recipient_email: string
+          status: string
+          template_name?: string | null
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          message_id?: string | null
+          metadata?: Json | null
+          recipient_email?: string
+          status?: string
+          template_name?: string | null
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_newsletter_send_log_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_newsletter_subscribers: {
+        Row: {
+          consent_at: string | null
+          created_at: string
+          email: string
+          id: string
+          name: string | null
+          preferred_language: string | null
+          profile_id: string | null
+          source: string | null
+          subscribed: boolean
+          tags: string[]
+          tenant_id: string
+          unsubscribed_at: string | null
+        }
+        Insert: {
+          consent_at?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          name?: string | null
+          preferred_language?: string | null
+          profile_id?: string | null
+          source?: string | null
+          subscribed?: boolean
+          tags?: string[]
+          tenant_id: string
+          unsubscribed_at?: string | null
+        }
+        Update: {
+          consent_at?: string | null
           created_at?: string
           email?: string
           id?: string
-          locale?: string
           name?: string | null
-          source?: string
-          status?: string
+          preferred_language?: string | null
+          profile_id?: string | null
+          source?: string | null
+          subscribed?: boolean
           tags?: string[]
           tenant_id?: string
-          unsubscribe_token?: string
           unsubscribed_at?: string | null
-          updated_at?: string
         }
         Relationships: [
           {
@@ -5855,56 +6413,31 @@ export type Database = {
           },
         ]
       }
-      tenant_newsletter_trigger_events: {
+      tenant_newsletter_suppressions: {
         Row: {
-          available_at: string
           created_at: string
-          error_message: string | null
-          id: string
-          payload: Json
-          processed_at: string | null
-          recipient_email: string | null
-          status: string
-          subscriber_id: string | null
+          email: string
+          metadata: Json | null
+          reason: string
           tenant_id: string
-          trigger_key: string
         }
         Insert: {
-          available_at?: string
           created_at?: string
-          error_message?: string | null
-          id?: string
-          payload?: Json
-          processed_at?: string | null
-          recipient_email?: string | null
-          status?: string
-          subscriber_id?: string | null
+          email: string
+          metadata?: Json | null
+          reason: string
           tenant_id: string
-          trigger_key: string
         }
         Update: {
-          available_at?: string
           created_at?: string
-          error_message?: string | null
-          id?: string
-          payload?: Json
-          processed_at?: string | null
-          recipient_email?: string | null
-          status?: string
-          subscriber_id?: string | null
+          email?: string
+          metadata?: Json | null
+          reason?: string
           tenant_id?: string
-          trigger_key?: string
         }
         Relationships: [
           {
-            foreignKeyName: "tenant_newsletter_trigger_events_subscriber_id_fkey"
-            columns: ["subscriber_id"]
-            isOneToOne: false
-            referencedRelation: "tenant_newsletter_subscribers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tenant_newsletter_trigger_events_tenant_id_fkey"
+            foreignKeyName: "tenant_newsletter_suppressions_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -5917,40 +6450,39 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          message_context: Json | null
+          profile_id: string | null
           reason_code: string | null
           reason_text: string | null
-          source: string
-          subscriber_id: string | null
+          source: string | null
           tenant_id: string
+          unsubscribe_scope: Json | null
         }
         Insert: {
           created_at?: string
           email: string
           id?: string
+          message_context?: Json | null
+          profile_id?: string | null
           reason_code?: string | null
           reason_text?: string | null
-          source?: string
-          subscriber_id?: string | null
+          source?: string | null
           tenant_id: string
+          unsubscribe_scope?: Json | null
         }
         Update: {
           created_at?: string
           email?: string
           id?: string
+          message_context?: Json | null
+          profile_id?: string | null
           reason_code?: string | null
           reason_text?: string | null
-          source?: string
-          subscriber_id?: string | null
+          source?: string | null
           tenant_id?: string
+          unsubscribe_scope?: Json | null
         }
         Relationships: [
-          {
-            foreignKeyName: "tenant_newsletter_unsubscribe_feedback_subscriber_id_fkey"
-            columns: ["subscriber_id"]
-            isOneToOne: false
-            referencedRelation: "tenant_newsletter_subscribers"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "tenant_newsletter_unsubscribe_feedback_tenant_id_fkey"
             columns: ["tenant_id"]
@@ -5960,24 +6492,36 @@ export type Database = {
           },
         ]
       }
-      tenant_order_sequences: {
+      tenant_newsletter_unsubscribe_tokens: {
         Row: {
-          last_seq: number
+          created_at: string
+          email: string
+          id: string
           tenant_id: string
+          token: string
+          used_at: string | null
         }
         Insert: {
-          last_seq?: number
+          created_at?: string
+          email: string
+          id?: string
           tenant_id: string
+          token: string
+          used_at?: string | null
         }
         Update: {
-          last_seq?: number
+          created_at?: string
+          email?: string
+          id?: string
           tenant_id?: string
+          token?: string
+          used_at?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "tenant_order_sequences_tenant_id_fkey"
+            foreignKeyName: "tenant_newsletter_unsubscribe_tokens_tenant_id_fkey"
             columns: ["tenant_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
@@ -6021,73 +6565,24 @@ export type Database = {
           },
         ]
       }
-      tenant_printers: {
+      tenant_order_sequences: {
         Row: {
-          auto_print: boolean
-          categories: string[] | null
-          char_width: number
-          connection: string
-          copies: number
-          created_at: string
-          device_sn: string | null
-          enabled: boolean
-          id: string
-          is_default: boolean
-          location_id: string | null
-          name: string
-          qz_printer_name: string | null
-          station: string | null
+          last_seq: number
           tenant_id: string
-          updated_at: string
         }
         Insert: {
-          auto_print?: boolean
-          categories?: string[] | null
-          char_width?: number
-          connection?: string
-          copies?: number
-          created_at?: string
-          device_sn?: string | null
-          enabled?: boolean
-          id?: string
-          is_default?: boolean
-          location_id?: string | null
-          name?: string
-          qz_printer_name?: string | null
-          station?: string | null
+          last_seq?: number
           tenant_id: string
-          updated_at?: string
         }
         Update: {
-          auto_print?: boolean
-          categories?: string[] | null
-          char_width?: number
-          connection?: string
-          copies?: number
-          created_at?: string
-          device_sn?: string | null
-          enabled?: boolean
-          id?: string
-          is_default?: boolean
-          location_id?: string | null
-          name?: string
-          qz_printer_name?: string | null
-          station?: string | null
+          last_seq?: number
           tenant_id?: string
-          updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "tenant_printers_location_id_fkey"
-            columns: ["location_id"]
-            isOneToOne: false
-            referencedRelation: "locations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tenant_printers_tenant_id_fkey"
+            foreignKeyName: "tenant_order_sequences_tenant_id_fkey"
             columns: ["tenant_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
@@ -6276,6 +6771,78 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "tenant_payment_accounts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_printers: {
+        Row: {
+          auto_print: boolean
+          categories: string[] | null
+          char_width: number
+          connection: string
+          copies: number
+          created_at: string
+          device_sn: string | null
+          enabled: boolean
+          id: string
+          is_default: boolean
+          location_id: string | null
+          name: string
+          qz_printer_name: string | null
+          station: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          auto_print?: boolean
+          categories?: string[] | null
+          char_width?: number
+          connection?: string
+          copies?: number
+          created_at?: string
+          device_sn?: string | null
+          enabled?: boolean
+          id?: string
+          is_default?: boolean
+          location_id?: string | null
+          name?: string
+          qz_printer_name?: string | null
+          station?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          auto_print?: boolean
+          categories?: string[] | null
+          char_width?: number
+          connection?: string
+          copies?: number
+          created_at?: string
+          device_sn?: string | null
+          enabled?: boolean
+          id?: string
+          is_default?: boolean
+          location_id?: string | null
+          name?: string
+          qz_printer_name?: string | null
+          station?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_printers_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_printers_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -6660,7 +7227,16 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      tenant_newsletter_profiles: {
+        Row: {
+          email: string | null
+          id: string | null
+          name: string | null
+          preferred_language: string | null
+          secondary_language: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       can_admin_tenant: { Args: { t: string }; Returns: boolean }
@@ -6739,6 +7315,14 @@ export type Database = {
         Args: { target_post_id: string }
         Returns: boolean
       }
+      tenant_newsletter_register_click: {
+        Args: { p_delivery_id: string; p_token: string; p_url: string }
+        Returns: boolean
+      }
+      tenant_newsletter_register_open: {
+        Args: { p_delivery_id: string; p_token: string }
+        Returns: boolean
+      }
     }
     Enums: {
       admin_role:
@@ -6799,12 +7383,15 @@ export type Database = {
         | "nuovo"
         | "in_preparazione"
         | "pronto"
-        | "in_consegna"
         | "consegnato"
         | "annullato"
         | "pending_confirmation"
         | "expired"
-      order_type: "tavolo" | "asporto"
+        | "accettato"
+        | "in_consegna"
+        | "rifiutato"
+        | "consegna_fallita"
+      order_type: "tavolo" | "asporto" | "delivery"
       price_kind: "single" | "sized" | "persone" | "volume"
       session_status: "aperta" | "chiusa"
       siteadmin_role:
@@ -7006,13 +7593,16 @@ export const Constants = {
         "nuovo",
         "in_preparazione",
         "pronto",
-        "in_consegna",
         "consegnato",
         "annullato",
         "pending_confirmation",
         "expired",
+        "accettato",
+        "in_consegna",
+        "rifiutato",
+        "consegna_fallita",
       ],
-      order_type: ["tavolo", "asporto"],
+      order_type: ["tavolo", "asporto", "delivery"],
       price_kind: ["single", "sized", "persone", "volume"],
       session_status: ["aperta", "chiusa"],
       siteadmin_role: [
