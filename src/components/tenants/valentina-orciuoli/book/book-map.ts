@@ -74,6 +74,49 @@ export function backCoverHref(localePrefix: string) {
   return `${valentinaBasePath}${localePrefix}${rest}`;
 }
 
+/**
+ * L'appendice: note legali in fondo al volume.
+ *
+ * Non sta nella sequenza degli spread di proposito — sfogliando non ci si finisce
+ * mai dentro, esattamente come in un libro non si incappa nel colophon leggendo.
+ * Ci si arriva solo dai richiami nel piede, e da lì si torna alla lettura.
+ */
+export type VoAppendixId = "privacy" | "cookie";
+
+export type VoAppendix = {
+  id: VoAppendixId;
+  path: string;
+  navLabel: string;
+  runningHead: string;
+};
+
+export const voAppendix: readonly VoAppendix[] = [
+  {
+    id: "privacy",
+    path: `${valentinaBasePath}/privacy`,
+    navLabel: "Privacy Policy",
+    runningHead: "Note legali",
+  },
+  {
+    id: "cookie",
+    path: `${valentinaBasePath}/cookie`,
+    navLabel: "Cookie Policy",
+    runningHead: "Note legali",
+  },
+];
+
+export function appendixByPathname(pathname: string | null | undefined) {
+  if (!pathname) return null;
+  const normalized = stripLocaleSegment(pathname).replace(/\/$/, "") || valentinaBasePath;
+  return voAppendix.find((entry) => entry.path === normalized) ?? null;
+}
+
+export function appendixHref(entry: VoAppendix, localePrefix: string) {
+  if (!localePrefix) return entry.path;
+  const rest = entry.path.slice(valentinaBasePath.length);
+  return `${valentinaBasePath}${localePrefix}${rest}`;
+}
+
 export type VoFaceSide = "left" | "right";
 
 export type VoFaceRef = {
@@ -107,6 +150,22 @@ export function stripLocaleSegment(pathname: string) {
   if (!pathname.startsWith(valentinaBasePath)) return pathname;
   const rest = pathname.slice(valentinaBasePath.length).replace(/^\/[a-z]{2}(?=\/|$)/i, "");
   return `${valentinaBasePath}${rest}` || valentinaBasePath;
+}
+
+/**
+ * true solo per i path che il libro sa impaginare. Serve perché il fallback di
+ * `spreadIndexByPathname` è la home: senza questa guardia una route che il libro
+ * non conosce — per esempio un appunto sulla scrivania — verrebbe scambiata per
+ * il frontespizio, e lo shell riscriverebbe l'URL portando via dalla pagina.
+ */
+export function isBookPathname(pathname: string | null | undefined) {
+  if (!pathname) return false;
+  const normalized = stripLocaleSegment(pathname).replace(/\/$/, "") || valentinaBasePath;
+  return (
+    voSpreads.some((spread) => spread.path === normalized) ||
+    voAppendix.some((entry) => entry.path === normalized) ||
+    normalized === voBackCover.path
+  );
 }
 
 export function spreadIndexByPathname(pathname: string | null | undefined) {

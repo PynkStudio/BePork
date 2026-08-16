@@ -4,7 +4,7 @@ import { TenantProvider } from "@/components/core/tenant-provider";
 import { LibritechBookDetailPage } from "@/components/tenants/libritech/pages/book-detail";
 import { ValentinaOrciuoliStaticPage } from "@/components/tenants/valentina-orciuoli/pages/static-page";
 import { ValentinaOrciuoliBookSite } from "@/components/tenants/valentina-orciuoli/book/book-site";
-import { voSpreads } from "@/components/tenants/valentina-orciuoli/book/book-map";
+import { voAppendix, voSpreads } from "@/components/tenants/valentina-orciuoli/book/book-map";
 import { valentinaOwnedSegments, type ValentinaPageKind } from "@/components/tenants/valentina-orciuoli/content";
 import { getPlatformModeFromHost } from "@/lib/platform";
 import { resolveTenantFromPreviewSlug } from "@/lib/tenant-runtime";
@@ -35,9 +35,11 @@ export default async function BookDetailRoute({
   if (tenant.id === "valentina-orciuoli" && valentinaPages.has(bookId)) {
     // Le sezioni che sono pagine del libro entrano nella shell già aperte al
     // punto giusto; "autrice" è la quarta di copertina, quindi entra a volume
-    // chiuso e rigirato. Il linktree resta una landing a sé, fuori dal volume.
+    // chiuso e rigirato; privacy e cookie sono l'appendice in fondo al volume.
+    // Il linktree resta una landing a sé, fuori dal libro.
     const spreadIndex = voSpreads.findIndex((entry) => entry.id === bookId);
-    const isBookRoute = spreadIndex >= 0 || bookId === "autrice";
+    const isAppendix = voAppendix.some((entry) => entry.id === bookId);
+    const isBookRoute = spreadIndex >= 0 || bookId === "autrice" || isAppendix;
 
     return (
       <TenantProvider tenant={tenant}>

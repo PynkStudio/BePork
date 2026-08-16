@@ -1,6 +1,6 @@
 "use client";
 
-import { animate, useMotionValue } from "framer-motion";
+import { animate, motion, useMotionValue, useTransform } from "framer-motion";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -8,13 +8,20 @@ import { getTenantGestioneExternalHref } from "@/lib/gestione-routing";
 import type { TenantBlogPost } from "@/lib/tenant-blog";
 import { VoBookShell } from "@/components/tenants/valentina-orciuoli/book/book-shell";
 import { VoBackCover } from "@/components/tenants/valentina-orciuoli/book/back-cover";
+import { VoDesk } from "@/components/tenants/valentina-orciuoli/book/desk";
 import { VoCover } from "@/components/tenants/valentina-orciuoli/book/cover";
-import { renderVoFace, type VoBookContext } from "@/components/tenants/valentina-orciuoli/book/pages";
+import {
+  renderVoAppendixFace,
+  renderVoFace,
+  type VoBookContext,
+} from "@/components/tenants/valentina-orciuoli/book/pages";
 import {
   voBookMemory,
   voBookMemoryAvailable,
 } from "@/components/tenants/valentina-orciuoli/book/book-memory";
 import {
+  appendixByPathname,
+  appendixHref,
   backCoverHref,
   hasSpread,
   isBackCoverPathname,
@@ -22,6 +29,7 @@ import {
   spreadHref,
   spreadIndexById,
   spreadIndexByPathname,
+  voAppendix,
   voBackCover,
   voSpreads,
   type VoSpread,
@@ -32,6 +40,7 @@ import {
   VoNewsletterTab,
 } from "@/components/tenants/valentina-orciuoli/book/newsletter-insert";
 import {
+  valentinaBasePath,
   valentinaCreativeWorks,
   type ValentinaCreativeWork,
 } from "@/components/tenants/valentina-orciuoli/content";
@@ -59,8 +68,20 @@ const CEREMONY_FOLLOW = { type: "spring", stiffness: 210, damping: 30, mass: 0.7
 const CEREMONY_OPEN_TRANSITION = { duration: 0.85, ease: [0.42, 0.02, 0.18, 1] } as const;
 /** Durata dell'inchiostro sulla dedica, allineata a `vo-inking` nel CSS. */
 const DEDICATION_MS = 3200;
+/** La panoramica fra il volume e la scrivania: lenta, come girare la testa. */
+const PAN_TRANSITION = { duration: 1.05, ease: [0.65, 0.02, 0.2, 1] } as const;
 
-export function ValentinaOrciuoliBookSite({ initialSpread }: { initialSpread: number }) {
+export function ValentinaOrciuoliBookSite({
+  initialSpread,
+  article = null,
+  deskPosts = [],
+}: {
+  initialSpread: number;
+  /** Articolo aperto: quando c'è, la vista si sposta dal libro alla scrivania. */
+  article?: TenantBlogPost | null;
+  /** Tutti gli appunti, per il mucchio sulla scrivania. */
+  deskPosts?: TenantBlogPost[];
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const localePrefix = localePrefixFromPathname(pathname);
@@ -68,6 +89,24 @@ export function ValentinaOrciuoliBookSite({ initialSpread }: { initialSpread: nu
   const gestioneHref = getTenantGestioneExternalHref("valentina-orciuoli");
 
   const showsBackCover = isBackCoverPathname(pathname);
+  const appendix = appendixByPathname(pathname);
+  const onDesk = article !== null;
+
+  /**
+   * La camera. Le due scene — il volume e la scrivania — stanno affiancate nello
+   * stesso mondo e resta montata sia l'una sia l'altra: è questo che rende la
+   * panoramica un movimento continuo invece di uno stacco. Un libro e i suoi
+   * appunti stanno sullo stesso tavolo, e il gesto per passare dall'uno agli
+   * altri è spostare lo sguardo, non girare una pagina.
+   */
+  const pan = useMotionValue(onDesk ? 1 : 0);
+  const worldX = useTransform(pan, [0, 1], ["0%", "-50%"]);
+  const bookFade = useTransform(pan, [0, 0.75], [1, 0.25]);
+
+  useEffect(() => {
+    const controls = animate(pan, onDesk ? 1 : 0, PAN_TRANSITION);
+    return () => controls.stop();
+  }, [onDesk, pan]);
 
   // Da dove parte il volume in questo montaggio: se la scheda ha già visto il
   // libro si riprende il suo stato, altrimenti è un ingresso vero e lo stato lo
@@ -78,7 +117,9 @@ export function ValentinaOrciuoliBookSite({ initialSpread }: { initialSpread: nu
     // ciò che il client produce al primo render, così l'idratazione torna.
     const alreadyOpened = voBookMemoryAvailable && voBookMemory.opened;
     return {
-      ceremony: !alreadyOpened && initialSpread === 0 && !showsBackCover,
+      // Un richiamo alle note legali non è un ingresso dalla home: chi ci arriva
+      // da un link deve trovare il volume già aperto sull'appendice.
+      ceremony: !alreadyOpened && initialSpread === 0 && !showsBackCover && !appendix,
       back: alreadyOpened ? voBookMemory.back : showsBackCover,
     };
   });
@@ -90,7 +131,7 @@ export function ValentinaOrciuoliBookSite({ initialSpread }: { initialSpread: nu
 
   // Il volume chiuso accetta il gesto d'apertura sempre, non solo all'ingresso:
   // dopo un "chiudi il libro" si deve poter riaprire allo stesso modo.
-  const closed = !opened && !showsBackCover;
+  const closed = !opened && !showsBackCover && !appendix;
 
   const [works, setWorks] = useState<ValentinaCreativeWork[]>(valentinaCreativeWorks);
   const [posts, setPosts] = useState<TenantBlogPost[]>([]);
@@ -277,6 +318,15 @@ export function ValentinaOrciuoliBookSite({ initialSpread }: { initialSpread: nu
     [localePrefix],
   );
 
+  const articleHref = useCallback(
+    (slug: string) => `${valentinaBasePath}${localePrefix}/blog/${slug}`,
+    [localePrefix],
+  );
+  const openArticle = useCallback(
+    (slug: string) => router.push(articleHref(slug), { scroll: false }),
+    [articleHref, router],
+  );
+
   // Il folio stampato: la pagina destra di uno spread porta sempre un numero dispari.
   const folioFor = useCallback((id: string) => spreadIndexById(id) * 2 + 1, []);
 
@@ -304,11 +354,15 @@ export function ValentinaOrciuoliBookSite({ initialSpread }: { initialSpread: nu
       folioFor,
       hasPage: hasSpread,
       writeDedication,
+      articleHref,
+      openArticle,
     }),
     [
+      articleHref,
       folioFor,
       goTo,
       hrefFor,
+      openArticle,
       newsletter.handleNewsletterSubmit,
       newsletter.newsletterError,
       newsletter.newsletterPending,
@@ -395,11 +449,14 @@ export function ValentinaOrciuoliBookSite({ initialSpread }: { initialSpread: nu
         </nav>
       </header>
 
-      <div
+      <motion.div className="vo-world" style={{ x: worldX }}>
+      <motion.div
         className="vo-book-viewport"
         ref={stageRef}
         data-ceremony={closed || undefined}
         onClick={closed ? openBook : undefined}
+        style={{ opacity: bookFade }}
+        inert={onDesk || undefined}
       >
         <div className="vo-volume">
             <VoBookShell
@@ -412,6 +469,11 @@ export function ValentinaOrciuoliBookSite({ initialSpread }: { initialSpread: nu
               backCover={<VoBackCover hidden={!showsBackCover} />}
               soundEnabled={soundEnabled}
               onCompactChange={setCompact}
+              appendix={appendix}
+              renderAppendix={renderVoAppendixFace}
+              onLeaveAppendix={() =>
+                router.push(spreadHref(resumeSpread, localePrefix), { scroll: false })
+              }
               insert={
                 opened && !showsBackCover ? (
                   <VoNewsletterTab onPick={() => setInsertOpen(true)} />
@@ -445,9 +507,13 @@ export function ValentinaOrciuoliBookSite({ initialSpread }: { initialSpread: nu
           </button>
         ) : null}
 
-        {opened || showsBackCover ? (
+        {opened || showsBackCover || appendix ? (
           <div className="vo-book-controls">
-              {showsBackCover ? (
+              {appendix ? (
+                <Link href={spreadHref(resumeSpread, localePrefix)} scroll={false}>
+                  Torna alla lettura
+                </Link>
+              ) : showsBackCover ? (
                 <Link href={hrefFor("home")} scroll={false}>
                   Rigira il libro
                 </Link>
@@ -470,13 +536,31 @@ export function ValentinaOrciuoliBookSite({ initialSpread }: { initialSpread: nu
             </button>
           </div>
         ) : null}
-      </div>
+      </motion.div>
+
+        <div className="vo-desk-scene" inert={!onDesk || undefined}>
+          <VoDesk
+            posts={deskPosts}
+            current={article}
+            onOpen={openArticle}
+            onBackToBook={() => router.push(hrefFor("blog"), { scroll: false })}
+          />
+        </div>
+      </motion.div>
 
       <footer className="vo-book-footer">
         <span>Valentina Orciuoli · sito ufficiale</span>
         <span className="vo-book-footer-links">
-          <Link href="/privacy">Privacy Policy</Link>
-          <Link href="/cookie">Cookie Policy</Link>
+          {voAppendix.map((entry) => (
+            <Link
+              key={entry.id}
+              href={appendixHref(entry, localePrefix)}
+              scroll={false}
+              aria-current={appendix?.id === entry.id ? "page" : undefined}
+            >
+              {entry.navLabel}
+            </Link>
+          ))}
           <a href={gestioneHref} target="_blank" rel="noopener noreferrer">
             Gestione
           </a>

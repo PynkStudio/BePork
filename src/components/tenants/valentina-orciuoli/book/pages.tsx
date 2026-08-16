@@ -12,7 +12,9 @@ import {
   valentinaEmail,
   type ValentinaCreativeWork,
 } from "@/components/tenants/valentina-orciuoli/content";
+import { DynamicPolicyDocument } from "@/components/legal/dynamic-policy-document";
 import type {
+  VoAppendix,
   VoFaceSide,
   VoSpread,
   VoStaticSpreadId,
@@ -36,6 +38,10 @@ export type VoBookContext = {
   hasPage: (id: string) => boolean;
   /** La dedica si scrive da sé una volta per apertura del libro, non a ogni ritorno. */
   writeDedication: boolean;
+  /** Indirizzo di un appunto sulla scrivania, con la lingua corrente preservata. */
+  articleHref: (slug: string) => string;
+  /** Apre l'appunto spostando la vista sulla scrivania. */
+  openArticle: (slug: string) => void;
 };
 
 /** Link che resta un vero `<a href>` per crawler e "apri in nuova scheda", ma dentro il libro sfoglia. */
@@ -171,6 +177,40 @@ function renderWorkFace(work: ValentinaCreativeWork, side: VoFaceSide, ordinal: 
   );
 }
 
+/**
+ * L'appendice: a sinistra il frontespizio della nota, a destra il documento.
+ *
+ * Il testo legale arriva dal modulo di piattaforma, non è riscritto qui: una
+ * informativa duplicata è una informativa che prima o poi diverge da quella vera.
+ * È anche l'unica pagina del volume in cui il contenuto può eccedere il foglio e
+ * scorrere — un'informativa non si può accorciare per farla stare in pagina.
+ */
+export function renderVoAppendixFace(entry: VoAppendix, side: VoFaceSide): ReactNode {
+  if (side === "left") {
+    return (
+      <div className="vo-face vo-face-intro">
+        <span className="vo-face-kicker">Note legali</span>
+        <h2>{entry.navLabel}</h2>
+        <span className="vo-face-rule" aria-hidden="true" />
+        <p className="vo-face-lead">
+          {entry.id === "privacy"
+            ? "Come vengono trattati i dati raccolti da questo sito."
+            : "Quali cookie usa questo sito e a cosa servono."}
+        </p>
+        <span className="vo-face-glyph vo-face-glyph-watermark" aria-hidden="true">
+          龍
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="vo-face vo-face-policy">
+      <DynamicPolicyDocument variant={entry.id} />
+    </div>
+  );
+}
+
 export function renderVoFace(spread: VoSpread, side: VoFaceSide, ctx: VoBookContext): ReactNode {
   if (spread.kind === "work") {
     // Il contenuto vivo arriva dalla gestione; la struttura delle pagine no.
@@ -295,7 +335,14 @@ export function renderVoFace(spread: VoSpread, side: VoFaceSide, ctx: VoBookCont
             <ul>
               {ctx.posts.map((post) => (
                 <li key={post.id}>
-                  <a href={`/valentina-orciuoli/blog/${post.slug}`}>
+                  <a
+                    href={ctx.articleHref(post.slug)}
+                    onClick={(event) => {
+                      if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
+                      event.preventDefault();
+                      ctx.openArticle(post.slug);
+                    }}
+                  >
                     {formatPostDate(post.publishedAt) ? (
                       <time dateTime={post.publishedAt ?? undefined}>
                         {formatPostDate(post.publishedAt)}

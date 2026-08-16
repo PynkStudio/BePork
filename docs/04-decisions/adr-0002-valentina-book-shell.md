@@ -47,6 +47,22 @@ Il libro è la **shell di presentazione**, non il meccanismo di navigazione.
   `pathname`; il libro insegue il pathname sfogliando.
 - Chi arriva da un link condiviso su `/it/eventi` trova il libro **già aperto** a quella
   pagina: la cerimonia di apertura della copertina si gioca solo entrando dalla home.
+- **Le note legali sono l'appendice del volume.** `/it/privacy` e `/it/cookie` sono pagine
+  del libro, ma occupano una posizione *virtuale* subito oltre l'ultima: sta fuori dai
+  limiti usati dalla navigazione manuale, quindi sfogliando non ci si finisce mai dentro
+  — come in un libro non si incappa nel colophon leggendo. Ci si arriva solo dai richiami
+  nel piede, e da lì si torna alla pagina che si stava leggendo. Essendo comunque una
+  posizione, il salto riusa il motore dei fogli: si vede il libro sfogliare fino in fondo.
+- **Il blog non sta nel libro: sta sulla scrivania.** Il volume è la cosa finita —
+  rilegata, impaginata, chiusa; gli appunti no. Mostrarli sfogliando direbbe che fanno
+  parte del libro, che è il contrario del punto. Perciò `/it/blog/<slug>` vive su una
+  seconda scena, raggiunta da una **panoramica**: girare pagina significa "più addentro
+  nello stesso oggetto", spostare la camera significa "un altro oggetto sul tavolo".
+  Le due scene stanno affiancate nello stesso mondo e restano montate entrambe — è questo
+  che rende la panoramica un movimento continuo invece di uno stacco.
+- Sulla scrivania **il mucchio è l'archivio**: prendere un altro foglio lo porta in cima
+  senza tornare al libro. Se la scrivania servisse solo a reggere un articolo, la
+  panoramica sarebbe un costo pagato per niente.
 - `/valentina-orciuoli/link` (linktree) resta **fuori** dal volume: è una landing per le
   bio dei social, non una pagina del libro.
 
@@ -252,6 +268,23 @@ decorativi e portano `pointer-events: none`. La copertina aperta si distende sop
 pagina sinistra: senza, si mangiava i clic dei link che ci stanno sotto — ed è così che i
 contatti risultavano morti. Restano interattivi solo la linguetta della cedola, i tagli
 cliccabili e la coda del segnalibro sulla quarta.
+
+**Il testo legale non è riscritto.** L'appendice rende `DynamicPolicyDocument`, il modulo
+di piattaforma che costruisce le sezioni dai flag e dai dati legali del tenant; qui si
+limita a vestirsi da carta con regole CSS scoped. Una informativa duplicata è una
+informativa che prima o poi diverge da quella vera. È anche **l'unica pagina del volume in
+cui il contenuto può eccedere il foglio e scorrere**: un'informativa non si accorcia per
+farla stare in pagina. Scorre senza barra, come tutte le altre.
+
+**Il foglio dell'articolo è lungo, non è una finestra.** Scorre perché la carta continua
+oltre il bordo dello schermo, non perché ci sia un riquadro con dentro uno scroll: è la
+differenza fra un manoscritto e un `div`. Senza barra, come ovunque.
+
+**Una guardia che serve più di quanto sembri.** `spreadIndexByPathname` ripiega sulla home
+quando non riconosce un path. Sulla route di un appunto questo faceva credere allo shell di
+essere sul frontespizio, e il libro **riscriveva l'URL** buttando fuori dall'articolo appena
+aperto. `isBookPathname` dice se il path è impaginabile dal volume; se non lo è, lo shell
+non si muove e soprattutto non tocca la barra degli indirizzi.
 
 **Densità.** Le pagine sono progettate per stare dentro il foglio: se una eccede resta
 scorrevole ma senza barra, perché una scrollbar dentro un libro è l'artefatto che rompe

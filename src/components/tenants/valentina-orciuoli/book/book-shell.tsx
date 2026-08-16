@@ -22,12 +22,14 @@ import {
 } from "@/components/tenants/valentina-orciuoli/book/book-memory";
 import {
   isBackCoverPathname,
+  isBookPathname,
   leafFaces,
   localePrefixFromPathname,
   spreadHref,
   spreadIndexByPathname,
   voSpreadCount,
   voSpreads,
+  type VoAppendix,
   type VoFaceSide,
   type VoSpread,
 } from "@/components/tenants/valentina-orciuoli/book/book-map";
@@ -157,6 +159,9 @@ export function VoBookShell({
   onBeforeFirstPage,
   onPastLastPage,
   onCompactChange,
+  appendix,
+  onLeaveAppendix,
+  renderAppendix,
 }: {
   initialSpread: number;
   renderFace: (spread: VoSpread, side: VoFaceSide) => ReactNode;
@@ -180,6 +185,11 @@ export function VoBookShell({
   onPastLastPage?: () => void;
   /** Riporta il modo alla radice del sito, che ne veste testatina, comandi e piede. */
   onCompactChange?: (compact: boolean) => void;
+  /** Appendice aperta dai richiami nel piede, fuori dalla sequenza sfogliabile. */
+  appendix: VoAppendix | null;
+  /** Chiamata quando si esce dall'appendice tornando alla lettura. */
+  onLeaveAppendix?: () => void;
+  renderAppendix: (entry: VoAppendix, side: VoFaceSide) => ReactNode;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -227,7 +237,24 @@ export function VoBookShell({
         : { spread: position, half: 0 },
     [compact],
   );
-  const pos = toPos(spread, half);
+  /**
+   * L'appendice occupa una posizione *virtuale* subito oltre l'ultima pagina. Sta
+   * fuori dai limiti usati dalla navigazione manuale, quindi sfogliando non ci si
+   * arriva mai; ma essendo una posizione come le altre, il salto per raggiungerla
+   * riusa il motore dei fogli e si vede il libro sfogliare fino in fondo.
+   */
+  const appendixPos = positionCount;
+
+  /**
+   * Se il volume era già aperto si parte da dov'eravamo e l'appendice diventa un
+   * *bersaglio*: la differenza fra le due posizioni è ciò che l'effetto sul
+   * pathname trasforma in un riffle fino in fondo al libro. Chi invece apre un
+   * richiamo legale da un link diretto ci si trova già, senza sfogliata inutile.
+   */
+  const [atAppendix, setAtAppendix] = useState(
+    () => Boolean(appendix) && !(voBookMemoryAvailable && voBookMemory.opened),
+  );
+  const pos = atAppendix ? appendixPos : toPos(spread, half);
 
   const [gesture, setGesture] = useState<Gesture | null>(null);
 
@@ -259,6 +286,21 @@ export function VoBookShell({
 
   const pageSheet = useCallback(
     (position: number, side: VoFaceSide) => {
+      if (position === appendixPos) {
+        if (!appendix) return <div className="vo-page-sheet vo-page-sheet-blank" />;
+        const face: VoFaceSide = compact ? "right" : side;
+        return (
+          <div className="vo-page-sheet" data-side={face} data-spread="appendice">
+            <div className="vo-page-grain" aria-hidden="true" />
+            <div className="vo-page-running-head" aria-hidden="true">
+              <span>{face === "left" ? "Valentina Orciuoli" : appendix.runningHead}</span>
+            </div>
+            <div className="vo-page-body" data-vo-scroll="">
+              {renderAppendix(appendix, face)}
+            </div>
+          </div>
+        );
+      }
       if (position < 0 || position >= positionCount) {
         return <div className="vo-page-sheet vo-page-sheet-blank" />;
       }
@@ -285,7 +327,7 @@ export function VoBookShell({
         </div>
       );
     },
-    [compact, fromPos, positionCount, renderFace],
+    [appendix, appendixPos, compact, fromPos, positionCount, renderAppendix, renderFace],
   );
 
   const clearGesture = useCallback(() => {
@@ -297,7 +339,15 @@ export function VoBookShell({
 
   const commit = useCallback(
     (target: number) => {
+      // L'appendice non è una posizione del volume: l'URL ce l'ha già portata, e
+      // scriverla in `spread` la farebbe rientrare nella sequenza sfogliabile.
+      if (target === appendixPos) {
+        setAtAppendix(true);
+        clearGesture();
+        return;
+      }
       const { spread: nextSpread, half: nextHalf } = fromPos(target);
+      setAtAppendix(false);
       setSpread(nextSpread);
       setHalf(nextHalf);
       clearGesture();
@@ -305,13 +355,14 @@ export function VoBookShell({
       // spread: l'URL cambia solo quando cambia la sezione.
       router.push(spreadHref(voSpreads[nextSpread], localePrefix), { scroll: false });
     },
-    [clearGesture, fromPos, localePrefix, router],
+    [appendixPos, clearGesture, fromPos, localePrefix, router],
   );
 
   const goTo = useCallback(
     (target: number) => {
       if (!open) return;
-      if (target < 0 || target >= positionCount || target === pos) return;
+      if (target < 0 || (target >= positionCount && target !== appendixPos)) return;
+      if (target === pos) return;
       if (gesture?.mode === "run") return;
       if (reducedMotion) {
         commit(target);
@@ -327,7 +378,7 @@ export function VoBookShell({
         mode: "run",
       });
     },
-    [commit, gesture?.mode, open, pos, positionCount, reducedMotion],
+    [appendixPos, commit, gesture?.mode, open, pos, positionCount, reducedMotion],
   );
 
   // Avvia le animazioni una volta che i fogli sono montati con lo stato di partenza.
@@ -366,9 +417,13 @@ export function VoBookShell({
 
   // Back/forward del browser: il libro insegue l'URL sfogliando davvero.
   useEffect(() => {
+    // Un path che il libro non impagina — un appunto sulla scrivania — non deve
+    // muovere il volume né, peggio, farlo riscrivere l'URL.
+    if (!isBookPathname(pathname)) return;
     if (isBackCoverPathname(pathname)) return;
-    // Una sezione si apre sempre dalla sua prima facciata.
-    const fromUrl = toPos(spreadIndexByPathname(pathname), 0);
+    // Una sezione si apre sempre dalla sua prima facciata; l'appendice ha la sua
+    // posizione virtuale in fondo, così raggiungerla è comunque uno sfogliare.
+    const fromUrl = appendix ? appendixPos : toPos(spreadIndexByPathname(pathname), 0);
     if (fromUrl === pos || gesture) return;
     if (reducedMotion) {
       const landing = fromPos(fromUrl);
@@ -386,7 +441,7 @@ export function VoBookShell({
       mode: "run",
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname]);
+  }, [appendix, pathname]);
 
   // ── Input: rotella ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -411,6 +466,10 @@ export function VoBookShell({
       const direction = wheelAccRef.current > 0 ? 1 : -1;
       wheelAccRef.current = 0;
       wheelLockRef.current = now + WHEEL_COOLDOWN_MS;
+      if (pos === appendixPos) {
+        if (direction === -1) onLeaveAppendix?.();
+        return;
+      }
       // Ai due capi del volume non ci sono pagine: ci sono i piatti.
       if (direction === -1 && pos === 0) {
         onBeforeFirstPage?.();
@@ -425,7 +484,17 @@ export function VoBookShell({
 
     stage.addEventListener("wheel", onWheel, { passive: false });
     return () => stage.removeEventListener("wheel", onWheel);
-  }, [goTo, onBeforeFirstPage, onPastLastPage, open, pos, positionCount, reducedMotion]);
+  }, [
+    appendixPos,
+    goTo,
+    onBeforeFirstPage,
+    onLeaveAppendix,
+    onPastLastPage,
+    open,
+    pos,
+    positionCount,
+    reducedMotion,
+  ]);
 
   // ── Input: tastiera ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -435,17 +504,19 @@ export function VoBookShell({
       if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
       if (event.key === "ArrowRight" || event.key === "PageDown") {
         event.preventDefault();
+        if (pos === appendixPos) return;
         if (pos === positionCount - 1) onPastLastPage?.();
         else goTo(pos + 1);
       } else if (event.key === "ArrowLeft" || event.key === "PageUp") {
         event.preventDefault();
-        if (pos === 0) onBeforeFirstPage?.();
+        if (pos === appendixPos) onLeaveAppendix?.();
+        else if (pos === 0) onBeforeFirstPage?.();
         else goTo(pos - 1);
       }
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [goTo, onBeforeFirstPage, onPastLastPage, open, pos, positionCount]);
+  }, [appendixPos, goTo, onBeforeFirstPage, onLeaveAppendix, onPastLastPage, open, pos, positionCount]);
 
   // ── Input: hotspot sul taglio del foglio (hover → sollevamento, click → giro) ─
   const hintAt = useCallback(
@@ -564,8 +635,8 @@ export function VoBookShell({
   const staticLeft = gesture ? (gesture.dir === 1 ? gesture.from : gesture.to) : pos;
   const staticRight = gesture ? (gesture.dir === 1 ? gesture.to : gesture.from) : pos;
 
-  const canGoBack = pos > 0;
-  const canGoForward = pos < positionCount - 1;
+  const canGoBack = pos === appendixPos ? true : pos > 0;
+  const canGoForward = pos === appendixPos ? false : pos < positionCount - 1;
 
   return (
     <div
@@ -641,7 +712,7 @@ export function VoBookShell({
           onPointerUp={onHotspotPointerUp}
           onPointerCancel={onHotspotPointerUp}
           onClick={() => (canGoForward ? goTo(pos + 1) : onPastLastPage?.())}
-          disabled={!open || (!canGoForward && !onPastLastPage)}
+          disabled={!open || pos === appendixPos || (!canGoForward && !onPastLastPage)}
           aria-label={canGoForward ? "Pagina successiva" : "Chi sono, sul retro del volume"}
         />
         <button
@@ -653,7 +724,11 @@ export function VoBookShell({
           onPointerMove={onHotspotPointerMove}
           onPointerUp={onHotspotPointerUp}
           onPointerCancel={onHotspotPointerUp}
-          onClick={() => (canGoBack ? goTo(pos - 1) : onBeforeFirstPage?.())}
+          onClick={() => {
+            if (pos === appendixPos) onLeaveAppendix?.();
+            else if (canGoBack) goTo(pos - 1);
+            else onBeforeFirstPage?.();
+          }}
           disabled={!open || (!canGoBack && !onBeforeFirstPage)}
           aria-label="Pagina precedente"
         />

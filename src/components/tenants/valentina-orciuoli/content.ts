@@ -161,4 +161,7 @@ export const trilogy: Array<{
 export const valentinaOwnedSegments: readonly string[] = [
   ...valentinaStaticPageKinds,
   ...valentinaCreativeWorks.map((work) => work.slug),
+  // Le note legali del tenant vivono dentro il libro, non sulle route globali.
+  "privacy",
+  "cookie",
 ];
