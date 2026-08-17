@@ -15,9 +15,7 @@ import type { ReactNode } from "react";
  */
 const STAVES = 5;
 const MAX_BEND_DEG = 22;
-const COVER_ART = "/valentina-orciuoli/hero-dragon-moon.png";
-
-function BentArt({ bend }: { bend: MotionValue<number> }) {
+function BentCover({ bend }: { bend: MotionValue<number> }) {
   // Le doghe si annidano: ognuna parte dove finisce la precedente e ci aggiunge
   // la propria rotazione, così gli angoli si sommano lungo la curva.
   let stack: ReactNode = null;
@@ -29,12 +27,7 @@ function BentArt({ bend }: { bend: MotionValue<number> }) {
         key={index}
         style={{
           rotateY: bend,
-          backgroundImage: `url(${COVER_ART})`,
-          // Le doghe si annidano, quindi le percentuali si comporrebbero: la
-          // larghezza va ancorata alla misura assoluta della copertina.
           width: `calc(var(--vo-cover-w) / ${STAVES})`,
-          backgroundSize: "var(--vo-cover-w) 100%",
-          backgroundPosition: `calc(var(--vo-cover-w) / ${-STAVES} * ${index}) 0`,
           left: index === 0 ? 0 : "100%",
         }}
         data-stave={index}
@@ -61,14 +54,10 @@ export function VoCover({ progress }: { progress: MotionValue<number> }) {
           dove deve stare il piatto di un libro aperto. */}
       <div className="vo-cover-depth">
       <div className="vo-cover-face vo-cover-front">
-        <BentArt bend={bend} />
+        <BentCover bend={bend} />
         <div className="vo-cover-plate">
-          <div className="vo-cover-frame" />
           <div className="vo-cover-titling">
-            <span className="vo-cover-kicker">The Emotion Dragons</span>
-            <strong className="vo-cover-name">valentina orciuoli</strong>
-            <span className="vo-cover-rule" />
-            <span className="vo-cover-sub">Fantasy · Romantasy · Dark-noir</span>
+            <strong className="vo-cover-name">Valentina Orciuoli</strong>
           </div>
         </div>
         <motion.span className="vo-cover-shade" style={{ opacity: shade }} />
