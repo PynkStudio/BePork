@@ -6,12 +6,16 @@ import {
   BadgeEuro,
   BookUser,
   CalendarClock,
-  ExternalLink,
+  LayoutDashboard,
   LogOut,
   Mail,
   Menu as MenuIcon,
+  Shield,
   UserCircle,
   X,
+  UtensilsCrossed,
+  Briefcase,
+  Music,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { clearAdminSession } from "@/lib/admin-auth";
@@ -29,7 +33,13 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin-pynkstudio/agenda",       label: "Agenda",         icon: CalendarClock },
   { href: "/admin-pynkstudio/crm",          label: "CRM",            icon: BookUser },
   { href: "/admin-pynkstudio/patrimoniale", label: "Patrimoniale",   icon: BadgeEuro },
-  { href: "https://admin.menuary.it",       label: "Controllo verticali", icon: ExternalLink, external: true },
+];
+
+const PORTAL_ITEMS: NavItem[] = [
+  { href: "/admin-pynkstudio/menuary",  label: "Menuary",  icon: UtensilsCrossed },
+  { href: "/admin-pynkstudio/bizery",   label: "Bizery",   icon: Briefcase },
+  { href: "/admin-pynkstudio/orpheo",   label: "Orpheo",   icon: Music },
+  { href: "/admin-pynkstudio/security", label: "Security",  icon: Shield },
 ];
 
 export function PynkAdminShell({ children }: { children: React.ReactNode }) {
@@ -60,6 +70,8 @@ export function PynkAdminShell({ children }: { children: React.ReactNode }) {
     router.replace("/admin-pynkstudio/login");
   }
 
+  const isHub = pathname === "/admin-pynkstudio" || pathname === "/admin-pynkstudio/";
+
   return (
     <div className="pynk-admin-root">
       <aside
@@ -69,14 +81,27 @@ export function PynkAdminShell({ children }: { children: React.ReactNode }) {
         )}
       >
         <div className="pynk-admin-sidebar-header flex items-center justify-between p-5">
-          <Link href="/admin-pynkstudio/inbox" className="pynk-admin-brand">
-            PynkStudio · admin
+          <Link href="/admin-pynkstudio" className="pynk-admin-brand">
+            PynkStudio
           </Link>
           <button className="lg:hidden" onClick={() => setOpen(false)} aria-label="Chiudi">
             <X size={22} />
           </button>
         </div>
         <nav className="flex-1 space-y-1 p-3">
+          <Link
+            href="/admin-pynkstudio"
+            className="pynk-admin-nav-link"
+            data-active={isHub}
+          >
+            <LayoutDashboard size={18} />
+            Dashboard
+          </Link>
+
+          <div className="my-2 border-t border-white/10" />
+          <span className="block px-3 pt-1 pb-1 text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--pa-sidebar-muted)] opacity-60">
+            Strumenti
+          </span>
           {NAV_ITEMS.map((it) => {
             const active =
               !it.external &&
@@ -103,6 +128,26 @@ export function PynkAdminShell({ children }: { children: React.ReactNode }) {
                     {inboxUnread}
                   </span>
                 )}
+              </Link>
+            );
+          })}
+
+          <div className="my-2 border-t border-white/10" />
+          <span className="block px-3 pt-1 pb-1 text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--pa-sidebar-muted)] opacity-60">
+            Portali
+          </span>
+          {PORTAL_ITEMS.map((it) => {
+            const active = pathname?.startsWith(it.href);
+            return (
+              <Link
+                key={it.href}
+                href={it.href}
+                onClick={() => setOpen(false)}
+                className="pynk-admin-nav-link"
+                data-active={active}
+              >
+                <it.icon size={18} />
+                {it.label}
               </Link>
             );
           })}

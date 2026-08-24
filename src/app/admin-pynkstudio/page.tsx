@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { PynkAdminDashboard } from "@/components/admin-pynkstudio/pynk-admin-dashboard";
 
 export default function PynkAdminHome() {
-  redirect("/gestione/pynkstudio");
+  return <PynkAdminDashboard />;
 }

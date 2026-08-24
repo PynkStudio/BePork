@@ -2555,6 +2555,129 @@
     background: var(--pa-accent-dark);
   }
 
+  /* ─── Hub dashboard: portal cards ────────────────────────── */
+  .pynk-admin-portal-grid {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+  .pynk-admin-portal-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px solid var(--pa-line);
+    background: #ffffff;
+    color: var(--pa-ink);
+    text-decoration: none;
+    transition: border-color 200ms ease, transform 200ms ease, box-shadow 200ms ease;
+    box-shadow:
+      0 1px 0 hsl(330 10% 85% / 0.3),
+      0 8px 24px -16px hsl(330 15% 12% / 0.08);
+  }
+  .pynk-admin-portal-card:hover {
+    border-color: var(--pa-accent);
+    transform: translateY(-2px);
+    box-shadow:
+      0 1px 0 hsl(330 10% 85% / 0.3),
+      0 12px 32px -12px hsl(330 15% 12% / 0.14);
+  }
+  .pynk-admin-portal-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    flex-shrink: 0;
+  }
+  .pynk-admin-portal-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .pynk-admin-portal-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--pa-ink);
+  }
+  .pynk-admin-portal-desc {
+    margin-top: 4px;
+    font-size: 13px;
+    color: var(--pa-muted);
+    line-height: 1.4;
+  }
+  .pynk-admin-portal-arrow {
+    color: var(--pa-muted);
+    opacity: 0;
+    transition: opacity 200ms ease;
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+  .pynk-admin-portal-card:hover .pynk-admin-portal-arrow {
+    opacity: 1;
+  }
+
+  /* ─── Hub dashboard: section headings ────────────────────── */
+  .pynk-admin-section-heading {
+    margin-bottom: 16px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--pa-muted);
+  }
+
+  /* ─── Hub dashboard: KPI grid improvements ───────────────── */
+  .pynk-admin-kpi-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  }
+
+  /* ─── Sidebar portal section divider ─────────────────────── */
+  .pynk-admin-sidebar-section {
+    border-top: 1px solid hsl(330 20% 18% / 0.5);
+    margin-top: 8px;
+    padding-top: 8px;
+  }
+  .pynk-admin-sidebar-label {
+    display: block;
+    padding: 4px 12px 8px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--pa-sidebar-muted);
+    opacity: 0.6;
+  }
+
+  /* ─── Portal status badge ────────────────────────────────── */
+  .pynk-admin-portal-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .pynk-admin-portal-badge[data-status="active"] {
+    background: hsl(150 60% 92%);
+    color: hsl(150 65% 30%);
+  }
+  .pynk-admin-portal-badge[data-status="warning"] {
+    background: hsl(40 80% 92%);
+    color: hsl(35 80% 35%);
+  }
+  .pynk-admin-portal-badge[data-status="error"] {
+    background: hsl(0 60% 92%);
+    color: hsl(0 60% 40%);
+  }
+
   /* Reuse menuary-admin-card classes inside pynk-admin for inbox */
   html[data-platform="admin-pynkstudio"] .menuary-admin-card {
     background: #ffffff;
