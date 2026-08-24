@@ -21,8 +21,10 @@ export async function GET(request: Request) {
     return new Response("Missing tokens", { status: 400 });
   }
 
-  const response = NextResponse.redirect(new URL(next, request.url));
   const cookieStore = await cookies();
+
+  // Crea una response temporanea per raccogliere i cookie
+  const tempResponse = NextResponse.next();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -32,9 +34,8 @@ export async function GET(request: Request) {
           return cookieStore.getAll();
         },
         setAll(cookiesToSet) {
-          console.log("[cross-domain-session] setting cookies:", cookiesToSet.map(c => c.name).join(", "));
           cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options),
+            tempResponse.cookies.set(name, value, options),
           );
         },
       },
@@ -53,7 +54,17 @@ export async function GET(request: Request) {
     return new Response("No session created", { status: 500 });
   }
 
-  console.log("[cross-domain-session] ok, session created, redirecting to", next);
-  console.log("[cross-domain-session] response cookies:", response.cookies.getAll().map(c => c.name).join(", "));
+  console.log("[cross-domain-session] ok, cookies:", tempResponse.cookies.getAll().map(c => c.name).join(", "));
+
+  // Ora costruisci il redirect con i cookie già impostati
+  const redirectUrl = new URL(next, request.url);
+  const response = NextResponse.redirect(redirectUrl);
+
+  // Copia i cookie dalla response temporanea al redirect
+  for (const cookie of tempResponse.cookies.getAll()) {
+    response.cookies.set(cookie.name, cookie.value, cookie);
+  }
+
+  console.log("[cross-domain-session] redirecting to", redirectUrl.href, "with cookies:", response.cookies.getAll().map(c => c.name).join(", "));
   return response;
 }
