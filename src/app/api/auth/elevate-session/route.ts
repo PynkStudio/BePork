@@ -55,31 +55,78 @@ async function createClientWithResponse(
   );
 }
 
+function isCrossDomainDestination(destination: string, requestUrl: string): boolean {
+  try {
+    const destOrigin = new URL(destination).origin;
+    const reqOrigin = new URL(requestUrl).origin;
+    return destOrigin !== reqOrigin;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * GET ?destination=...
  * Legge la sessione corrente dai cookie (login.menuary.it),
  * la riscrive con Domain=.menuary.it via refreshSession(),
  * poi redirige alla destinazione.
  * Usato dal login portal quando l'utente è già loggato.
+ *
+ * Cross-domain: quando la destinazione è su un dominio diverso (es. admin.pynkstudio.eu),
+ * i cookie non sono leggibili. Passa i token come query params alla destinazione
+ * che li impone come cookie sul proprio dominio.
  */
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const destination = safeDestination(searchParams.get("destination"));
   const domain = cookieDomain(request);
 
-  // Usa una response temporanea per raccogliere i cookie del refresh
-  // prima di decidere se redirigere alla destinazione o al login.
+  // Cross-domain token handshake: ricevi token e impostali come cookie
+  const accessToken = searchParams.get("access_token");
+  const refreshToken = searchParams.get("refresh_token");
+  const finalDestination = searchParams.get("next") || destination;
+
+  if (accessToken && refreshToken) {
+    const response = NextResponse.redirect(new URL(finalDestination));
+    const supabase = await createClientWithResponse(request, response, domain);
+    const { data, error } = await supabase.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    });
+    if (error || !data.session) {
+      const loginUrl = new URL("/", request.url);
+      loginUrl.searchParams.set("destination", finalDestination);
+      return NextResponse.redirect(loginUrl);
+    }
+    return response;
+  }
+
+  // Flusso standard: refresh session dai cookie correnti
   const cookieJar = NextResponse.json({});
   const supabase = await createClientWithResponse(request, cookieJar, domain);
   const { data, error } = await supabase.auth.refreshSession();
 
   if (error || !data.session) {
-    // Sessione non valida — rimanda al login invece di far atterrare l'utente disconnesso.
     const loginUrl = new URL("/", request.url);
     loginUrl.searchParams.set("destination", destination);
     return NextResponse.redirect(loginUrl);
   }
 
+  // Cross-domain redirect: passa i token nella URL
+  if (isCrossDomainDestination(destination, request.url)) {
+    const crossDomainUrl = new URL(destination);
+    crossDomainUrl.pathname = "/api/auth/elevate-session";
+    crossDomainUrl.searchParams.set("access_token", data.session.access_token);
+    crossDomainUrl.searchParams.set("refresh_token", data.session.refresh_token);
+    crossDomainUrl.searchParams.set("next", destination);
+    const response = NextResponse.redirect(crossDomainUrl);
+    for (const cookie of cookieJar.cookies.getAll()) {
+      response.cookies.set(cookie.name, cookie.value, cookie);
+    }
+    return response;
+  }
+
+  // Same-domain: imposta cookie e redirect
   const response = NextResponse.redirect(new URL(destination));
   for (const cookie of cookieJar.cookies.getAll()) {
     response.cookies.set(cookie.name, cookie.value, cookie);
