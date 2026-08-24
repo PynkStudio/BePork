@@ -22,12 +22,6 @@ function cookieDomain(request: Request): string | undefined {
   return undefined;
 }
 
-/**
- * Crea un client Supabase server-side con cookie attaccati alla response.
- * I cookie vengono sempre scritti SULLA response in modo esplicito,
- * evitando il bug Next.js 15 per cui `cookies().set()` in Route Handler
- * non propaga le mutate a `NextResponse.json()` / `NextResponse.redirect()`.
- */
 async function createClientWithResponse(
   request: Request,
   response: NextResponse,
@@ -55,12 +49,18 @@ async function createClientWithResponse(
   );
 }
 
+function isCrossDomain(destination: string, requestUrl: string): boolean {
+  try {
+    return new URL(destination).origin !== new URL(requestUrl).origin;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * GET ?destination=...
- * Legge la sessione corrente dai cookie (login.menuary.it),
- * la riscrive con Domain=.menuary.it via refreshSession(),
- * poi redirige alla destinazione.
- * Usato dal login portal quando l'utente è già loggato.
+ * Flusso standard per portali same-domain (.menuary.it).
+ * Cross-domain: passa i token via query params al endpoint sulla destinazione.
  */
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -77,6 +77,18 @@ export async function GET(request: Request) {
     return NextResponse.redirect(loginUrl);
   }
 
+  // Cross-domain: redirect alla destinazione con i token come query params
+  // Il endpoint sulla destinazione li impone come cookie sul proprio dominio
+  if (isCrossDomain(destination, request.url)) {
+    const url = new URL(destination);
+    url.pathname = "/api/auth/cross-domain-session";
+    url.searchParams.set("access_token", data.session.access_token);
+    url.searchParams.set("refresh_token", data.session.refresh_token);
+    url.searchParams.set("next", destination);
+    return NextResponse.redirect(url);
+  }
+
+  // Same-domain: imposta cookie e redirect
   const response = NextResponse.redirect(new URL(destination));
   for (const cookie of cookieJar.cookies.getAll()) {
     response.cookies.set(cookie.name, cookie.value, cookie);
@@ -88,7 +100,6 @@ export async function GET(request: Request) {
  * POST { access_token, refresh_token }
  * Riceve i token da un login appena completato lato client,
  * li persiste come cookie con Domain=.menuary.it (o .pynkstudio.*).
- * Usato dal LoginPortalForm dopo signInWithPassword.
  */
 export async function POST(request: Request) {
   let body: unknown;
