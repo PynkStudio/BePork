@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
-const ALLOWED_ORIGINS = /^(https:\/\/[a-z0-9-]+\.(menuary\.it|pynkstudio\.it|pynkstudio\.com|pynkstudio\.eu))$/;
-
 /**
  * GET /api/auth/cross-domain-session?access_token=...&refresh_token=...&next=...
  *
