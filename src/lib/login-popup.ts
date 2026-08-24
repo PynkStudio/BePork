@@ -73,13 +73,14 @@ export function openLoginPopup(options: LoginPopupOptions): void {
       };
       if (access_token && refresh_token) {
         try {
-          await fetch("/api/auth/set-session", {
+          const res = await fetch("/api/auth/set-session", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ access_token, refresh_token }),
           });
-        } catch {
-          // Session non impostata, router.refresh() mostrerà stato anonimo
+          console.log("[login-popup] set-session response:", res.status, await res.text());
+        } catch (err) {
+          console.error("[login-popup] set-session failed:", err);
         }
       }
     }
