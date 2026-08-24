@@ -282,6 +282,7 @@ function canonicalInternalPlatformRedirect(
 ): NextResponse | null {
   const { pathname, search } = request.nextUrl;
 
+  // admin-pynkstudio deve essere prima di /admin perché "/admin-pynkstudio".startsWith("/admin") è true
   if (
     pathname.startsWith("/admin-pynkstudio") &&
     mode !== "admin-pynkstudio"
@@ -289,7 +290,11 @@ function canonicalInternalPlatformRedirect(
     return NextResponse.redirect(new URL(`https://admin.pynkstudio.eu${pathname}${search}`));
   }
 
-  if (pathname.startsWith("/admin") && mode !== "platform-admin") {
+  if (
+    pathname.startsWith("/admin") &&
+    !pathname.startsWith("/admin-pynkstudio") &&
+    mode !== "platform-admin"
+  ) {
     return NextResponse.redirect(new URL(`https://admin.menuary.it${pathname}${search}`));
   }
 
