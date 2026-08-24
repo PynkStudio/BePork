@@ -127,3 +127,64 @@ Tipi esportati: `SecurityTenant`, `SecurityUser`, `SecurityAuditLog`, `SecurityD
 3. Deployare SecurityApp: `cd supabase && supabase functions deploy admin`
 4. Testare: aprire `admin.pynkstudio.eu/security` — dovrebbe mostrare le statistiche reali
 5. Le page `/security/tenants`, `/security/users`, `/security/audit` funzioneranno automaticamente
+
+---
+
+## 7. TODO: Migrazione login → login.pynkstudio.eu
+
+### Problema attuale
+
+Il login centralizzato vive su `login.menuary.it`. Quando un utente accede a `admin.pynkstudio.eu`:
+
+1. Il middleware redirige a `login.menuary.it?from=admin-pynkstudio`
+2. Dopo l'autenticazione, `login.menuary.it` imposta cookie su `.menuary.it`
+3. Redirect a `admin.pynkstudio.eu` — ma i cookie `.menuary.it` non sono leggibili da `.pynkstudio.eu`
+4. Solution attuale: passaggio token via query params nell'elevate-session (cross-domain handshake)
+
+Questo funziona ma e' un workaround. Il dominio login ideale per PynkStudio e' `login.pynkstudio.eu`.
+
+### Cosa cambia con login.pynkstudio.eu
+
+| Aspetto | Oggi (login.menuary.it) | Futuro (login.pynkstudio.eu) |
+|---------|--------------------------|------------------------------|
+| Cookie domain | `.menuary.it` | `.pynkstudio.eu` |
+| Cross-domain handshake | necessario (query params) | non necessario (stesso dominio) |
+| Cookie sharing | solo con sottodominii `.menuary.it` | solo con sottodominii `.pynkstudio.eu` |
+| Flusso `admin.menuary.it` | nativo | diventa cross-domain handshake |
+| Flusso `admin.pynkstudio.eu` | cross-domain handshake | nativo |
+
+### Piani di impatto
+
+Migrare il login impatta **tutti i portali** che usano `login.menuary.it`:
+
+**Portali PynkStudio (diventano nativi):**
+- `admin.pynkstudio.eu` — portale admin aziendale
+- `pagamenti.pynkstudio.eu` — pagamenti (futuro)
+
+**Portali Menuary (diventano cross-domain):**
+- `admin.menuary.it` — back-office piattaforma
+- `clienti.menuary.it` — portale clienti
+- `gestione.menuary.it/*` — pannelli gestione store
+- `support.menuary.it` — supporto
+
+### Checklist migrazione
+
+1. **Deploy `login.pynkstudio.eu`** come istanza separata o clone di `login.menuary.it`
+2. **Configurare cookie domain** su `.pynkstudio.eu` nel nuovo login
+3. **Aggiungere `elevate-session` handshake** per i portali Menuary che diventano cross-domain (inverte il flusso attuale)
+4. **Aggiornare `src/lib/login-url.ts`** — `LOGIN_BASE` per i from PynkStudio punta a `login.pynkstudio.eu`
+5. **Aggiornare `src/app/admin-pynkstudio/login/page.tsx`** — il link "Accedi" punta a `login.pynkstudio.eu`
+6. **Aggiornare `src/app/login-portal/page.tsx`** — la session check per PynkStudio usa `.pynkstudio.eu`
+7. **Testare tutti i flussi** con entrambi i domini (Menuary + PynkStudio)
+8. **Rotazione graduale**: prima solo admin.pynkstudio.eu, poi gli altri portali PynkStudio
+
+### Riferimenti codice coinvolti
+
+| File | Cosa toccare |
+|------|-------------|
+| `src/lib/login-url.ts` | `LOGIN_BASE`, `buildLoginUrl()`, `resolveDestination()` |
+| `src/app/admin-pynkstudio/login/page.tsx` | URL login hardcoded |
+| `src/components/login-portal/login-portal-form.tsx` | Eventuale switch login base per from |
+| `src/app/api/auth/elevate-session/route.ts` | Gestione cookie domain per handshake |
+| `src/lib/session-cookie-domain.ts` | Aggiungere `login.pynkstudio.eu` se necessario |
+| `src/middleware.ts` | Configurazione mode `login` per il nuovo dominio |
