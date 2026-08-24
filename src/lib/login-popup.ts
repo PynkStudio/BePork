@@ -158,13 +158,27 @@ function isBizerySubdomain(origin: string): boolean {
   }
 }
 
+function isPynkStudioSubdomain(origin: string): boolean {
+  try {
+    const { hostname } = new URL(origin);
+    return (
+      hostname === "pynkstudio.eu" || hostname.endsWith(".pynkstudio.eu") ||
+      hostname === "pynkstudio.it" || hostname.endsWith(".pynkstudio.it") ||
+      hostname === "pynkstudio.com" || hostname.endsWith(".pynkstudio.com")
+    );
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Origini autorizzate a ricevere token via postMessage.
- * Include tutti i sottodomini Menuary, tutti i sottodomini Bizery + domini tenant registrati.
+ * Include tutti i sottodomini Menuary, Bizery, PynkStudio e domini tenant registrati.
  */
 function isAllowedOrigin(origin: string): boolean {
   if (isMenuarySubdomain(origin)) return true;
   if (isBizerySubdomain(origin)) return true;
+  if (isPynkStudioSubdomain(origin)) return true;
   try {
     const { hostname } = new URL(origin);
     return TENANTS.some((tenant) =>

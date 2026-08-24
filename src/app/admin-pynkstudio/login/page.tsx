@@ -1,16 +1,24 @@
+"use client";
+
+import { useState } from "react";
 import { Lock } from "lucide-react";
+import { openLoginPopup } from "@/lib/login-popup";
 
-const LOGIN_BASE = "https://login.menuary.it";
+export default function PynkAdminLoginPage() {
+  const [loading, setLoading] = useState(false);
 
-export default async function PynkAdminLoginPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ next?: string }>;
-}) {
-  const { next } = await searchParams;
-  const loginUrl = new URL(LOGIN_BASE);
-  loginUrl.searchParams.set("from", "admin-pynkstudio");
-  if (next && next !== "/") loginUrl.searchParams.set("next", next);
+  function handleLogin() {
+    setLoading(true);
+    openLoginPopup({
+      from: "admin-pynkstudio",
+      onSuccess: () => {
+        window.location.reload();
+      },
+      onCancel: () => {
+        setLoading(false);
+      },
+    });
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center p-6" style={{ background: "hsl(240 8% 6%)" }}>
@@ -24,13 +32,15 @@ export default async function PynkAdminLoginPage({
         <p className="mt-5 text-sm" style={{ color: "hsl(330 10% 35%)" }}>
           Accedi con il tuo account per continuare.
         </p>
-        <a
-          href={loginUrl.toString()}
-          className="mt-6 block w-full rounded-full px-6 py-3 text-center font-semibold text-white shadow-lg transition-opacity hover:opacity-90"
+        <button
+          type="button"
+          onClick={handleLogin}
+          disabled={loading}
+          className="mt-6 block w-full rounded-full px-6 py-3 text-center font-semibold text-white shadow-lg transition-opacity hover:opacity-90 disabled:opacity-50"
           style={{ background: "hsl(330 80% 52%)" }}
         >
-          Accedi
-        </a>
+          {loading ? "Accesso in corso…" : "Accedi"}
+        </button>
       </div>
     </div>
   );
