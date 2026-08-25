@@ -862,9 +862,6 @@ export async function middleware(request: NextRequest) {
       if (!role) {
         return NextResponse.redirect(new URL("/admin-pynkstudio/login", request.url));
       }
-      if ((effectivePath.replace(/\/+$/, "") || "/admin-pynkstudio") === "/admin-pynkstudio") {
-        return NextResponse.redirect(new URL("/admin-pynkstudio/inbox", request.url));
-      }
       return response;
     }
 
