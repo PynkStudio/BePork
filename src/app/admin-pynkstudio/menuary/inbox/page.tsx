@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Mail } from "lucide-react";
 
@@ -26,12 +27,12 @@ export default function MenuaryInboxPage() {
         <p className="mt-4 text-sm text-[var(--pa-muted)]">
           La posta in arrivo è gestita dalla casella PynkStudio.
         </p>
-        <a
+        <Link
           href="/admin-pynkstudio/mailapp"
           className="pynk-admin-btn-primary mt-4 inline-flex"
         >
           Apri Posta
-        </a>
+        </Link>
       </div>
     </div>
   );

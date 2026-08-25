@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
 import "@/lib/mailapp-runtime";
 import { MailApp } from "@pynkstudio/mailapp/react";
 import { getInboundEmails, getInboxUnreadCounts, getInboxUnreadCountForUser } from "@pynkstudio/mailapp/email";
@@ -21,7 +20,6 @@ export default async function MailappPage() {
   let canCompose = false;
 
   try {
-    const headersList = await headers();
     const supabase = await createSupabaseServerClient(".pynstudio.eu");
     const { data: { user } } = await supabase.auth.getUser();
 
