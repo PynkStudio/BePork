@@ -161,14 +161,14 @@ export async function generateMetadata(): Promise<Metadata> {
   if (mode === "gestione" || mode === "gestione-custom") {
     if (!tenant) {
       return {
-        metadataBase: new URL("https://gestione.menuary.it"),
+        metadataBase: new URL("https://admin.pynstudio.eu"),
         title: { default: "Menuary · gestione", template: "%s · Menuary" },
         robots: { index: false, follow: false },
         icons: buildIconSet(mode),
       };
     }
     return {
-      metadataBase: new URL(mode === "gestione-custom" ? `https://gestione.${tenant.domains[0] ?? "menuary.it"}` : "https://gestione.menuary.it"),
+      metadataBase: new URL(mode === "gestione-custom" ? `https://gestione.${tenant.domains[0] ?? "menuary.it"}` : "https://admin.pynstudio.eu"),
       title: { default: `${tenant.name} · gestione`, template: `%s · ${tenant.name}` },
       robots: { index: false, follow: false },
       icons: buildIconSet(mode, tenant),

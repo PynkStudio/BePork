@@ -122,7 +122,7 @@ const PORTALS: PortalCard[] = [
 ];
 
 const QUICK_TOOLS: { href: string; label: string; icon: React.ElementType; badge?: number }[] = [
-  { href: "/admin-pynkstudio/inbox",        label: "Posta",       icon: Mail },
+  { href: "/admin-pynkstudio/mailapp",      label: "Posta",       icon: Mail },
   { href: "/admin-pynkstudio/agenda",       label: "Agenda",      icon: CalendarClock },
   { href: "/admin-pynkstudio/crm",          label: "CRM",         icon: BookUser },
   { href: "/admin-pynkstudio/patrimoniale", label: "Patrimoniale", icon: BadgeEuro },

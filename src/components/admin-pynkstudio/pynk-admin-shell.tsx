@@ -29,7 +29,7 @@ type NavItem = {
 };
 
 const NAV_ITEMS: NavItem[] = [
-  { href: "/admin-pynkstudio/inbox",        label: "Posta",          icon: Mail },
+  { href: "/admin-pynkstudio/mailapp",      label: "Posta",          icon: Mail },
   { href: "/admin-pynkstudio/agenda",       label: "Agenda",         icon: CalendarClock },
   { href: "/admin-pynkstudio/crm",          label: "CRM",            icon: BookUser },
   { href: "/admin-pynkstudio/patrimoniale", label: "Patrimoniale",   icon: BadgeEuro },
@@ -118,7 +118,7 @@ export function PynkAdminShell({ children }: { children: React.ReactNode }) {
                 <it.icon size={18} />
                 {it.label}
                 {it.external && <span className="pynk-admin-nav-tag">↗</span>}
-                {it.href === "/admin-pynkstudio/inbox" && inboxUnread > 0 && (
+                {it.href === "/admin-pynkstudio/mailapp" && inboxUnread > 0 && (
                   <span
                     className={cn(
                       "ml-auto rounded-full px-1.5 py-0.5 text-[10px] font-bold",

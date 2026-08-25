@@ -24,15 +24,13 @@ export default function MenuaryInboxPage() {
       <div className="pynk-admin-card p-8 text-center">
         <Mail size={40} className="mx-auto text-[var(--pa-muted)]" />
         <p className="mt-4 text-sm text-[var(--pa-muted)]">
-          La posta in arrivo è gestita dal portale Menuary.
+          La posta in arrivo è gestita dalla casella PynkStudio.
         </p>
         <a
-          href="https://admin.menuary.it/admin/inbox"
-          target="_blank"
-          rel="noopener noreferrer"
+          href="/admin-pynkstudio/mailapp"
           className="pynk-admin-btn-primary mt-4 inline-flex"
         >
-          Apri su admin.menuary.it
+          Apri Posta
         </a>
       </div>
     </div>

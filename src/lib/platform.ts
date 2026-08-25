@@ -13,7 +13,7 @@
 // "support"           → support.menuary.it      registro errori operativo interno
 // "login"             → login.menuary.it        auth centralizzato (popup + redirect)
 // "app"               → app.menuary.it          download app operative native
-// "gestione"          → gestione.menuary.it     pannello gestione tenant food
+// "gestione"          → admin.pynstudio.eu/[slug]  pannello gestione tenant food (migrato)
 // "gestione-bizery"   → gestione.bizery.it      pannello gestione tenant bizery (cross-domain popup auth)
 // "gestione-custom"   → gestione.[dominio]      pannello gestione sul dominio del tenant
 // "ordini-custom"     → ordini.[dominio]        console operativa ordini del tenant/sede

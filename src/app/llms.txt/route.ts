@@ -20,7 +20,7 @@ Menuary è il verticale food della piattaforma Menuary. Il verticale gemello per
 - [Login](https://login.menuary.it): autenticazione centralizzata clienti e staff
 - [Area clienti](https://clienti.menuary.it): area personale dei clienti finali (preferiti, prenotazioni, ordini)
 - [Studio](https://studio.menuary.it): fatturazione e abbonamenti B2B
-- [Gestione tenant](https://gestione.menuary.it): pannello backoffice per il singolo locale
+- [Gestione tenant](https://admin.pynstudio.eu): pannello backoffice per il singolo locale
 
 ## Moduli
 

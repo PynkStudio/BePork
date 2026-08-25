@@ -5,7 +5,7 @@
  *   "admin"                  → admin.menuary.it              (platform admin)
  *   "studio"                 → studio.menuary.it             (fatturazione B2B)
  *   "clienti"                → clienti.menuary.it            (portale clienti)
- *   "gestione.bepork"        → gestione.menuary.it/bepork    (pannello store food)
+ *   "gestione.bepork"        → admin.pynstudio.eu/bepork    (pannello store food)
  *   "gestione-bizery.acme"   → gestione.bizery.it/acme       (pannello store bizery, cross-domain popup)
  *   "gestione-custom.bepork" -> gestione.tenant.example      (pannello store sul dominio tenant)
  *   "gestione-demo.bepork"   → demo.menuary.it/bepork/gestione
@@ -167,13 +167,13 @@ export function resolveDestination(options: {
   if (from === "admin-pynkstudio" && isSiteadmin) return `https://admin.pynkstudio.eu${next ?? ""}`;
   if (from === "studio") {
     if (isSiteadmin) return "https://admin.menuary.it/admin";
-    if (tenantId)    return `https://gestione.menuary.it/${tenantId}/fatturazione${next ?? ""}`;
+    if (tenantId)    return `https://admin.pynstudio.eu/${tenantId}/fatturazione${next ?? ""}`;
   }
   if (from === "clienti") return `https://clienti.menuary.it${next ?? ""}`;
   if (from?.startsWith("gestione.")) {
     const slug = tenantSlugFromFrom(from);
     if (slug && (isSiteadmin || tenantId === slug))
-      return `https://gestione.menuary.it/${slug}${next ?? ""}`;
+      return `https://admin.pynstudio.eu/${slug}${next ?? ""}`;
   }
   if (from?.startsWith("gestione-bizery.")) {
     const slug = tenantSlugFromFrom(from);
@@ -195,6 +195,6 @@ export function resolveDestination(options: {
 
   // Fallback per ruolo
   if (isSiteadmin) return "https://admin.menuary.it/admin";
-  if (tenantId)    return `https://gestione.menuary.it/${tenantId}`;
+  if (tenantId)    return `https://admin.pynstudio.eu/${tenantId}`;
   return "https://clienti.menuary.it";
 }

@@ -164,7 +164,7 @@ Migrare il login impatta **tutti i portali** che usano `login.menuary.it`:
 **Portali Menuary (diventano cross-domain):**
 - `admin.menuary.it` — back-office piattaforma
 - `clienti.menuary.it` — portale clienti
-- `gestione.menuary.it/*` — pannelli gestione store
+- `admin.pynstudio.eu/*` — pannelli gestione store (migrato da gestione.menuary.it)
 - `support.menuary.it` — supporto
 
 ### Checklist migrazione

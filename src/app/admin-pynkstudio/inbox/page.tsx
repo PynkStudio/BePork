@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function PynkAdminInboxPage() {
-  redirect("/admin-pynkstudio");
+  redirect("/admin-pynkstudio/mailapp");
 }
