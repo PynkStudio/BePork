@@ -165,6 +165,7 @@ Progetti attivi:
 | Progetto | Documento |
 |---|---|
 | Blog editoriale multilingua (rich text, media, SEO, MCP per tenant) | `docs/03-features/blog-editoriale.md` |
+| Pannello di controllo PynkStudio (hub aziendale + portali prodotto separati) | `docs/03-features/pannello-pynkstudio.md` |
 
 Regole valide per ogni progetto con bacheca:
 

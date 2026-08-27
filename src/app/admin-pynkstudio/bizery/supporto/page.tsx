@@ -1,29 +1,38 @@
-"use client";
+import type { Metadata } from "next";
+import { SupportAdminPage } from "@/components/admin/support/support-admin-page";
+import { getCurrentSiteadmin, listSupportTicketMessages, listSupportTickets } from "@/lib/support/admin";
+import { TENANTS } from "@/lib/tenant-registry";
 
-import { LifeBuoy, ExternalLink } from "lucide-react";
+export const metadata: Metadata = {
+  title: "Supporto · Bizery",
+};
 
-export default function BizerySupportoPage() {
+export const dynamic = "force-dynamic";
+
+export default async function BizerySupportPage() {
+  const productTenants = TENANTS.filter((tenant) => tenant.vertical === "services");
+  const productTenantIds = new Set(productTenants.map((tenant) => tenant.id));
+
+  const [siteadmin, allTickets] = await Promise.all([
+    getCurrentSiteadmin(),
+    listSupportTickets(),
+  ]);
+
+  // Un ticket senza tenant non è attribuibile a un prodotto: resta sull'hub.
+  const tickets = allTickets.filter(
+    (ticket) => ticket.tenant_id != null && productTenantIds.has(ticket.tenant_id),
+  );
+  const messages = await listSupportTicketMessages(tickets.map((ticket) => ticket.id));
+  const tenantNames = Object.fromEntries(
+    productTenants.map((tenant) => [tenant.id, tenant.name]),
+  );
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="pynk-admin-page-title">Supporto</h1>
-        <p className="pynk-admin-page-subtitle">Supporto e assistenza Bizery</p>
-      </div>
-      <div className="pynk-admin-card p-8 text-center">
-        <LifeBuoy size={40} className="mx-auto text-[var(--pa-muted)]" />
-        <p className="mt-4 text-sm text-[var(--pa-muted)]">
-          Disponibile sul portale Bizery.
-        </p>
-        <a
-          href="https://admin.bizery.it/admin/supporto"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="pynk-admin-btn-primary mt-4 inline-flex"
-        >
-          Apri su admin.bizery.it
-          <ExternalLink size={14} />
-        </a>
-      </div>
-    </div>
+    <SupportAdminPage
+      initialTickets={tickets}
+      initialMessages={messages}
+      tenantNames={tenantNames}
+      currentSiteadminId={siteadmin?.id ?? null}
+    />
   );
 }

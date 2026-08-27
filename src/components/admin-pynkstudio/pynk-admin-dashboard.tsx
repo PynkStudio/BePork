@@ -11,6 +11,7 @@ import {
   Mail,
   Music,
   Shield,
+  UserCog,
   Users,
   Briefcase,
   UtensilsCrossed,
@@ -18,6 +19,8 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { PRODUCT_PORTAL_LIST, type ProductPortalSlug } from "@/lib/platform/product-portals";
+import type { LeadVertical, PlatformLead } from "@/lib/platform-crm-types";
 
 type KpiData = {
   leadsAttention: number;
@@ -34,8 +37,11 @@ type PortalCard = {
   description: string;
   icon: React.ElementType;
   color: string;
-  metrics?: { label: string; value: string | number }[];
+  /** Verticale su cui contare i lead; assente per i portali non-piattaforma. */
+  vertical?: LeadVertical;
 };
+
+type VerticalTotals = { total: number; active: number };
 
 function useKpis() {
   const [kpis, setKpis] = useState<KpiData>({
@@ -90,46 +96,77 @@ function useKpis() {
   return kpis;
 }
 
+const PORTAL_ICONS: Record<ProductPortalSlug, React.ElementType> = {
+  menuary: UtensilsCrossed,
+  bizery: Briefcase,
+  orpheo: Music,
+};
+
+const PORTAL_COLORS: Record<ProductPortalSlug, string> = {
+  menuary: "hsl(330 80% 52%)",
+  bizery: "hsl(210 80% 50%)",
+  orpheo: "hsl(280 65% 50%)",
+};
+
 const PORTALS: PortalCard[] = [
-  {
-    href: "/admin-pynkstudio/menuary",
-    label: "Menuary",
-    description: "Piattaforma food: ristoranti, bar, pizzerie",
-    icon: UtensilsCrossed,
-    color: "hsl(330 80% 52%)",
-  },
-  {
-    href: "/admin-pynkstudio/bizery",
-    label: "Bizery",
-    description: "Piattaforma services: officine, studi, saloni",
-    icon: Briefcase,
-    color: "hsl(210 80% 50%)",
-  },
-  {
-    href: "/admin-pynkstudio/orpheo",
-    label: "Orpheo",
-    description: "Piattaforma creative: artisti, agenzie, studi",
-    icon: Music,
-    color: "hsl(280 65% 50%)",
-  },
+  ...PRODUCT_PORTAL_LIST.map((portal) => ({
+    href: portal.basePath,
+    label: portal.label,
+    description: portal.tagline,
+    icon: PORTAL_ICONS[portal.slug],
+    color: PORTAL_COLORS[portal.slug],
+    vertical: portal.vertical as LeadVertical,
+  })),
   {
     href: "/admin-pynkstudio/security",
     label: "Security",
-    description: "Gestione aziende di sicurezza e operativita",
+    description: "Gestione aziende di sicurezza e operatività",
     icon: Shield,
     color: "hsl(150 60% 38%)",
   },
 ];
 
-const QUICK_TOOLS: { href: string; label: string; icon: React.ElementType; badge?: number }[] = [
-  { href: "/admin-pynkstudio/mailapp",      label: "Posta",       icon: Mail },
-  { href: "/admin-pynkstudio/agenda",       label: "Agenda",      icon: CalendarClock },
-  { href: "/admin-pynkstudio/crm",          label: "CRM",         icon: BookUser },
-  { href: "/admin-pynkstudio/patrimoniale", label: "Patrimoniale", icon: BadgeEuro },
+const QUICK_TOOLS: { href: string; label: string; icon: React.ElementType }[] = [
+  { href: "/admin-pynkstudio/mailapp",      label: "Posta",           icon: Mail },
+  { href: "/admin-pynkstudio/agenda",       label: "Agenda",          icon: CalendarClock },
+  { href: "/admin-pynkstudio/crm",          label: "CRM PynkStudio",  icon: BookUser },
+  { href: "/admin-pynkstudio/patrimoniale", label: "Patrimoniale",    icon: BadgeEuro },
+  { href: "/admin-pynkstudio/utenti",       label: "Utenti interni",  icon: UserCog },
 ];
+
+function useVerticalTotals() {
+  const [totals, setTotals] = useState<Record<LeadVertical, VerticalTotals> | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/admin/leads", { signal: controller.signal })
+      .then((r) => r.json())
+      .then((data: { leads?: PlatformLead[] }) => {
+        const leads = data.leads ?? [];
+        const empty = (): VerticalTotals => ({ total: 0, active: 0 });
+        const acc: Record<LeadVertical, VerticalTotals> = {
+          food: empty(),
+          services: empty(),
+          creative: empty(),
+        };
+        for (const lead of leads) {
+          const bucket = acc[lead.business_vertical];
+          if (!bucket) continue;
+          bucket.total += 1;
+          if (lead.status === "active") bucket.active += 1;
+        }
+        setTotals(acc);
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, []);
+
+  return totals;
+}
 
 export function PynkAdminDashboard() {
   const kpis = useKpis();
+  const verticalTotals = useVerticalTotals();
 
   const kpiCards = [
     { label: "Lead da seguire", value: kpis.leadsAttention, icon: Users, accent: kpis.leadsAttention > 0 },
@@ -184,6 +221,18 @@ export function PynkAdminDashboard() {
                   <ArrowRight size={14} className="text-[var(--pa-muted)] opacity-0 transition-opacity group-hover:opacity-100" />
                 </div>
                 <p className="mt-0.5 text-sm text-[var(--pa-muted)]">{portal.description}</p>
+                {portal.vertical && verticalTotals && (
+                  <p className="mt-2 text-xs text-[var(--pa-muted)]">
+                    <strong className="text-[var(--pa-ink)]">
+                      {verticalTotals[portal.vertical].total}
+                    </strong>{" "}
+                    lead ·{" "}
+                    <strong className="text-[var(--pa-ink)]">
+                      {verticalTotals[portal.vertical].active}
+                    </strong>{" "}
+                    attivi
+                  </p>
+                )}
               </div>
             </Link>
           ))}

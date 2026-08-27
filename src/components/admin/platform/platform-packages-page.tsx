@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Package,
   Plus,
@@ -18,7 +18,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { PlatformPackage } from "@/lib/platform-crm-types";
+import type { LeadVertical, PlatformPackage } from "@/lib/platform-crm-types";
 import { TENANT_MODULES, TENANT_MODULE_CATEGORIES } from "@/lib/tenant-modules";
 import type { TenantFeatureKey } from "@/lib/tenant";
 import { AI_ADDON, ORPHEO_PRICING_PLANS, PRICING_PLANS } from "@/lib/platform-pricing";
@@ -299,8 +299,29 @@ function pkgToForm(p: PlatformPackageExtended): PackageForm {
 
 // ─── Componente ───────────────────────────────────────────────────────────────
 
-export function PlatformPackagesPage() {
-  const [packages, setPackages] = useState<PlatformPackageExtended[]>(MOCK_PACKAGES);
+export type PlatformPackagesPageProps = {
+  /**
+   * Blocca la vista sui pacchetti del verticale indicato (portale prodotto).
+   * I pacchetti marcati "both" restano visibili perché validi per tutti i prodotti.
+   * Omesso = tutti i prodotti (hub PynkStudio e admin.menuary.it).
+   */
+  vertical?: LeadVertical;
+  /** Etichetta di sezione mostrata in testata. Default: "Piattaforma". */
+  productLabel?: string;
+};
+
+export function PlatformPackagesPage({
+  vertical,
+  productLabel,
+}: PlatformPackagesPageProps = {}) {
+  const [allPackages, setAllPackages] = useState<PlatformPackageExtended[]>(MOCK_PACKAGES);
+  const packages = useMemo(
+    () =>
+      vertical
+        ? allPackages.filter((p) => p.vertical === vertical || p.vertical === "both")
+        : allPackages,
+    [allPackages, vertical],
+  );
   const [editing, setEditing] = useState<string | "new" | null>(null);
   const [form, setForm] = useState<PackageForm>(emptyForm());
   const [tab, setTab] = useState<"marketing" | "tech">("marketing");
@@ -317,7 +338,7 @@ export function PlatformPackagesPage() {
         if (!alive) return;
         if (json.error) throw new Error(json.error);
         const marketPrices = json.market_prices ?? [];
-        setPackages(
+        setAllPackages(
           (json.packages ?? []).map((pkg) => ({
             ...pkg,
             market_prices: marketPrices.filter((price) => price.country_code && (price as PackageMarketPrice & { package_slug?: string }).package_slug === pkg.slug),
@@ -402,7 +423,7 @@ export function PlatformPackagesPage() {
       const json = (await res.json().catch(() => ({}))) as { error?: string; package?: PlatformPackageExtended; market_prices?: PackageMarketPrice[] };
       if (!res.ok || json.error || !json.package) throw new Error(json.error ?? "Salvataggio non riuscito.");
       const saved = { ...json.package, market_prices: json.market_prices ?? [] };
-      setPackages((prev) =>
+      setAllPackages((prev) =>
         editing === "new"
           ? [...prev, saved]
           : prev.map((p) => (p.id === editing ? saved : p)),
@@ -425,7 +446,7 @@ export function PlatformPackagesPage() {
   }
 
   function moveUp(id: string) {
-    setPackages((prev) => {
+    setAllPackages((prev) => {
       const idx = prev.findIndex((p) => p.id === id);
       if (idx === 0) return prev;
       const next = [...prev];
@@ -435,7 +456,7 @@ export function PlatformPackagesPage() {
   }
 
   function moveDown(id: string) {
-    setPackages((prev) => {
+    setAllPackages((prev) => {
       const idx = prev.findIndex((p) => p.id === id);
       if (idx === prev.length - 1) return prev;
       const next = [...prev];
@@ -445,7 +466,7 @@ export function PlatformPackagesPage() {
   }
 
   function toggleActive(id: string) {
-    setPackages((prev) =>
+    setAllPackages((prev) =>
       prev.map((p) => (p.id === id ? { ...p, is_active: !p.is_active } : p)),
     );
   }
@@ -454,7 +475,7 @@ export function PlatformPackagesPage() {
     <div className="space-y-8">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="impact-title text-xs text-pork-red">Piattaforma</p>
+          <p className="impact-title text-xs text-pork-red">{productLabel ?? "Piattaforma"}</p>
           <h1 className="headline text-4xl">Pacchetti</h1>
           <p className="mt-1 text-pork-ink/60">
             Gestisci i piani commerciali esposti su{" "}

@@ -41,7 +41,7 @@ I moduli sono abilitati per tenant tramite i feature-flag in `tenant-registry.ts
 | `staffRoles` | Staff e ruoli |
 | `multiLocation` | Multi-sede |
 | `mail` | Mail |
-| `slabbby` | **Da verificare** (nome non autoesplicativo) |
+| `slabbby` | Wishlist Slabbby — estensione/widget di terze parti, vedi [[#Nota modulo `slabbby`]] |
 | `aiPhone` | Assistente telefonica IA (Retell) |
 | `aiWhatsapp` | Assistente WhatsApp IA |
 | `hubriseSync` | Sync HubRise (POS) |
@@ -50,6 +50,33 @@ I moduli sono abilitati per tenant tramite i feature-flag in `tenant-registry.ts
 | `presence` | Raggruppamento "Presenza online" (sito, gallery, blog, linktree, press kit) — **non** è la presenza operativa dei portali, vedi [[#Nota modulo `rider` e presenza operativa]] |
 
 > Le voci `catalog`, `commerce`, `operations`, `bookings`, `customers`, `organization`, `integrations` compaiono anch'esse come `key:` in `tenant-modules.ts`: **da verificare** se sono moduli o raggruppamenti/categorie. Vanno lette in contesto nel file.
+
+## Nota modulo `slabbby`
+
+Slabbby è una **wishlist di terze parti fra negozi diversi**: l'utente salva un capo
+qui e se lo ritrova nella propria lista insieme a quelli di altri e-commerce.
+Il modulo ha due metà, che vanno tenute distinte:
+
+| Pezzo | Dove | Cosa fa |
+|---|---|---|
+| `SlabbbyScriptGate` | `src/components/core/slabbby-script-gate.tsx` | Carica `https://slabbby.com/widget.js` se `features.slabbby` è attivo. Nel layout globale è montato con `skipInPreview`, quindi **in preview il gate lo monta la pagina del tenant**. |
+| `SlabbbyWishlistButton` | `src/components/modules/shop/slabbby-wishlist-btn.tsx` | Bottone della maison/negozio. Va **sotto** il tasto carrello nella scheda prodotto, mai in home/catalogo né sopra il titolo. |
+
+Verificato sul campo (2026-08-27, tenant `casabizzi`):
+
+- `widget.js` si carica e apre un iframe `https://slabbby.com/widget-auth`.
+- Il widget **si aggancia da solo accanto al primo heading della pagina** e monta la
+  propria UI in uno **shadow root chiuso**: dall'esterno si può governare solo il box
+  del suo host `#slabbby-widget-host`, non il suo interno.
+  Conseguenza pratica: caricare il gate sulla pagina di collezione mette il bottone
+  Slabbby dentro il marchio. Per questo su `casabizzi` il gate è montato **solo nella
+  scheda oggetto**.
+- `window.Slabbby` **non esiste**: il ramo "prova prima l'API JS del widget" di
+  `SlabbbyWishlistButton` non scatta mai con la build attuale del widget, e il bottone
+  usa sempre il fallback `https://slabbby.com/save?...`. Il bottone funziona, ma
+  chi legge il codice non deve aspettarsi che passi dall'API.
+
+Tenant con il modulo attivo: `libritech`, `casabizzi`.
 
 ## Note modulo `mail`
 

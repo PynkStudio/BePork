@@ -1,29 +1,37 @@
-"use client";
+import type { Metadata } from "next";
+import { ErrorEventsDashboard } from "@/components/support/error-events-dashboard";
+import { listPlatformErrors } from "@/lib/platform-errors";
+import { getCurrentSiteadmin } from "@/lib/support/admin";
+import { TENANTS } from "@/lib/tenant-registry";
 
-import { ServerCrash, ExternalLink } from "lucide-react";
+export const metadata: Metadata = {
+  title: "Errori operativi · Menuary",
+};
 
-export default function MenuaryErroriPage() {
+export const dynamic = "force-dynamic";
+
+export default async function MenuaryErrorEventsPage() {
+  const productTenants = TENANTS.filter((tenant) => tenant.vertical === "food");
+  const productTenantIds = new Set(productTenants.map((tenant) => tenant.id));
+
+  const [siteadmin, allEvents] = await Promise.all([
+    getCurrentSiteadmin(),
+    listPlatformErrors(),
+  ]);
+
+  // Gli errori senza tenant sono di piattaforma: restano sull'hub PynkStudio.
+  const events = allEvents.filter(
+    (event) => event.tenant_id != null && productTenantIds.has(event.tenant_id),
+  );
+  const tenantNames = Object.fromEntries(
+    productTenants.map((tenant) => [tenant.id, tenant.name]),
+  );
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="pynk-admin-page-title">Errori operativi</h1>
-        <p className="pynk-admin-page-subtitle">Registro errori e crash della piattaforma</p>
-      </div>
-      <div className="pynk-admin-card p-8 text-center">
-        <ServerCrash size={40} className="mx-auto text-[var(--pa-muted)]" />
-        <p className="mt-4 text-sm text-[var(--pa-muted)]">
-          Registro errori disponibile sul portale Menuary.
-        </p>
-        <a
-          href="https://admin.menuary.it/admin/errori"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="pynk-admin-btn-primary mt-4 inline-flex"
-        >
-          Apri su admin.menuary.it
-          <ExternalLink size={14} />
-        </a>
-      </div>
-    </div>
+    <ErrorEventsDashboard
+      initialEvents={events}
+      currentSiteadminId={siteadmin?.id ?? null}
+      tenantNames={tenantNames}
+    />
   );
 }

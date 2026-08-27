@@ -14,12 +14,14 @@ import {
   UserCircle,
   X,
   UtensilsCrossed,
+  UserCog,
   Briefcase,
   Music,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { clearAdminSession } from "@/lib/admin-auth";
 import { cn } from "@/lib/utils";
+import { canonicalPynkPath, isPynkNavActive } from "./pynk-path";
 
 type NavItem = {
   href: string;
@@ -31,8 +33,9 @@ type NavItem = {
 const NAV_ITEMS: NavItem[] = [
   { href: "/admin-pynkstudio/mailapp",      label: "Posta",          icon: Mail },
   { href: "/admin-pynkstudio/agenda",       label: "Agenda",         icon: CalendarClock },
-  { href: "/admin-pynkstudio/crm",          label: "CRM",            icon: BookUser },
+  { href: "/admin-pynkstudio/crm",          label: "CRM PynkStudio", icon: BookUser },
   { href: "/admin-pynkstudio/patrimoniale", label: "Patrimoniale",   icon: BadgeEuro },
+  { href: "/admin-pynkstudio/utenti",       label: "Utenti interni", icon: UserCog },
 ];
 
 const PORTAL_ITEMS: NavItem[] = [
@@ -70,7 +73,7 @@ export function PynkAdminShell({ children }: { children: React.ReactNode }) {
     router.replace("/admin-pynkstudio/login");
   }
 
-  const isHub = pathname === "/admin-pynkstudio" || pathname === "/admin-pynkstudio/";
+  const isHub = canonicalPynkPath(pathname) === "/admin-pynkstudio";
 
   return (
     <div className="pynk-admin-root">
@@ -103,9 +106,7 @@ export function PynkAdminShell({ children }: { children: React.ReactNode }) {
             Strumenti
           </span>
           {NAV_ITEMS.map((it) => {
-            const active =
-              !it.external &&
-              (pathname === it.href || pathname?.startsWith(it.href + "/"));
+            const active = !it.external && isPynkNavActive(pathname, it.href);
             return (
               <Link
                 key={it.href}
@@ -137,7 +138,7 @@ export function PynkAdminShell({ children }: { children: React.ReactNode }) {
             Portali
           </span>
           {PORTAL_ITEMS.map((it) => {
-            const active = pathname?.startsWith(it.href);
+            const active = isPynkNavActive(pathname, it.href);
             return (
               <Link
                 key={it.href}
@@ -156,7 +157,7 @@ export function PynkAdminShell({ children }: { children: React.ReactNode }) {
           href="/admin-pynkstudio/profilo"
           onClick={() => setOpen(false)}
           className="pynk-admin-nav-link mx-3 mb-1"
-          data-active={pathname === "/admin-pynkstudio/profilo"}
+          data-active={isPynkNavActive(pathname, "/admin-pynkstudio/profilo")}
         >
           <UserCircle size={18} />
           Profilo

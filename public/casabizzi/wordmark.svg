@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 132" role="img" aria-label="Casa Bizzi, Milano">
+  <rect width="420" height="132" fill="#ECECE4"/>
+  <rect x="40" y="30" width="340" height="1.4" fill="#6E1B26"/>
+  <rect x="40" y="100" width="340" height="1.4" fill="#6E1B26"/>
+  <text x="210" y="80" text-anchor="middle"
+        font-family="Didot, 'Bodoni MT', 'Bodoni 72', 'Playfair Display', Georgia, 'Times New Roman', serif"
+        font-size="46" letter-spacing="4" fill="#1A1A18">CASA BIZZI</text>
+  <text x="210" y="118" text-anchor="middle"
+        font-family="'Archivo', 'Helvetica Neue', Helvetica, Arial, sans-serif"
+        font-size="11" letter-spacing="7" fill="#6E1B26">MILANO</text>
+</svg>

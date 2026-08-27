@@ -337,9 +337,11 @@ type StepProps = {
   set: <K extends keyof WizardData>(k: K, v: WizardData[K]) => void;
   step: number;
   total: number;
+  /** Impostato nei portali prodotto: nasconde il selettore settore. */
+  lockedVertical?: WizardData["business_vertical"];
 };
 
-function StepIdentity({ data, set, step, total }: StepProps) {
+function StepIdentity({ data, set, step, total, lockedVertical }: StepProps) {
   return (
     <div>
       <StepHeader
@@ -360,6 +362,7 @@ function StepIdentity({ data, set, step, total }: StepProps) {
           />
         </Field>
 
+        {!lockedVertical && (
         <div>
           <p className="mb-2 text-sm font-black uppercase tracking-wide text-pork-ink/40">
             Settore
@@ -394,6 +397,7 @@ function StepIdentity({ data, set, step, total }: StepProps) {
             />
           </div>
         </div>
+        )}
 
         {data.business_vertical === "services" || data.business_vertical === "creative" ? (
           <Field
@@ -990,9 +994,24 @@ function buildSteps(hasWebsite: boolean | null): Step[] {
   ];
 }
 
-export function PlatformLeadCreatePage() {
+export type PlatformLeadCreatePageProps = {
+  /**
+   * Preimposta e blocca il verticale (portale prodotto): il selettore settore
+   * sparisce, perché il portale può creare solo lead del proprio prodotto.
+   */
+  vertical?: WizardData["business_vertical"];
+  /** Prefisso delle route CRM. Default: "/admin/crm". */
+  basePath?: string;
+};
+
+export function PlatformLeadCreatePage({
+  vertical,
+  basePath = "/admin/crm",
+}: PlatformLeadCreatePageProps = {}) {
   const router = useRouter();
-  const [data, setData] = useState<WizardData>(INITIAL);
+  const [data, setData] = useState<WizardData>(
+    vertical ? { ...INITIAL, business_vertical: vertical } : INITIAL,
+  );
   const [step, setStep] = useState<Step>("identity");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -1082,14 +1101,14 @@ export function PlatformLeadCreatePage() {
       });
       const json = (await res.json().catch(() => ({}))) as { id?: string; error?: string };
       if (!res.ok) throw new Error(json.error ?? "Errore durante il salvataggio.");
-      router.replace(`/admin/crm/${json.id}`);
+      router.replace(`${basePath}/${json.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Errore sconosciuto.");
       setSaving(false);
     }
   }
 
-  const stepProps: StepProps = { data, set, step: stepNumber, total };
+  const stepProps: StepProps = { data, set, step: stepNumber, total, lockedVertical: vertical };
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -1099,7 +1118,7 @@ export function PlatformLeadCreatePage() {
           <h1 className="headline text-4xl">Inserimento guidato</h1>
         </div>
         <Link
-          href="/admin/crm"
+          href={basePath}
           className="inline-flex items-center gap-2 rounded-full bg-pork-ink/5 px-4 py-2 text-sm font-black text-pork-ink hover:bg-pork-ink/10"
         >
           <ChevronLeft size={16} /> CRM

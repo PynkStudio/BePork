@@ -280,14 +280,15 @@ function isInternalPlatformPath(pathname: string): boolean {
 const ADMIN_PYNKSTUDIO_PATHS = [
   "/agenda",
   "/bizery",
-  "/company",
   "/crm",
   "/inbox",
   "/mailapp",
   "/menuary",
   "/orpheo",
   "/patrimoniale",
+  "/profilo",
   "/security",
+  "/utenti",
 ];
 
 function canonicalInternalPlatformRedirect(
@@ -323,7 +324,7 @@ function canonicalInternalPlatformRedirect(
     mode !== "gestione-custom"
   ) {
     const publicGestionePath = pathname.replace(/^\/gestione/, "") || "/";
-    return NextResponse.redirect(new URL(`https://admin.pynstudio.eu${publicGestionePath}${search}`));
+    return NextResponse.redirect(new URL(`https://admin.pynkstudio.eu${publicGestionePath}${search}`));
   }
 
   return null;
@@ -767,11 +768,11 @@ export async function middleware(request: NextRequest) {
 
   if (allowStaticAssets(pathname)) return NextResponse.next();
 
-  // ── Redirect gestione.menuary.it → admin.pynstudio.eu ──────────────────────
-  // Il pannello gestione è stato migrato da gestione.menuary.it a admin.pynstudio.eu.
+  // ── Redirect gestione.menuary.it → admin.pynkstudio.eu ──────────────────────
+  // Il pannello gestione è stato migrato da gestione.menuary.it a admin.pynkstudio.eu.
   if (mode === "gestione") {
     const publicPath = pathname.replace(/^\/gestione/, "") || "/";
-    return NextResponse.redirect(new URL(`https://admin.pynstudio.eu${publicPath}${request.nextUrl.search}`), 301);
+    return NextResponse.redirect(new URL(`https://admin.pynkstudio.eu${publicPath}${request.nextUrl.search}`), 301);
   }
 
   const internalPlatformRedirect = canonicalInternalPlatformRedirect(request, mode);
@@ -974,7 +975,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // ── Gestione tenant su dominio cliente (gestione.[dominio].it) ───────────
-  // Mantiene intatti i legacy admin.pynstudio.eu/[slug] e gestione.bizery.it/[slug],
+  // Mantiene intatti i legacy admin.pynkstudio.eu/[slug] e gestione.bizery.it/[slug],
   // ma per i domini tenant monta lo stesso gestionale senza slug pubblico.
   if (mode === "gestione-custom") {
     const tenant = resolveTenantFromManagementHost(host);
@@ -1124,7 +1125,7 @@ export async function middleware(request: NextRequest) {
     );
   }
 
-  // ── Studio (deprecato) → reindirizza tutto su admin.pynstudio.eu ──────
+  // ── Studio (deprecato) → reindirizza tutto su admin.pynkstudio.eu ──────
   if (mode === "studio") {
     // Mappa i vecchi path studio sulle nuove sezioni di gestione
     const sectionMap: Record<string, string> = {
@@ -1170,10 +1171,10 @@ export async function middleware(request: NextRequest) {
         .maybeSingle();
       const tid = empRow?.tenant_id;
       if (!tid) return NextResponse.redirect(new URL("https://login.menuary.it?from=studio"));
-      return NextResponse.redirect(new URL(`https://admin.pynstudio.eu/${tid}${section}`));
+      return NextResponse.redirect(new URL(`https://admin.pynkstudio.eu/${tid}${section}`));
     }
     return NextResponse.redirect(
-      new URL(`https://admin.pynstudio.eu/${row.tenant_id}${section}`),
+      new URL(`https://admin.pynkstudio.eu/${row.tenant_id}${section}`),
     );
   }
 

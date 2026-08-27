@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import {
+  Archivo,
   Bagel_Fat_One,
   Bebas_Neue,
+  Bodoni_Moda,
   Cormorant_Garamond,
   DM_Sans,
   Fraunces,
@@ -102,6 +104,24 @@ const cascinaBody = Inter({
   display: "swap",
 });
 
+// Casa Bizzi: didone italiana per il marchio e le targhe, grottesco per le
+// etichette d'inventario. Il Bodoni è la lettera con cui Milano stampa la moda,
+// non un serif scelto perché "sembra di lusso".
+const casabizziDisplay = Bodoni_Moda({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  style: ["normal", "italic"],
+  variable: "--font-casabizzi-display",
+  display: "swap",
+});
+
+const casabizziBody = Archivo({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-casabizzi-body",
+  display: "swap",
+});
+
 export async function generateMetadata(): Promise<Metadata> {
   const h = await headers();
   const host = h.get("host");
@@ -161,14 +181,14 @@ export async function generateMetadata(): Promise<Metadata> {
   if (mode === "gestione" || mode === "gestione-custom") {
     if (!tenant) {
       return {
-        metadataBase: new URL("https://admin.pynstudio.eu"),
+        metadataBase: new URL("https://admin.pynkstudio.eu"),
         title: { default: "Menuary · gestione", template: "%s · Menuary" },
         robots: { index: false, follow: false },
         icons: buildIconSet(mode),
       };
     }
     return {
-      metadataBase: new URL(mode === "gestione-custom" ? `https://gestione.${tenant.domains[0] ?? "menuary.it"}` : "https://admin.pynstudio.eu"),
+      metadataBase: new URL(mode === "gestione-custom" ? `https://gestione.${tenant.domains[0] ?? "menuary.it"}` : "https://admin.pynkstudio.eu"),
       title: { default: `${tenant.name} · gestione`, template: `%s · ${tenant.name}` },
       robots: { index: false, follow: false },
       icons: buildIconSet(mode, tenant),
@@ -701,7 +721,7 @@ export default async function RootLayout({
   return (
     <html
       lang={lang}
-      className={`${display.variable} ${impact.variable} ${body.variable} ${menuaryDisplay.variable} ${menuaryBody.variable} ${cascinaHeading.variable} ${cascinaBody.variable}`}
+      className={`${display.variable} ${impact.variable} ${body.variable} ${menuaryDisplay.variable} ${menuaryBody.variable} ${cascinaHeading.variable} ${cascinaBody.variable} ${casabizziDisplay.variable} ${casabizziBody.variable}`}
       style={themeVars as React.CSSProperties}
       data-tenant={tenant.id}
       data-platform={mode}

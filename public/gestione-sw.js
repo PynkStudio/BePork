@@ -1,5 +1,5 @@
 // Service worker Web Push per il pannello Gestione dei tenant
-// (admin.pynstudio.eu/[slug], gestione.bizery.it, domini custom tenant).
+// (admin.pynkstudio.eu/[slug], gestione.bizery.it, domini custom tenant).
 // Generico e riusabile per qualsiasi notifica del pannello Gestione (oggi:
 // nuova mail nel modulo mail; in futuro altri moduli potranno riusarlo senza
 // bisogno di un nuovo service worker). Riceve il payload inviato da

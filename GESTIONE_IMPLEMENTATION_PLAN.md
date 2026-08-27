@@ -1,4 +1,4 @@
-# Piano implementazione admin.pynstudio.eu (ex gestione.menuary.it)
+# Piano implementazione admin.pynkstudio.eu (ex gestione.menuary.it)
 
 > Stato: DB e ruoli completati. Routing e UI da implementare.
 
@@ -42,13 +42,13 @@
 
 ---
 
-## Da implementare: admin.pynstudio.eu (ex gestione.menuary.it)
+## Da implementare: admin.pynkstudio.eu (ex gestione.menuary.it)
 
 ### 1. Platform mode e routing
 
 **`src/lib/platform.ts`**
 - Aggiungere `"gestione"` a `PlatformMode`
-- `admin.pynstudio.eu` → mode `"gestione"`
+- `admin.pynkstudio.eu` → mode `"gestione"`
 
 **`src/middleware.ts`**
 - Modalità `gestione`: 
@@ -56,7 +56,7 @@
   - Auth guard Supabase
   - Check `can_admin_tenant(tenantSlug)` per verificare accesso al tenant specifico
   - Path pubblici: `/[slug]/login`, `/[slug]/set-password`
-   - Rewrite: `admin.pynstudio.eu/bepork/ordini` → `/gestione/bepork/ordini`
+   - Rewrite: `admin.pynkstudio.eu/bepork/ordini` → `/gestione/bepork/ordini`
 
 ### 2. Route Next.js
 
@@ -97,12 +97,12 @@ gia' brandizzati, cosi' possono essere abilitati in futuro senza modifiche CSS.
 
 ### 3. Enrollment flow (set-password per staff)
 
-`admin.pynstudio.eu/[slug]/set-password` deve:
+`admin.pynkstudio.eu/[slug]/set-password` deve:
 1. Form nuova password
 2. Checkbox "Abilita anche come cliente Menuary"
    - Se checked → `UPDATE user_profiles SET consumer_enabled = true WHERE user_id = auth.uid()`
    - Mostra nota: "Puoi accedere a clienti.menuary.it con le stesse credenziali"
-3. On success → redirect a `admin.pynstudio.eu/[slug]/dashboard`
+3. On success → redirect a `admin.pynkstudio.eu/[slug]/dashboard`
 
 ### 4. Invito staff da parte del titolare
 
@@ -114,7 +114,7 @@ Il titolare può invitare dipendenti dalla pagina Staff:
    await db.admin_users.insert({ email, role, tenant_id, display_name, permissions, invited_by })
    // 2. Invia invito Supabase con redirect corretto
    await supabase.auth.admin.inviteUserByEmail(email, {
-      redirectTo: `https://admin.pynstudio.eu/${tenantSlug}/set-password`
+      redirectTo: `https://admin.pynkstudio.eu/${tenantSlug}/set-password`
    })
    ```
 
@@ -142,7 +142,7 @@ Endpoint `/api/gestione/device-auth`:
 ### 7. Link dai siti tenant
 
 Nei siti pubblici dei ristoranti (bepork.it, faak.it), aggiungere link a:
-`https://admin.pynstudio.eu/[tenantSlug]`
+`https://admin.pynkstudio.eu/[tenantSlug]`
 
 ### 8. Multilingua menu e gestione
 
@@ -153,7 +153,7 @@ Nei siti pubblici dei ristoranti (bepork.it, faak.it), aggiungere link a:
 - Tutta la parte di gestione deve essere predisposta alla traduzione UI, senza
   stringhe hardcoded quando viene introdotto il dizionario del tenant.
 - La scelta lingua del tenant deve persistere anche in gestione: menu pubblico e
-  `admin.pynstudio.eu/[tenantSlug]` devono leggere/scrivere la stessa preferenza
+  `admin.pynkstudio.eu/[tenantSlug]` devono leggere/scrivere la stessa preferenza
   lingua (localStorage/cookie tenant), cosi' cambiando area non si perde la lingua
   scelta.
 

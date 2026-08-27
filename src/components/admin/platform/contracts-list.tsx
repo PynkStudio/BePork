@@ -10,6 +10,8 @@ import {
   type ContractStatus,
 } from "@/lib/contracts/contracts-store";
 import { BRAND_INFO, formatEUR, computeYearlyTotal, type ContractData, type ContractBrand } from "@/lib/contracts/menuary-contract";
+import { contractBrandFromLeadVertical } from "@/lib/contracts/contract-lead-mapping";
+import type { LeadVertical } from "@/lib/platform-crm-types";
 
 type ServerContract = {
   id: string;
@@ -28,8 +30,27 @@ type ServerContract = {
   expires_at: string | null;
 };
 
-export function ContractsList() {
-  const [items, setItems] = useState<ServerContract[]>([]);
+export type ContractsListProps = {
+  /**
+   * Blocca la lista sul brand del verticale indicato (portale prodotto).
+   * Omesso = tutti i brand (hub PynkStudio e admin.menuary.it).
+   */
+  vertical?: LeadVertical;
+  /** Prefisso delle route contratti. Default: "/admin/contratti". */
+  basePath?: string;
+};
+
+export function ContractsList({
+  vertical,
+  basePath = "/admin/contratti",
+}: ContractsListProps = {}) {
+  const lockedBrand = vertical ? contractBrandFromLeadVertical(vertical) : null;
+  const [allItems, setAllItems] = useState<ServerContract[]>([]);
+  const items = lockedBrand
+    ? allItems.filter(
+        (c) => (c.brand ?? c.contract_data?.brand ?? "menuary") === lockedBrand,
+      )
+    : allItems;
   const [loading, setLoading] = useState(true);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [dropdownRect, setDropdownRect] = useState<{ top: number; right: number } | null>(null);
@@ -69,7 +90,7 @@ export function ContractsList() {
       const res = await fetch("/api/admin/contracts", { cache: "no-store" });
       if (!res.ok) return;
       const { contracts } = (await res.json()) as { contracts: ServerContract[] };
-      setItems(contracts ?? []);
+      setAllItems(contracts ?? []);
       window.dispatchEvent(new Event("contracts:refresh"));
     } catch {
       // ignora errori transitori di rete
@@ -85,7 +106,7 @@ export function ContractsList() {
           .then(async (res) => {
             if (!res.ok) return;
             const { contracts } = (await res.json()) as { contracts: ServerContract[] };
-            setItems(contracts ?? []);
+            setAllItems(contracts ?? []);
             window.dispatchEvent(new Event("contracts:refresh"));
           })
           .catch(() => {})
@@ -174,7 +195,7 @@ export function ContractsList() {
           </p>
         </div>
         <Link
-          href="/admin/contratti/nuovo"
+          href={vertical ? `${basePath}/nuovo?vertical=${vertical}` : `${basePath}/nuovo`}
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -219,7 +240,7 @@ export function ContractsList() {
             <thead style={{ background: "#f9fafb", textAlign: "left" }}>
               <tr>
                 <th style={th}>Numero</th>
-                <th style={th}>Brand</th>
+                {!lockedBrand && <th style={th}>Brand</th>}
                 <th style={th}>Cliente</th>
                 <th style={th}>Piano</th>
                 <th style={th}>Canone</th>
@@ -244,6 +265,7 @@ export function ContractsList() {
                     <td style={td}>
                       <strong>{c.numero}</strong>
                     </td>
+                    {!lockedBrand && (
                     <td style={td}>
                       <span
                         style={{
@@ -270,6 +292,7 @@ export function ContractsList() {
                         {BRAND_INFO[brandKey].label}
                       </span>
                     </td>
+                    )}
                     <td style={td}>{d.cliente.ragioneSociale || "—"}</td>
                     <td style={td}>{d.servizio.pianoNome}</td>
                     <td style={td}>
@@ -367,13 +390,13 @@ export function ContractsList() {
             }}
           >
             {c.status === "draft" && (
-              <Link href={`/admin/contratti/${c.id}`} className="dropdown-item" style={dropdownItemStyle}>
+              <Link href={`${basePath}/${c.id}`} className="dropdown-item" style={dropdownItemStyle}>
                 <Edit3 size={13} /> Modifica contratto
               </Link>
             )}
             {c.status !== "draft" && (
               <Link
-                href={needFirma ? c.counterparty_signing_url! : (c.signing_url ?? `/admin/contratti/${c.id}`)}
+                href={needFirma ? c.counterparty_signing_url! : (c.signing_url ?? `${basePath}/${c.id}`)}
                 target={needFirma || c.signing_url ? "_blank" : undefined}
                 className="dropdown-item"
                 style={dropdownItemStyle}

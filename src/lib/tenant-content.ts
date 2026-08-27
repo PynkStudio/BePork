@@ -1755,7 +1755,128 @@ const cascinaErranteContent: TenantContent = {
 
 import { findTenantById } from "./tenant-registry";
 
+const casabizziContent: TenantContent = {
+  logoSrc: "/casabizzi/wordmark.svg",
+  logoAlt: "Casa Bizzi",
+  showcaseLogoSrc: "/casabizzi/capi/giacca-verde.webp",
+  showcaseLogoAlt: "Casa Bizzi, giacca strutturata Aethel in verde foresta",
+  description:
+    "Casa Bizzi, maison milanese fondata da Michele Bizzi. Otto oggetti in ventidue varianti: sartoria, maglieria e seta, con le misure dichiarate capo per capo.",
+  url: "https://demo.bizery.it/casabizzi",
+  social: {
+    instagram: "https://www.instagram.com/casabizzi/",
+    facebook: "https://www.facebook.com/casabizzi",
+    instagramLabel: "Instagram Casa Bizzi",
+    facebookLabel: "Facebook Casa Bizzi",
+  },
+  contact: {
+    phone: "+39 02 8901 2260",
+    email: "showroom@casabizzi.it",
+    whatsappDigits: "390289012260",
+    whatsappMessage: "Buongiorno Casa Bizzi, vorrei fissare un appuntamento in showroom.",
+  },
+  address: {
+    street: "Via Solferino, 18",
+    zip: "20121",
+    city: "Milano",
+    province: "MI",
+    full: "Via Solferino, 18 - 20121 Milano (MI)",
+  },
+  maps: {
+    searchUrl: "https://www.google.com/maps/search/?api=1&query=Via+Solferino+18+Milano",
+    embedUrl: "https://www.google.com/maps?q=Via+Solferino+18+Milano&output=embed",
+  },
+  hero: {
+    eyebrow: "Maison, Milano",
+    titleLead: "Otto oggetti,",
+    titleAccent: "ventidue varianti.",
+    body: "La collezione Autunno Inverno 26 esposta come un catalogo: numero di inventario, tessuto, origine e misure dichiarate capo per capo.",
+    backdrop: "/casabizzi/capi/trench-sabbia.webp",
+    ctaLabel: "Vedi la collezione",
+  },
+  soulsIntro: {
+    eyebrow: "Tre capsule, una casa",
+    titleLead: "Aethel, Loom",
+    titleAccent: "e Kroma.",
+    body: "Tre linee interne alla maison: la sartoria strutturata, il guardaroba grezzo e la maglia senza cuciture.",
+  },
+  souls: [
+    {
+      id: "aethel",
+      kicker: "Linea Aethel",
+      title: "Sartoria a mezza tela",
+      desc: "Lana di Biella, fodera in cupro, bottoni in corno. La giacca doppiopetto e il girocollo in cashmere puro.",
+      href: "#collezione",
+      image: "/casabizzi/capi/giacca-cammello.webp",
+    },
+    {
+      id: "loom",
+      kicker: "Linea Loom",
+      title: "Cotone e denim grezzo",
+      desc: "Popeline biologico toscano e denim giapponese da 14 once, con la cimosa lasciata a vista.",
+      href: "#collezione",
+      image: "/casabizzi/capi/camicia-azzurro.webp",
+    },
+    {
+      id: "kroma",
+      kicker: "Linea Kroma",
+      title: "Maglia e seta stampata",
+      desc: "L'abito esce dal telaio in un pezzo solo. Il foulard porta un disegno a linea continua stampato a Como.",
+      href: "#collezione",
+      image: "/casabizzi/capi/foulard-senape.webp",
+    },
+  ],
+  dishesIntro: {
+    eyebrow: "Inventario",
+    title: "Gli oggetti che escono per primi dallo showroom.",
+    subtitle: "Ordine di peso, dal cappotto al foulard. Ogni scheda porta le misure del capo, non quelle del corpo.",
+  },
+  dishes: [
+    {
+      name: "Giacca strutturata Aethel",
+      desc: "Doppiopetto in lana vergine da 340 grammi, revers a lancia, spalla naturale.",
+      price: "€1.480",
+      image: "/casabizzi/capi/giacca-nero.webp",
+      variant: "red",
+      href: "#collezione",
+    },
+    {
+      name: "Girocollo in cashmere Aethel",
+      desc: "Cashmere puro filato 2/28, finezza 12, cuciture ribattute a mano.",
+      price: "€590",
+      image: "/casabizzi/capi/maglia-merlot.webp",
+      variant: "mustard",
+      href: "#collezione",
+    },
+    {
+      name: "Foulard in twill Kroma",
+      desc: "Novanta per novanta, twill di seta 14 momme, orlo rullato a mano.",
+      price: "€290",
+      image: "/casabizzi/capi/foulard-monocromo.webp",
+      variant: "green",
+      href: "#collezione",
+    },
+  ],
+  findUs: {
+    eyebrow: "Showroom",
+    titleLead: "Milano,",
+    titleAccent: "via Solferino.",
+    body: "Da martedì a sabato, dalle 10 alle 19. Ogni capo si prova prima di ordinarlo, la presa misure è il primo mercoledì del mese.",
+    mapTitle: "Mappa showroom Casa Bizzi",
+  },
+  footer: {
+    tagline: "Otto oggetti, ventidue varianti.",
+    body: "Casa Bizzi, maison fondata da Michele Bizzi. Sito dimostrativo su piattaforma Bizery.",
+  },
+  delivery: {
+    title: "Spedizione e reso",
+    body: "Consegna in Italia in due giorni lavorativi, in Europa in cinque. Reso entro trenta giorni con il cartellino attaccato.",
+    partners: [],
+  },
+};
+
 export function getTenantContent(tenantId: string): TenantContent {
+  if (tenantId === "casabizzi") return casabizziContent;
   if (tenantId === "cascina-errante") return cascinaErranteContent;
   if (tenantId === "faak") return faakContent;
   if (tenantId === "libritech") return libritechContent;

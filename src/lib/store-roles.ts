@@ -1,5 +1,5 @@
 /**
- * Ruoli e permessi per admin.pynstudio.eu
+ * Ruoli e permessi per admin.pynkstudio.eu
  *
  * SiteadminRole → chi opera su admin.menuary.it (siteadmin table)
  * EmployeeRole  → dipendenti degli store (employee table)

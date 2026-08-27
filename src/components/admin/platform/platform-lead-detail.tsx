@@ -127,7 +127,17 @@ function eur(n: number | null) {
 
 // ─── Componente principale ────────────────────────────────────────────────────
 
-export function PlatformLeadDetail({ leadId }: { leadId: string }) {
+export function PlatformLeadDetail({
+  leadId,
+  basePath = "/admin/crm",
+  contractsBasePath = "/admin/contratti",
+}: {
+  leadId: string;
+  /** Prefisso delle route CRM. Default: "/admin/crm". */
+  basePath?: string;
+  /** Prefisso delle route contratti. Default: "/admin/contratti". */
+  contractsBasePath?: string;
+}) {
   const router = useRouter();
   const [lead, setLead] = useState<PlatformLead | null>(
     PLATFORM_LEADS.find((item) => item.id === leadId) ?? null,
@@ -294,7 +304,7 @@ export function PlatformLeadDetail({ leadId }: { leadId: string }) {
       const response = await fetch(`/api/admin/leads/${lead.id}`, { method: "DELETE" });
       const payload = (await response.json().catch(() => ({}))) as { error?: string };
       if (!response.ok) throw new Error(payload.error ?? "Impossibile eliminare il lead.");
-      router.replace("/admin/crm");
+      router.replace(basePath);
       router.refresh();
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : "Impossibile eliminare il lead.");
@@ -499,7 +509,7 @@ export function PlatformLeadDetail({ leadId }: { leadId: string }) {
     return (
       <div className="space-y-6">
         <Link
-          href="/admin/crm"
+          href={basePath}
           className="inline-flex items-center gap-2 rounded-full border border-pork-ink/15 px-4 py-2 text-sm font-bold text-pork-ink/70 transition hover:border-pork-red/30 hover:text-pork-red"
         >
           <ArrowLeft size={15} /> CRM
@@ -515,7 +525,7 @@ export function PlatformLeadDetail({ leadId }: { leadId: string }) {
     return (
       <div className="space-y-6">
         <Link
-          href="/admin/crm"
+          href={basePath}
           className="inline-flex items-center gap-2 rounded-full border border-pork-ink/15 px-4 py-2 text-sm font-bold text-pork-ink/70 transition hover:border-pork-red/30 hover:text-pork-red"
         >
           <ArrowLeft size={15} /> CRM
@@ -543,7 +553,7 @@ export function PlatformLeadDetail({ leadId }: { leadId: string }) {
       {/* Header */}
       <div className="flex flex-wrap items-start gap-4">
         <Link
-          href="/admin/crm"
+          href={basePath}
           className="inline-flex items-center gap-2 rounded-full border border-pork-ink/15 px-4 py-2 text-sm font-bold text-pork-ink/70 transition hover:border-pork-red/30 hover:text-pork-red"
         >
           <ArrowLeft size={15} /> CRM
@@ -646,7 +656,7 @@ export function PlatformLeadDetail({ leadId }: { leadId: string }) {
                 <Figma size={14} /> Aggiorna Figma
               </button>
               <Link
-                href={`/admin/contratti/nuovo?leadId=${lead.id}`}
+                href={`${contractsBasePath}/nuovo?leadId=${lead.id}`}
                 className="inline-flex items-center gap-2 rounded-full border border-pork-ink/15 px-4 py-2 text-sm font-bold text-pork-ink/70 hover:border-pork-red/30 hover:text-pork-red"
               >
                 <FileText size={14} /> Genera contratto
@@ -754,7 +764,7 @@ export function PlatformLeadDetail({ leadId }: { leadId: string }) {
         )}
         {activeTab === "fatturazione" && <TabFatturazione lead={lead} />}
         {activeTab === "proposta" && (
-          <TabProposta lead={lead} onSave={saveProposal} saving={leadSaving} />
+          <TabProposta lead={lead} onSave={saveProposal} saving={leadSaving} contractsBasePath={contractsBasePath} />
         )}
         {activeTab === "abbonamento" && (
           <TabAbbonamento
@@ -827,8 +837,10 @@ function TabProposta({
   lead,
   onSave,
   saving,
+  contractsBasePath,
 }: {
   lead: PlatformLead;
+  contractsBasePath: string;
   onSave: (proposal: {
     proposed_package_slug: string | null;
     proposed_addons: string[];
@@ -1064,7 +1076,7 @@ function TabProposta({
 
       <div className="flex flex-wrap items-center justify-end gap-2">
         <Link
-          href={`/admin/contratti/nuovo?leadId=${lead.id}`}
+          href={`${contractsBasePath}/nuovo?leadId=${lead.id}`}
           className="inline-flex items-center gap-2 rounded-full border border-pork-ink/15 px-5 py-2.5 text-sm font-bold text-pork-ink/70 hover:text-pork-ink"
         >
           <FileText size={15} /> Crea contratto da questa proposta

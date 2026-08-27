@@ -88,7 +88,7 @@ era già in progetto).
 | `book-memory.ts` | Memoria del volume che sopravvive al rimontaggio del segmento dinamico |
 | `book-site.tsx` | Componente di primo livello: cerimonia, chiusura e giro, dati, nav, piede |
 | `book-shell.tsx` | Scena, stato di navigazione, input (hotspot, rotella, tastiera) |
-| `leaf.tsx` | Il foglio in volo e i suoi tre strati di ombreggiatura |
+| `leaf.tsx` | Il foglio in volo: la curvatura della carta, la luce sulle doghe, l'ombra portata |
 | `cover.tsx` | Copertina con curvatura a doghe annidate |
 | `back-cover.tsx` | Quarta di copertina: ritratto, biografia, marchio, codice a barre |
 | `pages.tsx` | Contenuto delle facce, spread per spread |
@@ -258,6 +258,90 @@ contrario — così una fila di schede non sembra timbrata con lo stesso stampo.
 aggiunto domani prende la sua variazione da sé, e resta sempre la stessa: un valore
 casuale vero cambierebbe a ogni render e la foto saltellerebbe a ogni sfogliata.
 
+**La carta si incurva.** Il foglio non è un piano che ruota. È vincolato al dorso
+*tangente al piatto* — la piega sta nella cucitura, non nella carta — mentre il taglio
+libero è dove lo porta il gesto. Fra i due la carta descrive un arco:
+
+```
+arc(p)  = -ARC * sin(2π p)     gradi accumulati fra dorso e taglio
+root(p) = -180 p - arc(p)      rotazione del bordo sul dorso
+taglio  = root + arc = -180 p  ← il taglio è sempre dove lo chiede il gesto
+```
+
+Il doppio periodo non è una scelta estetica: ai quarti di giro la geometria vuole
+esattamente quei valori — a `p = 0,25` il taglio è a -45° e il dorso è ancora tangente al
+piatto destro (`root = 0`), a `p = 0,75` il dorso è tangente al piatto sinistro
+(`root = -180`). Ai capi e a metà giro l'arco è nullo, ed è giusto: posata la carta è
+piana, e in piedi fuori dal libro è quasi piana. Il segno si ribalta da sé passando la
+verticale, perché lì la tangente al dorso rotola da un piatto all'altro.
+
+Sopra ci va la **frusta**, l'unico termine che dipende dalla velocità: l'aria e l'inerzia
+trattengono il taglio mentre il foglio vola. È quella a distinguere un foglio trascinato
+piano — che resta quasi piatto sotto il dito — da uno lanciato con un colpetto. Va tenuta
+piccola rispetto all'arco: a parità di segno opposto nella prima metà del giro, una frusta
+grande annulla la curvatura proprio a metà volo, che è il momento in cui si guarda.
+
+**Le doghe del foglio non si annidano.** La copertina spezza l'arte in doghe annidate
+(`cover.tsx`) e funziona perché lì il fondo è una texture, che si ritaglia da sé. Il foglio
+no: ogni doga deve ritagliare la propria striscia di DOM vivo, e un `overflow` diverso da
+`visible` **appiattisce il contesto 3D dei figli**, spezzando la catena alla prima doga.
+Quindi la catena si srotola in coordinate assolute — posizione e `z` di ogni doga calcolate
+sommando i tratti precedenti — e ogni doga è una foglia dell'albero 3D, dove il ritaglio
+non fa danno.
+
+Sei doghe: poche e la carta si vede spigolosa, troppe e si paga una copia del contenuto per
+ognuna. Il foglio si monta a gesto già cominciato, e quel montaggio cade sul primo
+fotogramma del giro — è il posto peggiore per un lavoro in più.
+
+**La larghezza della doga va letta dallo stile calcolato, non dal rettangolo a schermo.**
+`getBoundingClientRect()` su un discendente di `perspective` restituisce la proiezione: il
+volume sta inclinato di 6° dentro una fuga di 2800px, e su un foglio da 350px sono dodici
+pixel di troppo. Le strisce slittavano di un pixel e mezzo a doga e la pagina si leggeva
+spezzata in sei colonne — un difetto che *sembra* una cucitura di antialiasing e non lo è.
+Le due cose vanno distinte, perché la cucitura vera esiste comunque e si chiude a parte,
+con mezzo pixel di sormonto fra doghe adiacenti.
+
+**La luce si calcola, non si disegna.** Ombre, riflesso e ombra portata escono dalla normale
+reale di ogni doga (Lambert più un lobo speculare largo, perché la carta è opaca), non da
+curve scritte a mano sul progresso: se la geometria cambia, la luce la segue. La rampa fra
+due doghe è continua per costruzione — due veli per doga, acceso l'uno sul bordo interno e
+l'altro sull'esterno, con le opacità dei *bordi* — quindi il bordo destro di una doga vale
+esattamente quanto il sinistro della successiva e la carta non si vede spezzata.
+
+Il riflesso non è un velo che compare: è una banda stretta che **cammina** sulla carta,
+ferma sulla doga che guarda la bisettrice fra luce e osservatore. Con la carta piana quella
+doga non esiste, ed è per questo che il termine è moltiplicato per l'arco.
+
+**L'ombra portata sta sul piano del libro, non sul foglio.** Un `box-shadow` sulla carta
+ruota con lei, e un'ombra che si alza da terra non è un'ombra. È un elemento a sé che si
+accorcia col coseno dell'angolo; oltre la verticale il coseno cambia segno e con esso lo
+`scaleX`, quindi l'ombra passa da sé sull'altra metà — che è dove il foglio sta andando.
+È massima ai quarti: a foglio posato non c'è distacco, di taglio non c'è superficie.
+
+**La rotella scorre il giro, non lo fa scattare.** Prima era una soglia con un tempo morto:
+novanta pixel facevano partire un giro intero, e per quattro decimi di secondo la rotella
+non contava più — un pulsante nascosto dentro uno scorrimento. Ora la rotella apre lo stesso
+trascinamento del dito con una corsa sua (300px per pagina), il foglio la segue per tutta la
+corsa e a gesto finito valgono le due regole di sempre: oltre il 30% cade in avanti, sotto
+torna indietro. Gli scatti di un mouse sono discreti, quindi la rotella detta il *bersaglio*
+e una molla ci arriva — lo stesso patto della cerimonia d'apertura. La normalizzazione di
+`deltaMode` è ora dichiarata una volta sola e importata dalla cerimonia, invece di esistere
+in due copie.
+
+Due difetti del motore sono emersi facendo questo, e valgono anche per il dito:
+
+- **La decisione va presa sul bersaglio del gesto, non su dove è arrivata la carta.** Otto
+  scatti di rotella nello stesso fotogramma portano il bersaglio a fondo corsa mentre la
+  molla è ancora ferma sul dorso: leggendo il foglio, il giro risultava appena accennato e
+  non si compiva mai.
+- **Una corsa che raccoglie un foglio già in aria non deve riallinearlo.** Il
+  riallineamento serve ai salti nuovi, il cui valore può essere rimasto al capo opposto da
+  un gesto precedente; applicato a una ripresa riportava al dorso un foglio lasciato oltre
+  metà corsa, che ripartiva da capo sotto gli occhi.
+
+**Il fruscio sta all'aggancio, non al rilascio.** La carta suona quando si stacca. Prima il
+suono partiva alla fine del trascinamento, cioè quando il foglio aveva già viaggiato.
+
 **Movimento.** Molla morbida, massa alta, smorzamento quasi critico: una pagina di carta è
 leggera ma incontra l'aria, rallenta lunga e si posa senza rimbalzare (~1,3 s per giro).
 Il foglio si solleva **in proporzione a quanto il puntatore si avvicina al taglio**, con
@@ -303,6 +387,13 @@ non si muove e soprattutto non tocca la barra degli indirizzi.
 **Densità.** Le pagine sono progettate per stare dentro il foglio: se una eccede resta
 scorrevole ma senza barra, perché una scrollbar dentro un libro è l'artefatto che rompe
 l'illusione più di ogni altro.
+
+**Da verificare sul campo.** Il costo per fotogramma del foglio a doghe non è stato
+misurato: il pannello di anteprima tiene la scheda nascosta fra un comando e l'altro, e con
+la scheda nascosta `requestAnimationFrame` è fermo — quindi ogni misura di fps fatta da lì
+misura gli screenshot, non l'animazione. Va guardato su una macchina lenta prima di
+considerarlo chiuso; se costa troppo, la leva è il numero di doghe, che è una costante sola
+in `leaf.tsx` e il foglio di stile la legge da lì.
 
 **Da completare.** La dedica usa un corsivo di sistema: per farla sembrare scritta a mano
 serve un font calligrafico da self-hostare in `public/valentina-orciuoli/`. Il compatto

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import {
   Building2,
@@ -66,8 +66,25 @@ function fmt(iso: string) {
 
 type CurrentUser = { user_id: string; name: string; role: string };
 
-export function PlatformCrmPage() {
-  const [leads, setLeads] = useState<PlatformLead[]>([]);
+export type PlatformCrmPageProps = {
+  /**
+   * Blocca la vista su un solo verticale (portale prodotto): i lead degli altri
+   * prodotti non vengono mai mostrati e i filtri cross-prodotto spariscono.
+   * Omesso = vista aggregata (hub PynkStudio e admin.menuary.it).
+   */
+  vertical?: LeadVertical;
+  /** Prefisso delle route CRM (dettaglio e nuovo lead). Default: "/admin/crm". */
+  basePath?: string;
+  /** Etichetta di sezione mostrata in testata. Default: "Piattaforma". */
+  productLabel?: string;
+};
+
+export function PlatformCrmPage({
+  vertical,
+  basePath = "/admin/crm",
+  productLabel,
+}: PlatformCrmPageProps = {}) {
+  const [allLeads, setAllLeads] = useState<PlatformLead[]>([]);
   const [loadingLeads, setLoadingLeads] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<LeadStatus | "all">("all");
@@ -91,11 +108,16 @@ export function PlatformCrmPage() {
           error?: string;
         };
         if (!r.ok) throw new Error(data.error ?? "Impossibile caricare i lead.");
-        setLeads(data.leads ?? []);
+        setAllLeads(data.leads ?? []);
       })
       .catch((err) => setLoadError(err instanceof Error ? err.message : "Impossibile caricare i lead."))
       .finally(() => setLoadingLeads(false));
   }, []);
+
+  const leads = useMemo(
+    () => (vertical ? allLeads.filter((l) => l.business_vertical === vertical) : allLeads),
+    [allLeads, vertical],
+  );
 
   const foodLeads = leads.filter((l) => l.business_vertical === "food");
   const servicesLeads = leads.filter((l) => l.business_vertical === "services");
@@ -135,14 +157,14 @@ export function PlatformCrmPage() {
     <div className="space-y-8">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="impact-title text-xs text-pork-red">Piattaforma</p>
+          <p className="impact-title text-xs text-pork-red">{productLabel ?? "Piattaforma"}</p>
           <h1 className="headline text-4xl">CRM Lead</h1>
           <p className="mt-1 text-pork-ink/60">
             Pipeline commerciale completa: demo, trattativa, venduto e conversione a tenant.
           </p>
         </div>
         <Link
-          href="/admin/crm/nuovo"
+          href={vertical ? `${basePath}/nuovo?vertical=${vertical}` : `${basePath}/nuovo`}
           className="inline-flex items-center gap-2 rounded-full bg-pork-red px-5 py-2.5 font-bold text-white transition hover:bg-pork-red/90"
         >
           <Plus size={16} /> Nuovo lead
@@ -157,7 +179,8 @@ export function PlatformCrmPage() {
         <StatCard icon={CheckCircle2} label="Tenant attivi" value={counts.active} color="text-pork-green" />
       </div>
 
-      {/* Split verticali */}
+      {/* Split verticali — solo in vista aggregata */}
+      {!vertical && (
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <VerticalSplitCard
           icon={UtensilsCrossed}
@@ -190,6 +213,7 @@ export function PlatformCrmPage() {
           selected={verticalFilter === "creative"}
         />
       </div>
+      )}
 
       {/* Filtri */}
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
@@ -212,7 +236,8 @@ export function PlatformCrmPage() {
           ))}
         </div>
 
-        {/* Filtro verticale */}
+        {/* Filtro verticale — solo in vista aggregata */}
+        {!vertical && (
         <div className="flex gap-1 rounded-2xl bg-pork-ink/5 p-1">
           {VERTICAL_FILTERS.map((vf) => {
             const Icon = vf.icon;
@@ -239,6 +264,7 @@ export function PlatformCrmPage() {
             );
           })}
         </div>
+        )}
 
         {/* Search */}
         <div className="relative flex-1 min-w-48">
@@ -289,7 +315,13 @@ export function PlatformCrmPage() {
           </div>
         )}
           {filtered.map((lead) => (
-            <LeadRow key={lead.id} lead={lead} currentUserId={currentUser?.user_id ?? null} />
+            <LeadRow
+              key={lead.id}
+              lead={lead}
+              currentUserId={currentUser?.user_id ?? null}
+              basePath={basePath}
+              hideVerticalBadge={vertical != null}
+            />
           ))}
       </div>
     </div>
@@ -364,7 +396,17 @@ function VerticalSplitCard({
 
 // ─── Riga lead ────────────────────────────────────────────────────────────────
 
-function LeadRow({ lead, currentUserId }: { lead: PlatformLead; currentUserId: string | null }) {
+function LeadRow({
+  lead,
+  currentUserId,
+  basePath,
+  hideVerticalBadge,
+}: {
+  lead: PlatformLead;
+  currentUserId: string | null;
+  basePath: string;
+  hideVerticalBadge: boolean;
+}) {
   const phoneHref = lead.contact_phone ? `tel:${lead.contact_phone.replace(/\s/g, "")}` : undefined;
   const whatsappHref = lead.contact_phone
     ? `https://wa.me/${lead.contact_phone.replace(/[^\d]/g, "")}`
@@ -409,15 +451,17 @@ function LeadRow({ lead, currentUserId }: { lead: PlatformLead; currentUserId: s
             </span>
           )}
 
-          {/* Badge verticale */}
-          <span
-            className={cn(
-              "rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide",
-              VERTICAL_BADGE_CLASSES[lead.business_vertical],
-            )}
-          >
-            {VERTICAL_SHORT_LABELS[lead.business_vertical]}
-          </span>
+          {/* Badge verticale — ridondante in un portale prodotto */}
+          {!hideVerticalBadge && (
+            <span
+              className={cn(
+                "rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide",
+                VERTICAL_BADGE_CLASSES[lead.business_vertical],
+              )}
+            >
+              {VERTICAL_SHORT_LABELS[lead.business_vertical]}
+            </span>
+          )}
 
           {/* Badge status */}
           <span
@@ -544,7 +588,7 @@ function LeadRow({ lead, currentUserId }: { lead: PlatformLead; currentUserId: s
         )}
       </div>
 
-      <Link href={`/admin/crm/${lead.id}`} className="shrink-0 rounded-full p-2 text-pork-ink/30 hover:bg-pork-ink/5 hover:text-pork-ink" aria-label={`Apri ${lead.business_name}`}>
+      <Link href={`${basePath}/${lead.id}`} className="shrink-0 rounded-full p-2 text-pork-ink/30 hover:bg-pork-ink/5 hover:text-pork-ink" aria-label={`Apri ${lead.business_name}`}>
         <ArrowRight size={16} />
       </Link>
     </article>

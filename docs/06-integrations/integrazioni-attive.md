@@ -25,6 +25,7 @@ Per documentare in dettaglio una singola integrazione usa [[integration-template
 | **SUNMI Cloud Printer** | Stampa comande cloud (server-side, API V2 push diretto) | `src/lib/printing/sunmi-cloud.ts`, `src/lib/printing/dispatch.ts`, `SUNMI_CLOUD_APP_ID`, `SUNMI_CLOUD_APP_KEY`, `SUNMI_CLOUD_API_BASE` |
 | **MapLibre** | Mappe | dipendenza `maplibre-gl`, `tenant/[tenantId]/map` |
 | **Vercel Analytics** | Analytics | dipendenza `@vercel/analytics` |
+| **Slabbby** | Wishlist cross-negozio (widget di terze parti) | `src/components/core/slabbby-script-gate.tsx`, `src/components/modules/shop/slabbby-wishlist-btn.tsx`, feature flag `slabbby`. Nessuna env: lo script è pubblico (`https://slabbby.com/widget.js`). Dettagli e limiti in [[moduli-piattaforma]] |
 
 ## Canali WhatsApp
 

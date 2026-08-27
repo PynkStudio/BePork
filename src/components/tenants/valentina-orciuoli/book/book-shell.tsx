@@ -49,8 +49,26 @@ const DRAG_COMMIT_THRESHOLD = 0.3;
 const FLICK_VELOCITY = 0.85;
 /** Pixel di traverso prima di decidere che il tocco è una sfogliata e non uno scorrimento. */
 const SWIPE_SLOP = 12;
-const WHEEL_THRESHOLD = 90;
-const WHEEL_COOLDOWN_MS = 420;
+/**
+ * `deltaY` non è in pixel dappertutto: `deltaMode` 1 conta righe (Firefox con una
+ * rotella vera manda ~3) e 2 conta pagine. Senza normalizzare, su quei browser
+ * girare una pagina richiederebbe decine di scatti.
+ */
+export const WHEEL_LINE_PX = 16;
+/** Tetto per singolo evento: l'inerzia di un trackpad manda colpi enormi. */
+export const WHEEL_MAX_STEP = 160;
+/** Pixel di rotella che valgono un giro pagina intero. */
+const WHEEL_SPAN = 300;
+/** Silenzio dopo cui la rotella si considera lasciata andare. */
+const WHEEL_IDLE_MS = 110;
+/**
+ * Dopo un giro concluso, la pausa prima che la rotella ne apra un altro. La coda
+ * d'inerzia di un trackpad arriva quando il foglio si è già posato: senza questa
+ * pausa aprirebbe da sola il giro successivo, e un colpo solo ne girerebbe tre.
+ */
+const WHEEL_RELOAD_MS = 170;
+/** La rotella non è un puntatore, ma prende in prestito lo stesso trascinamento. */
+const WHEEL_POINTER_ID = -1;
 const MAX_ANIMATED_LEAVES = 3;
 const LEAF_STAGGER_MS = 110;
 const LEAF_BASE_DEPTH = 1.2;
@@ -66,6 +84,12 @@ type Gesture = {
   /** Indici dei fogli animati, nell'ordine in cui si muovono. */
   leaves: number[];
   mode: GestureMode;
+  /**
+   * La corsa raccoglie un foglio già in aria invece di lanciarne uno da fermo.
+   * Serve a distinguerla da un salto nuovo, che parte sempre da un capo: senza,
+   * un foglio lasciato oltre metà corsa veniva riportato al dorso e rigirato.
+   */
+  resumed?: boolean;
 };
 
 // Una pagina di carta è leggera ma incontra l'aria: rallenta lunga e si posa
@@ -83,6 +107,18 @@ const hintSpring = { type: "spring", stiffness: 150, damping: 20, mass: 0.9 } as
  * molla d'accenno, altrimenti resta a mezz'aria abbastanza da sembrare un bug.
  */
 const releaseSpring = { type: "spring", stiffness: 190, damping: 24, mass: 0.85 } as const;
+/**
+ * La rotella detta il bersaglio, questa molla ci arriva. Serve perché gli scatti
+ * di un mouse sono discreti: seguirli di pari passo farebbe avanzare il foglio a
+ * scatti, e un foglio che scatta non è carta.
+ */
+const wheelFollow = {
+  type: "spring",
+  stiffness: 380,
+  damping: 38,
+  mass: 0.7,
+  restDelta: 0.0005,
+} as const;
 
 /**
  * Quali fogli animare per andare da `from` a `to`. Oltre tre fogli l'occhio non
@@ -329,7 +365,8 @@ export function VoBookShell({
   );
 
   const tokenRef = useRef(0);
-  const wheelAccRef = useRef(0);
+  /** Corsa accumulata dalla rotella nel gesto in corso, e il suo tempo di guardia. */
+  const wheelRef = useRef<{ travel: number; idle: number } | null>(null);
   const wheelLockRef = useRef(0);
   const dragRef = useRef<{
     startX: number;
@@ -337,6 +374,13 @@ export function VoBookShell({
     span: number;
     /** Da dove parte il foglio: un accenno già sollevato non ricomincia dal dorso. */
     base: number;
+    /**
+     * Dove il gesto ha chiesto di portare il foglio. Non coincide con la
+     * posizione del foglio quando è una molla a inseguire il bersaglio, ed è
+     * *questo* il valore su cui si decide se il giro è compiuto: il dito che ha
+     * spinto fin lì lo ha già deciso, la carta deve solo arrivarci.
+     */
+    target: number;
     pointerId: number;
   } | null>(null);
   /** La scatola del libro, letta una volta per passaggio del puntatore e non per evento. */
@@ -553,14 +597,22 @@ export function VoBookShell({
       // corso: azzerarlo farebbe uno scatto, quindi si riallinea solo se è al
       // capo sbagliato della corsa.
       const current = value.get();
-      if (index > 0 || (dir === 1 ? current > 0.5 : current < 0.5)) value.set(start);
+      // Un foglio raccolto a mezz'aria sta già dove deve stare. Il riallineamento
+      // serve ai salti nuovi, il cui valore può essere rimasto al capo opposto da
+      // un gesto precedente; applicarlo a una ripresa riportava al dorso un foglio
+      // lasciato oltre metà corsa, che ripartiva da capo sotto gli occhi.
+      const stale = dir === 1 ? current > 0.5 : current < 0.5;
+      if (index > 0 || (stale && !gesture.resumed)) value.set(start);
       const control = animate(value, end, {
         ...flipSpring,
         delay: (index * LEAF_STAGGER_MS) / 1000,
       });
       // Il fruscio del primo foglio è già dovuto: farlo partire subito lo aggancia
-      // al gesto invece che al fotogramma successivo.
-      if (index === 0) playPageSound();
+      // al gesto invece che al fotogramma successivo. Una ripresa però ha già
+      // frusciato quando il foglio si è staccato, ed è lì che la carta suona.
+      if (index === 0) {
+        if (!gesture.resumed) playPageSound();
+      }
       else timers.push(window.setTimeout(playPageSound, index * LEAF_STAGGER_MS));
       return control;
     });
@@ -654,41 +706,6 @@ export function VoBookShell({
     },
     [appendixPos, goTo, onBeforeFirstPage, onLeaveAppendix, onPastLastPage, positionCount],
   );
-
-  // ── Input: rotella ─────────────────────────────────────────────────────────
-  useEffect(() => {
-    const stage = stageRef.current;
-    if (!stage || !open || reducedMotion) return;
-
-    const onWheel = (event: WheelEvent) => {
-      // Se il puntatore è su una pagina che può ancora scorrere, la rotella è sua.
-      const scroller = (event.target as HTMLElement | null)?.closest?.("[data-vo-scroll]");
-      if (scroller instanceof HTMLElement) {
-        const room =
-          event.deltaY > 0
-            ? scroller.scrollHeight - scroller.clientHeight - scroller.scrollTop
-            : scroller.scrollTop;
-        if (room > 1) return;
-      }
-      event.preventDefault();
-      const now = performance.now();
-      if (now < wheelLockRef.current) return;
-      // Un colpo nella direzione opposta non deve prima consumare quello di prima:
-      // cambiare idea è immediato, non è una frenata.
-      if (wheelAccRef.current !== 0 && Math.sign(event.deltaY) !== Math.sign(wheelAccRef.current)) {
-        wheelAccRef.current = 0;
-      }
-      wheelAccRef.current += event.deltaY;
-      if (Math.abs(wheelAccRef.current) < WHEEL_THRESHOLD) return;
-      const direction = wheelAccRef.current > 0 ? 1 : -1;
-      wheelAccRef.current = 0;
-      wheelLockRef.current = now + WHEEL_COOLDOWN_MS;
-      step(direction);
-    };
-
-    stage.addEventListener("wheel", onWheel, { passive: false });
-    return () => stage.removeEventListener("wheel", onWheel);
-  }, [open, reducedMotion, step]);
 
   // ── Input: tastiera ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -786,7 +803,7 @@ export function VoBookShell({
 
   /** Prende il foglio dove si trova: un accenno già sollevato non ricade sul dorso. */
   const beginDrag = useCallback(
-    (dir: 1 | -1, startX: number, pointerId: number) => {
+    (dir: 1 | -1, startX: number, pointerId: number, travelSpan?: number) => {
       if (!open || reducedMotion || gestureRef.current?.mode === "run") return false;
       const stage = stageRef.current;
       if (!stage) return false;
@@ -804,42 +821,66 @@ export function VoBookShell({
       dragRef.current = {
         startX,
         // Su schermo largo la scatola contiene due facciate, su schermo stretto
-        // una: la corsa utile è sempre *una* facciata, non metà scatola.
-        span: Math.max((compact ? rect.width : rect.width * 0.5) || 1, 1),
+        // una: la corsa utile è sempre *una* facciata, non metà scatola. La
+        // rotella porta la sua, perché non ha una pagina sotto da misurare.
+        span: Math.max(travelSpan ?? (compact ? rect.width : rect.width * 0.5) ?? 1, 1),
         base: p0.get(),
+        target: p0.get(),
         pointerId,
       };
+      // La carta fruscia quando si stacca, non quando la si lascia andare.
+      if (!resuming) playPageSound();
       return true;
     },
-    [armGesture, compact, open, p0, pos, reducedMotion, stopHintAnim],
+    [armGesture, compact, open, p0, playPageSound, pos, reducedMotion, stopHintAnim],
   );
 
+  /**
+   * Porta il foglio dove il gesto lo chiede e restituisce quel punto. Un dito è
+   * già una posizione continua e ci va di pari passo; la rotella no — i suoi
+   * scatti sono discreti — e allora detta il bersaglio e lo raggiunge con una
+   * molla, che è lo stesso patto della cerimonia d'apertura.
+   */
   const updateDrag = useCallback(
-    (clientX: number) => {
+    (clientX: number, smooth = false) => {
       const drag = dragRef.current;
-      if (!drag) return;
+      if (!drag) return 0;
       const travelled = (drag.startX - clientX) / drag.span;
-      p0.set(Math.min(1, Math.max(0, drag.base + travelled)));
+      const target = Math.min(1, Math.max(0, drag.base + travelled));
+      drag.target = target;
+      stopHintAnim();
+      if (smooth) hintAnimRef.current = animate(p0, target, wheelFollow);
+      else p0.set(target);
+      return target;
     },
-    [p0],
+    [p0, stopHintAnim],
   );
 
   const endDrag = useCallback(
     (stillHovering: boolean) => {
       const drag = dragRef.current;
-      if (!drag || !gesture) return;
+      // Il riferimento, non lo stato: la rotella può arrivare a fine corsa in due
+      // eventi, cioè prima che React abbia ridisegnato, e lo stato direbbe ancora
+      // che non c'è nessun gesto — il foglio resterebbe a mezz'aria.
+      const held = gestureRef.current;
+      if (!drag || !held) return;
       dragRef.current = null;
-      const travelled = gesture.dir === 1 ? p0.get() : 1 - p0.get();
+      // Il bersaglio del gesto, non il punto in cui la carta è arrivata. Otto
+      // scatti di rotella nello stesso fotogramma portano il bersaglio a fondo
+      // corsa mentre la molla è ancora ferma sul dorso: leggendo il foglio, il
+      // giro risultava appena accennato e non si compiva mai.
+      const reached = drag.target;
+      const travelled = held.dir === 1 ? reached : 1 - reached;
       // La velocità del pollice conta quanto la distanza percorsa.
-      const flick = p0.getVelocity() * gesture.dir;
+      const flick = p0.getVelocity() * held.dir;
       if (travelled >= DRAG_COMMIT_THRESHOLD || flick >= FLICK_VELOCITY) {
         tokenRef.current += 1;
-        setGesture({ ...gesture, token: tokenRef.current, mode: "run" });
+        setGesture({ ...held, token: tokenRef.current, mode: "run", resumed: true });
         return;
       }
       // Sotto soglia il foglio ricade: se il puntatore è ancora sul taglio resta l'accenno.
       const settled =
-        gesture.dir === 1 ? (stillHovering ? HINT_MAX : 0) : stillHovering ? 1 - HINT_MAX : 1;
+        held.dir === 1 ? (stillHovering ? HINT_MAX : 0) : stillHovering ? 1 - HINT_MAX : 1;
       stopHintAnim();
       const control = animate(p0, settled, releaseSpring);
       hintAnimRef.current = control;
@@ -850,8 +891,85 @@ export function VoBookShell({
         });
       });
     },
-    [gesture, p0, stopHintAnim],
+    [p0, stopHintAnim],
   );
+
+  // ── Input: rotella ─────────────────────────────────────────────────────────
+  /**
+   * La rotella non fa scattare un giro: lo *scorre*. Il foglio segue la mano per
+   * tutta la corsa e a gesto finito decide da sé se cadere in avanti o tornare
+   * indietro, con le stesse due regole del dito — è lo stesso gesto con un'altra
+   * periferica, e va trattato come tale.
+   *
+   * Prima era una soglia con un tempo morto: novanta pixel facevano partire un
+   * giro intero, e per quattro decimi di secondo la rotella non contava più. Un
+   * pulsante nascosto dentro uno scorrimento, non una pagina che si gira.
+   *
+   * Sta qui sotto e non fra gli altri input perché prende in prestito il
+   * trascinamento: leggerlo prima di dichiararlo è un errore, non una scelta.
+   */
+  const endWheel = useCallback(() => {
+    const wheel = wheelRef.current;
+    if (!wheel) return;
+    window.clearTimeout(wheel.idle);
+    wheelRef.current = null;
+    endDrag(false);
+  }, [endDrag]);
+
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage || !open || reducedMotion) return;
+
+    const onWheel = (event: WheelEvent) => {
+      // Se il puntatore è su una pagina che può ancora scorrere, la rotella è sua.
+      const scroller = (event.target as HTMLElement | null)?.closest?.("[data-vo-scroll]");
+      if (scroller instanceof HTMLElement) {
+        const room =
+          event.deltaY > 0
+            ? scroller.scrollHeight - scroller.clientHeight - scroller.scrollTop
+            : scroller.scrollTop;
+        if (room > 1) return;
+      }
+      event.preventDefault();
+      const unit =
+        event.deltaMode === 1 ? WHEEL_LINE_PX : event.deltaMode === 2 ? window.innerHeight : 1;
+      const push = Math.max(-WHEEL_MAX_STEP, Math.min(WHEEL_MAX_STEP, event.deltaY * unit));
+      if (push === 0) return;
+
+      let wheel = wheelRef.current;
+      if (!wheel) {
+        if (performance.now() < wheelLockRef.current) return;
+        const direction: 1 | -1 = push > 0 ? 1 : -1;
+        // Ai capi del volume non c'è foglio da prendere, e con un foglio già in
+        // volo questo giro non è disponibile: in entrambi i casi decide `step`,
+        // che sa chiudere il libro, girarlo sulla quarta o mettersi in coda.
+        if (!beginDrag(direction, 0, WHEEL_POINTER_ID, WHEEL_SPAN)) {
+          step(direction);
+          return;
+        }
+        wheel = { travel: 0, idle: 0 };
+        wheelRef.current = wheel;
+      }
+      wheel.travel += push;
+      const reached = updateDrag(-wheel.travel, true);
+      window.clearTimeout(wheel.idle);
+      // A un capo della corsa la decisione è presa: aspettare il silenzio
+      // terrebbe il foglio incollato al bordo per un decimo di secondo.
+      if (reached <= 0 || reached >= 1) {
+        wheelLockRef.current = performance.now() + WHEEL_RELOAD_MS;
+        endWheel();
+        return;
+      }
+      wheel.idle = window.setTimeout(endWheel, WHEEL_IDLE_MS);
+    };
+
+    stage.addEventListener("wheel", onWheel, { passive: false });
+    return () => {
+      stage.removeEventListener("wheel", onWheel);
+      const wheel = wheelRef.current;
+      if (wheel) window.clearTimeout(wheel.idle);
+    };
+  }, [beginDrag, endWheel, open, reducedMotion, step, updateDrag]);
 
   /**
    * La sfogliata a dito, su tutta la pagina. Prima l'unica presa era la striscia

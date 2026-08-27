@@ -6,7 +6,11 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getTenantGestioneExternalHref } from "@/lib/gestione-routing";
 import type { TenantBlogPost } from "@/lib/tenant-blog";
-import { VoBookShell } from "@/components/tenants/valentina-orciuoli/book/book-shell";
+import {
+  VoBookShell,
+  WHEEL_LINE_PX,
+  WHEEL_MAX_STEP,
+} from "@/components/tenants/valentina-orciuoli/book/book-shell";
 import { VoBackCover } from "@/components/tenants/valentina-orciuoli/book/back-cover";
 import { VoDesk } from "@/components/tenants/valentina-orciuoli/book/desk";
 import { VoCover } from "@/components/tenants/valentina-orciuoli/book/cover";
@@ -55,14 +59,6 @@ const TURN_TRANSITION = { duration: 0.95, ease: [0.55, 0.06, 0.24, 1] } as const
  * gesto deliberato, non tanti da diventare una manovella.
  */
 const CEREMONY_TRAVEL = 700;
-/**
- * `deltaY` non è in pixel dappertutto: `deltaMode` 1 conta righe (Firefox con una
- * rotella vera manda ~3) e 2 conta pagine. Senza normalizzare, su quei browser la
- * corsa richiederebbe centinaia di scatti e il libro non si aprirebbe mai.
- */
-const WHEEL_LINE_PX = 16;
-/** Tetto per singolo evento: l'inerzia di un trackpad manda colpi enormi. */
-const WHEEL_MAX_STEP = 160;
 /**
  * Quanto conta un pixel di pollice sulla corsa della copertina. A 2.2 servivano
  * più di trecento pixel di trascinamento: su un telefono è quasi tutto lo schermo,

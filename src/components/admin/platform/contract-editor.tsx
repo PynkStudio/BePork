@@ -88,9 +88,11 @@ type ServerContract = {
 
 type Props = {
   contractId?: string;
+  /** Prefisso delle route contratti. Default: "/admin/contratti". */
+  basePath?: string;
 };
 
-export function ContractEditor({ contractId }: Props) {
+export function ContractEditor({ contractId, basePath = "/admin/contratti" }: Props) {
   const router = useRouter();
   const search = useSearchParams();
   const prefillLeadId = search.get("leadId");
@@ -310,7 +312,7 @@ export function ContractEditor({ contractId }: Props) {
       setServerContract(result);
       contractDraft.clearDraft();
       setFeedback("Contratto salvato");
-      if (!serverContract && result) router.replace(`/admin/contratti/${result.id}`);
+      if (!serverContract && result) router.replace(`${basePath}/${result.id}`);
       return result;
     } catch {
       setFeedback("Errore di rete nel salvataggio");
@@ -384,7 +386,7 @@ export function ContractEditor({ contractId }: Props) {
       );
       if (result.emailSent) {
         setSendPreviewOpen(false);
-        router.push('/admin/contratti');
+        router.push(basePath);
       } else {
         setSendError("Il contratto è stato caricato su Documenso, ma l'email non è stata inviata.");
       }
@@ -607,7 +609,7 @@ export function ContractEditor({ contractId }: Props) {
 
       <aside className="contract-form no-print">
         <div className="contract-back">
-          <Link href="/admin/contratti">
+          <Link href={basePath}>
             <ArrowLeft size={14} /> Storico contratti
           </Link>
           <span className={`status-pill ${statusColor}`}>{statusLabel}</span>

@@ -6,6 +6,12 @@ export type TenantLocaleConfig = {
 };
 
 const TENANT_LOCALES: Record<string, TenantLocaleConfig> = {
+  // Copy completi in entrambe le lingue in src/lib/casabizzi-i18n.ts: la
+  // maison vende in Europa, l'inglese è pubblicato dal primo rilascio.
+  casabizzi: {
+    defaultLocale: "it",
+    locales: ["it", "en"],
+  },
   // Predisposto per multilingua: pubblicare nuove lingue solo con copy completi.
   "cascina-errante": {
     defaultLocale: "it",

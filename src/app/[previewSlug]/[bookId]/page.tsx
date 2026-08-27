@@ -10,6 +10,8 @@ import { getPlatformModeFromHost } from "@/lib/platform";
 import { resolveTenantFromPreviewSlug } from "@/lib/tenant-runtime";
 import { tenantThemeCssVars } from "@/lib/tenant-theme";
 import { libritechCatalog } from "@/lib/libritech-catalog";
+import { CasaBizziPiecePage } from "@/components/tenants/casabizzi/pages/piece";
+import { findCasabizziPiece } from "@/lib/casabizzi-catalog";
 
 const valentinaPages = new Set<string>(valentinaOwnedSegments);
 
@@ -53,6 +55,21 @@ export default async function BookDetailRoute({
           ) : (
             <ValentinaOrciuoliStaticPage page={bookId as ValentinaPageKind} />
           )}
+        </div>
+      </TenantProvider>
+    );
+  }
+
+  if (tenant.id === "casabizzi") {
+    if (!tenant.features.shop || !findCasabizziPiece(bookId)) notFound();
+    return (
+      <TenantProvider tenant={tenant}>
+        <div
+          className="min-h-screen"
+          data-tenant-surface={tenant.id}
+          style={themeVars as React.CSSProperties}
+        >
+          <CasaBizziPiecePage pieceId={bookId} />
         </div>
       </TenantProvider>
     );

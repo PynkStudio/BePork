@@ -17,6 +17,7 @@ import { LibritechHomePage } from "@/components/tenants/libritech/pages/home";
 import { ValentinaOrciuoliBookSite } from "@/components/tenants/valentina-orciuoli/book/book-site";
 import { StudioAranzullaHomePage } from "@/components/tenants/studioaranzulla/pages/home";
 import { PynkStudioHomePage } from "@/components/tenants/pynkstudio/pages/home";
+import { CasaBizziHomePage } from "@/components/tenants/casabizzi/pages/home";
 import { JuniorFoodHomePage } from "@/components/tenants/junior-food/pages/home";
 import { KimosHomePage } from "@/components/tenants/kimos/pages/home";
 import { CascinaErranteHomePage } from "@/components/tenants/cascina-errante/pages/home";
@@ -27,6 +28,7 @@ import { getPlatformModeFromHost } from "@/lib/platform";
 import { resolveTenantFromPreviewSlug } from "@/lib/tenant-runtime";
 import { tenantThemeCssVars } from "@/lib/tenant-theme";
 import { getTenantContent } from "@/lib/tenant-content";
+import { CASABIZZI_SEO, type CasaBizziLocale } from "@/lib/casabizzi-catalog";
 import { buildTenantIconSet } from "@/lib/favicon";
 import { LOCALE_HEADER } from "@/i18n/locales";
 import { getTenantLocaleConfig } from "@/lib/tenant-locales";
@@ -59,6 +61,12 @@ export async function generateMetadata({
         : "https://demo.menuary.it";
   const localizedPath = localeConfig && locale ? `/${previewSlug}/${locale}` : `/${previewSlug}`;
   const isServices = tenant.vertical === "services";
+  // Casa Bizzi pubblica due lingue dal primo rilascio: titolo e descrizione
+  // devono seguire la lingua della route, non restare in italiano.
+  const casabizziSeo =
+    CASABIZZI_SEO[(locale as CasaBizziLocale) in CASABIZZI_SEO ? (locale as CasaBizziLocale) : "it"];
+  const description =
+    tenant.id === "casabizzi" ? casabizziSeo.description : content.description;
   const title =
     tenant.id === "officinakam"
       ? "Officina KAM - Meccanica di precisione"
@@ -70,6 +78,8 @@ export async function generateMetadata({
           ? "Studio Legale Aranzulla - Avv. Lara Aranzulla"
         : tenant.id === "pynkstudio"
           ? "PYNK STUDIO — Software, web e app su misura"
+        : tenant.id === "casabizzi"
+          ? casabizziSeo.title
           : isServices
         ? `${tenant.name} - servizi, appuntamenti e listino prezzi`
         : tenant.id === "faak"
@@ -89,7 +99,7 @@ export async function generateMetadata({
   return {
     metadataBase: new URL(metadataOrigin),
     title: { absolute: title },
-    description: content.description,
+    description,
     robots: {
       index: false,
       follow: false,
@@ -97,17 +107,17 @@ export async function generateMetadata({
     },
     openGraph: {
       title,
-      description: content.description,
+      description,
       url: `${metadataOrigin}${localizedPath}`,
       siteName: tenant.name,
-      locale: "it_IT",
+      locale: locale === "en" ? "en_GB" : "it_IT",
       type: "website",
       images: [{ url: content.showcaseLogoSrc, alt: content.showcaseLogoAlt }],
     },
     twitter: {
       card: "summary_large_image",
       title,
-      description: content.description,
+      description,
       images: [content.showcaseLogoSrc],
     },
     icons: buildTenantIconSet(tenant),
@@ -195,6 +205,8 @@ export default async function PreviewTenantHome({
             <StudioAranzullaHomePage />
           ) : tenant.id === "pynkstudio" ? (
             <PynkStudioHomePage />
+          ) : tenant.id === "casabizzi" ? (
+            <CasaBizziHomePage />
           ) : (
             <>
               <ServicesHero />

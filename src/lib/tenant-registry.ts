@@ -380,6 +380,39 @@ export const ORPHEO_MODULE_FLAGS: TenantFeatureFlags = {
   fanbaseCommunity: true,
 };
 
+/** Casa Bizzi: maison di moda demo su verticale services (shop + Slabbby). */
+export const CASABIZZI_MODULE_FLAGS: TenantFeatureFlags = {
+  website: true,
+  onlineMenu: true,        // "Collezione"
+  takeaway: false,
+  tableOrders: false,
+  orderKiosk: false,
+  kitchenDisplay: false,
+  dinerSeparation: false,
+  reservations: true,      // "Appuntamento in showroom"
+  tablePlanner: false,
+  productAvailability: true,
+  upselling: false,
+  crm: true,
+  analytics: true,
+  takeawaySlots: false,
+  deliveryHub: false,
+  cashRegister: false,
+  inventoryFoodCost: false,
+  printStations: false,
+  staffRoles: false,
+  multiLocation: false,
+  favorites: true,
+  reviews: true,
+  gallery: true,
+  shop: true,
+  slabbby: true,
+  aiPhone: false,
+  aiWhatsapp: false,
+  hubriseSync: false,
+  payments: false,
+};
+
 export const TENANTS: TenantProfile[] = [
   // ── Verticale food (menuary.it) ──────────────────────────────────────────
   {
@@ -690,6 +723,33 @@ export const TENANTS: TenantProfile[] = [
       pink: "#E94B97",
     },
     features: PYNKSTUDIO_MODULE_FLAGS,
+  },
+
+  {
+    id: "casabizzi",
+    name: "Casa Bizzi",
+    label: "Demo · Casa Bizzi",
+    vertical: "services",
+    domains: [],                    // solo preview slug → demo.bizery.it/casabizzi
+    previewSlug: "casabizzi",
+    enabled: true,
+    status: "trial",
+    theme: {
+      // Palette osso e cemento: i fondi reali dei packshot diventano il fondo
+      // della pagina, così i capi galleggiano senza card. Accento bordeaux
+      // preso dal cashmere Merlot della collezione.
+      red: "#6E1B26",        // bordeaux (accento unico, CTA)
+      redDark: "#4E161D",    // merlot (hover)
+      peach: "#F4F0E6",      // lino, fondo caldo delle sezioni maglieria
+      cream: "#ECECE4",      // osso, fondo pagina
+      ink: "#1A1A18",        // near-black caldo
+      brick: "#C6C6C7",      // cemento, fondo delle sezioni denim e sartoria
+      mustard: "#C29338",    // senape del foulard
+      mustardSoft: "#E3DCC9",
+      green: "#1D322D",      // verde foresta della giacca 01
+      pink: "#8B3A28",       // terracotta dell'abito 03
+    },
+    features: CASABIZZI_MODULE_FLAGS,
   },
 
   // ── Verticale creative (Orpheo — weuseorpheo.com) ─────────────────────────

@@ -1,7 +1,7 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type {
+  LeadVertical,
   PlatformSubscription,
   PlatformPayment,
   SubscriptionStatus,
@@ -56,9 +57,22 @@ const STATUS_FILTERS: { value: SubscriptionStatus | "all"; label: string }[] = [
   { value: "cancelled", label: "Cancellati" },
 ];
 
-export function PlatformSubscriptionsPage() {
-  const [subscriptions, setSubscriptions] = useState<PlatformSubscription[]>([]);
-  const [payments, setPayments] = useState<PlatformPayment[]>([]);
+export type PlatformSubscriptionsPageProps = {
+  /**
+   * Blocca la vista sugli abbonamenti del verticale indicato (portale prodotto).
+   * Omesso = tutti i prodotti (hub PynkStudio e admin.menuary.it).
+   */
+  vertical?: LeadVertical;
+  /** Etichetta di sezione mostrata in testata. Default: "Piattaforma". */
+  productLabel?: string;
+};
+
+export function PlatformSubscriptionsPage({
+  vertical,
+  productLabel,
+}: PlatformSubscriptionsPageProps = {}) {
+  const [allSubscriptions, setAllSubscriptions] = useState<PlatformSubscription[]>([]);
+  const [allPayments, setAllPayments] = useState<PlatformPayment[]>([]);
   const [activeFilter, setActiveFilter] = useState<SubscriptionStatus | "all">("all");
   const [paymentActionId, setPaymentActionId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -69,14 +83,30 @@ export function PlatformSubscriptionsPage() {
       .then((r) => r.json())
       .then((data: { subscriptions?: PlatformSubscription[]; payments?: PlatformPayment[] }) => {
         if (cancelled) return;
-        setSubscriptions(data.subscriptions ?? []);
-        setPayments(data.payments ?? []);
+        setAllSubscriptions(data.subscriptions ?? []);
+        setAllPayments(data.payments ?? []);
       })
       .catch(() => {});
     return () => {
       cancelled = true;
     };
   }, []);
+
+  // I pagamenti seguono gli abbonamenti: se filtro per prodotto devo restringere
+  // anche loro, altrimenti MRR e scaduti conterebbero gli altri prodotti.
+  const subscriptions = useMemo(
+    () =>
+      vertical
+        ? allSubscriptions.filter((s) => s.lead?.business_vertical === vertical)
+        : allSubscriptions,
+    [allSubscriptions, vertical],
+  );
+
+  const payments = useMemo(() => {
+    if (!vertical) return allPayments;
+    const ids = new Set(subscriptions.map((s) => s.id));
+    return allPayments.filter((p) => ids.has(p.subscription_id));
+  }, [allPayments, subscriptions, vertical]);
 
   const mrr = subscriptions
     .filter((s) => s.status === "active" || s.status === "trial")
@@ -111,7 +141,7 @@ export function PlatformSubscriptionsPage() {
         setFeedback(`Errore: ${result.error ?? "operazione non riuscita"}`);
         return;
       }
-      setPayments((current) =>
+      setAllPayments((current) =>
         current.map((item) =>
           item.id === payment.id ? { ...item, status: "paid" as const, paid_at: new Date().toISOString() } : item,
         ),
@@ -142,7 +172,7 @@ export function PlatformSubscriptionsPage() {
         return;
       }
       if (result.url) {
-        setPayments((current) =>
+        setAllPayments((current) =>
           current.map((item) =>
             item.id === payment.id
               ? {
@@ -184,7 +214,7 @@ export function PlatformSubscriptionsPage() {
         setFeedback(`Errore: ${result.error ?? "upload non riuscito"}`);
         return;
       }
-      setPayments((current) =>
+      setAllPayments((current) =>
         current.map((item) => (item.id === payment.id ? result.payment! : item)),
       );
       setFeedback("Fattura caricata.");
@@ -197,7 +227,7 @@ export function PlatformSubscriptionsPage() {
   return (
     <div className="space-y-8">
       <header>
-        <p className="impact-title text-xs text-pork-red">Piattaforma</p>
+        <p className="impact-title text-xs text-pork-red">{productLabel ?? "Piattaforma"}</p>
         <h1 className="headline text-4xl">Abbonamenti</h1>
         <p className="mt-1 text-pork-ink/60">
           Panoramica rinnovi, scadenze e pagamenti.

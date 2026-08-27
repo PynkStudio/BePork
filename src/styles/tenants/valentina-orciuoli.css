@@ -2724,35 +2724,106 @@
     transform-style: preserve-3d;
   }
 
+  /* ── La curvatura della carta ─────────────────────────────────────────────── */
+  /* Il foglio è spezzato in doghe verticali, come la copertina. A differenza di
+     quelle però non si annidano: ogni doga ritaglia la propria striscia di DOM
+     vivo, e un `overflow` diverso da `visible` appiattisce il contesto 3D dei
+     figli — quindi la catena si srotolerebbe alla prima. Le posizioni le calcola
+     il componente, doga per doga, in coordinate assolute. */
+  .vo-leaf-staves {
+    position: absolute;
+    inset: 0;
+    transform-style: preserve-3d;
+  }
+
+  .vo-leaf-stave {
+    position: absolute;
+    top: 0;
+    left: 0;
+    /* Numero di doghe e sormonto li dichiara il componente: sono decisioni di
+       geometria, e vivono dove vive la geometria. Il sormonto chiude la cucitura
+       fra due ritagli adiacenti, che a foglio posato rigava la pagina. */
+    width: calc(100% / var(--vo-leaf-n) + var(--vo-leaf-lap));
+    height: 100%;
+    transform-origin: left center;
+    transform-style: preserve-3d;
+    will-change: transform;
+  }
+
   .vo-leaf-face {
     position: absolute;
     inset: 0;
+    /* È questo il ritaglio: la striscia dentro è larga quanto tutto il foglio e
+       spostata all'indietro di quante doghe la precedono. */
     overflow: hidden;
     backface-visibility: hidden;
-    /* Il foglio staccato proietta la sua ombra sulla pagina sotto. Il foglio
-       esiste solo mentre è sollevato o in volo, quindi l'ombra non ha bisogno di
-       essere animata: quando c'è, serve. */
-    box-shadow: -10px 12px 26px -14px rgba(28, 20, 12, 0.6);
   }
 
   .vo-leaf-back {
     transform: rotateY(180deg);
   }
 
-  .vo-leaf-content {
+  /* Larghezza e scorrimento della striscia arrivano dal componente, in pixel:
+     una percentuale si risolverebbe sulla larghezza *sormontata* della doga e il
+     contenuto scivolerebbe di un pelo in più a ogni fetta. */
+  .vo-leaf-strip {
     position: absolute;
-    inset: 0;
   }
 
+  /* La rampa di luce di una doga: due veli, uno acceso sul bordo vicino al dorso
+     e uno sul bordo esterno. Le loro opacità sono la luminosità calcolata sui due
+     bordi, quindi il bordo destro di una doga vale esattamente quanto il sinistro
+     della successiva e la carta resta continua nonostante sia spezzata. */
+  .vo-leaf-lit {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    will-change: opacity;
+  }
+
+  .vo-leaf-lit-near {
+    background: linear-gradient(90deg, rgb(6 5 4) 0%, rgb(6 5 4 / 0) 100%);
+  }
+
+  .vo-leaf-lit-far {
+    background: linear-gradient(90deg, rgb(6 5 4 / 0) 0%, rgb(6 5 4) 100%);
+  }
+
+  /* L'ombra che il foglio alzato proietta sulla pagina sotto. Sta sul piano del
+     libro, non sul foglio: un `box-shadow` sulla carta ruoterebbe con lei, e
+     un'ombra che si alza da terra non è un'ombra. Si accorcia col coseno
+     dell'angolo, e oltre la verticale il coseno cambia segno — quindi lo `scaleX`
+     la ribalta da sé sull'altra metà, che è dove il foglio sta andando. */
+  .vo-leaf-cast {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 50%;
+    height: 100%;
+    transform-origin: left center;
+    background: linear-gradient(
+      100deg,
+      rgb(24 16 9 / 0.66) 0%,
+      rgb(24 16 9 / 0.34) 44%,
+      rgb(24 16 9 / 0.08) 80%,
+      rgb(24 16 9 / 0) 100%
+    );
+    /* Il bordo netto in cima e in fondo tradirebbe il rettangolo: la maschera lo
+       sfuma senza costare una sfocatura, che andrebbe ricalcolata a ogni scala. */
+    mask-image: linear-gradient(to bottom, transparent 0%, #000 5%, #000 95%, transparent 100%);
+    pointer-events: none;
+    will-change: transform, opacity;
+  }
+
+  /* Piega e riflesso stanno *dentro* la striscia, quindi esistono in copia per
+     ogni doga. Promuoverli come prima costerebbe sedici livelli a foglio per due
+     veli che coprono una frazione di pagina: qui la promozione la porta la doga,
+     e sotto di lei il ridisegno è una striscia da quarantaquattro pixel. */
   .vo-leaf-fold,
-  .vo-leaf-shade,
   .vo-leaf-sheen {
     position: absolute;
     inset: 0;
     pointer-events: none;
-    /* Tre veli la cui opacità cambia a ogni fotogramma: promossi, il compositore
-       li fonde senza ridisegnare la carta che hanno sotto. */
-    will-change: opacity;
   }
 
   /* Il dorso resta il bordo di rotazione: sul verso, ruotato di 180°, è a destra. */
@@ -2764,16 +2835,18 @@
     background: linear-gradient(to left, rgba(28, 21, 14, 0.62) 0%, rgba(28, 21, 14, 0) 16%);
   }
 
-  .vo-leaf-shade {
-    background: linear-gradient(105deg, rgba(6, 5, 4, 0.95) 0%, rgba(6, 5, 4, 0.62) 100%);
-  }
-
+  /* Il riflesso radente. Non compare e scompare sul posto: è una banda stretta
+     che cammina sulla carta, ferma sul punto in cui la curva guarda la bisettrice
+     fra luce e osservatore. Larga quanto il foglio, viene traslata dal componente
+     e ritagliata dalla doga che la ospita. */
   .vo-leaf-sheen {
     background: linear-gradient(
-      104deg,
-      transparent 26%,
-      rgba(255, 248, 226, 0.42) 48%,
-      transparent 68%
+      101deg,
+      transparent 34%,
+      rgba(255, 248, 226, 0.34) 44%,
+      rgba(255, 250, 234, 0.62) 50%,
+      rgba(255, 248, 226, 0.34) 56%,
+      transparent 66%
     );
     mix-blend-mode: screen;
   }
@@ -3340,6 +3413,7 @@
     }
 
     .vo-book-site[data-compact] .vo-leaf,
+    .vo-book-site[data-compact] .vo-leaf-cast,
     .vo-book-site[data-compact] .vo-cover {
       left: 0;
       width: 100%;
@@ -3417,7 +3491,8 @@
       animation: none;
     }
 
-    .vo-leaf {
+    .vo-leaf,
+    .vo-leaf-cast {
       display: none;
     }
   }

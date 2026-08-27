@@ -12,7 +12,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { CommissionStatus, PlatformCommission, PlatformSubscription } from "@/lib/platform-crm-types";
+import type { CommissionStatus, LeadVertical, PlatformCommission, PlatformSubscription } from "@/lib/platform-crm-types";
 import {
   COMMISSION_STATUS_COLORS,
   COMMISSION_STATUS_LABELS,
@@ -42,8 +42,31 @@ function fmt(iso: string) {
   });
 }
 
-export function PlatformCommissionsPage() {
-  const [commissions, setCommissions] = useState<PlatformCommission[]>(PLATFORM_COMMISSIONS);
+export type PlatformCommissionsPageProps = {
+  /**
+   * Blocca la vista sulle provvigioni del verticale indicato (portale prodotto).
+   * Omesso = tutti i prodotti (hub PynkStudio e admin.menuary.it).
+   */
+  vertical?: LeadVertical;
+  /** Etichetta di sezione mostrata in testata. Default: "Piattaforma". */
+  productLabel?: string;
+  /** Prefisso delle route CRM per i link al lead. Default: "/admin/crm". */
+  crmBasePath?: string;
+  /** Destinazione del link "Percentuali ruoli". Default: "/admin/utenti". */
+  usersHref?: string;
+};
+
+export function PlatformCommissionsPage({
+  vertical,
+  productLabel,
+  crmBasePath = "/admin/crm",
+  usersHref = "/admin/utenti",
+}: PlatformCommissionsPageProps = {}) {
+  // Il seed PLATFORM_COMMISSIONS non porta il verticale: in un portale prodotto
+  // non è attribuibile, quindi si parte vuoti e si attende il fetch reale.
+  const [commissions, setCommissions] = useState<PlatformCommission[]>(
+    vertical ? [] : PLATFORM_COMMISSIONS,
+  );
   const [statusFilter, setStatusFilter] = useState<CommissionStatus | "all">("all");
   const [query, setQuery] = useState("");
 
@@ -51,7 +74,10 @@ export function PlatformCommissionsPage() {
     fetch("/api/admin/subscriptions")
       .then((r) => r.json())
       .then((data: { subscriptions?: PlatformSubscription[] }) => {
-        const subs = data.subscriptions ?? [];
+        const allSubs = data.subscriptions ?? [];
+        const subs = vertical
+          ? allSubs.filter((s) => s.lead?.business_vertical === vertical)
+          : allSubs;
         if (!subs.length) return;
         const closingRule = PLATFORM_COMMISSION_RULES.find((r) => r.role === "venditore")!;
         const leadInsertRule = PLATFORM_COMMISSION_RULES.find((r) => r.role === "lead_inserter")!;
@@ -107,7 +133,7 @@ export function PlatformCommissionsPage() {
         }
       })
       .catch(() => null);
-  }, []);
+  }, [vertical]);
 
   const sellerRate = PLATFORM_COMMISSION_RULES.find((rule) => rule.role === "venditore")?.commission_rate ?? 30;
   const leadInsertRate = PLATFORM_COMMISSION_RULES.find((rule) => rule.role === "lead_inserter")?.commission_rate ?? 10;
@@ -151,14 +177,14 @@ export function PlatformCommissionsPage() {
     <div className="space-y-8">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="impact-title text-xs text-pork-red">Piattaforma</p>
+          <p className="impact-title text-xs text-pork-red">{productLabel ?? "Piattaforma"}</p>
           <h1 className="headline text-4xl">Provvigioni</h1>
           <p className="mt-1 max-w-3xl text-pork-ink/60">
             Tenant venduti, primo pagamento e commissioni maturate dai venditori.
           </p>
         </div>
         <Link
-          href="/admin/utenti"
+          href={usersHref}
           className="inline-flex items-center gap-2 rounded-full border border-pork-ink/15 px-4 py-2 text-sm font-bold text-pork-ink/70 transition hover:border-pork-red/30 hover:text-pork-red"
         >
           <SlidersHorizontal size={15} />
@@ -224,7 +250,7 @@ export function PlatformCommissionsPage() {
           </div>
         )}
         {filtered.map((item) => (
-          <CommissionRow key={item.id} item={item} onMarkPaid={markPaid} />
+          <CommissionRow key={item.id} item={item} onMarkPaid={markPaid} crmBasePath={crmBasePath} />
         ))}
       </div>
     </div>
@@ -266,16 +292,18 @@ function RuleBox({ label, value }: { label: string; value: string }) {
 function CommissionRow({
   item,
   onMarkPaid,
+  crmBasePath,
 }: {
   item: PlatformCommission;
   onMarkPaid: (id: string) => void;
+  crmBasePath: string;
 }) {
   return (
     <div className="rounded-3xl bg-white p-5 ring-1 ring-pork-ink/10">
       <div className="flex flex-wrap items-start gap-4">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <Link href={`/admin/crm/${item.lead_id}`} className="font-black text-pork-ink hover:text-pork-red">
+            <Link href={`${crmBasePath}/${item.lead_id}`} className="font-black text-pork-ink hover:text-pork-red">
               {item.business_name}
             </Link>
             <span

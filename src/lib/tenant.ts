@@ -25,7 +25,7 @@ export type TenantStatus = "active" | "trial" | "offline" | "trattativa" | "susp
 // ─── Google integration ───────────────────────────────────────────────────────
 // Il Place ID e il resource name della location Google non sono hardcodati qui:
 // vengono acquisiti dinamicamente quando il gestore collega il proprio account
-// Google Business tramite OAuth dal pannello di gestione (admin.pynstudio.eu /
+// Google Business tramite OAuth dal pannello di gestione (admin.pynkstudio.eu /
 // gestione.bizery.it) e sono persistiti nella tabella `tenant_google_locations`.
 export type TenantGoogleConfig = {
   /** Marker opzionale per indicare che il tenant ha già completato il linking Google. Usato solo come override manuale in casi eccezionali. */

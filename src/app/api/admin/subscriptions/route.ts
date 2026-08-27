@@ -44,6 +44,7 @@ type LeadLite = {
   id: string;
   business_name: string;
   business_slug: string | null;
+  business_vertical: string | null;
   tenant_id: string | null;
   sales_owner_id: string | null;
   sales_owner_name: string | null;
@@ -72,7 +73,7 @@ export async function GET() {
       ? db
           .from("platform_leads")
           .select(
-            "id, business_name, business_slug, tenant_id, sales_owner_id, sales_owner_name, created_by_id, created_by_name, converted_at",
+            "id, business_name, business_slug, business_vertical, tenant_id, sales_owner_id, sales_owner_name, created_by_id, created_by_name, converted_at",
           )
           .in("id", leadIds)
       : Promise.resolve({ data: [] as LeadLite[] }),
@@ -95,6 +96,7 @@ export async function GET() {
             id: lead.id,
             business_name: lead.business_name,
             business_slug: lead.business_slug,
+            business_vertical: lead.business_vertical ?? "food",
             tenant_id: lead.tenant_id,
             sales_owner_id: lead.sales_owner_id,
             sales_owner_name: lead.sales_owner_name,

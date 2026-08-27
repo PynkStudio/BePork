@@ -20,7 +20,7 @@ export default async function MailappPage() {
   let canCompose = false;
 
   try {
-    const supabase = await createSupabaseServerClient(".pynstudio.eu");
+    const supabase = await createSupabaseServerClient(".pynkstudio.eu");
     const { data: { user } } = await supabase.auth.getUser();
 
     if (user) {

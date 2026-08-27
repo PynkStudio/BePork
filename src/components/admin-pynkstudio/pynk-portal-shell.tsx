@@ -11,6 +11,7 @@ import {
 import { useState } from "react";
 import { clearAdminSession } from "@/lib/admin-auth";
 import { cn } from "@/lib/utils";
+import { isPynkNavActive } from "./pynk-path";
 
 export type PortalNavItem = {
   href: string;
@@ -68,9 +69,7 @@ export function PynkPortalShell({
           </Link>
           <div className="my-2 border-t border-white/10" />
           {navItems.map((it) => {
-            const active =
-              !it.external &&
-              (pathname === it.href || pathname?.startsWith(it.href + "/"));
+            const active = !it.external && isPynkNavActive(pathname, it.href);
             return (
               <Link
                 key={it.href}

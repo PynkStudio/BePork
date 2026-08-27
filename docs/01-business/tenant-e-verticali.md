@@ -20,6 +20,7 @@ Estratti da `TENANTS[]` in `src/lib/tenant-registry.ts` (campi `id`, `name`, `ve
 | `studioaranzulla` | Studio Legale Aranzulla | services | trattativa |
 | `officinakam` | Officina KAM | services | trattativa |
 | `pynkstudio` | PynkStudio | services | active |
+| `casabizzi` | Casa Bizzi | services | trial |
 | `orpheo-demo` | Orpheo Demo | creative | trial |
 
 > Nota: il tenant `bepork` ha `name: "ThePork"` nel codice; il `package.json` si chiama `thepork-website`. è stato anonimizzato per poterlo usare come esempio per altri senza fare rirefimento diretto al ristorante BePork di Bari che non ha acquistato il servizio.
@@ -33,6 +34,18 @@ Estratti da `TENANTS[]` in `src/lib/tenant-registry.ts` (campi `id`, `name`, `ve
   [[adr-0002-valentina-book-shell]]. `/autrice` non è una pagina ma la **quarta di
   copertina**: il volume si chiude e si rigira per mostrarla. La pagina `/link` (linktree)
   resta fuori dal libro.
+
+- **`casabizzi`** — maison di moda demo del verticale services, usata per mostrare
+  il modulo `shop` e l'integrazione **Slabbby** su un catalogo reale (otto capi in
+  ventidue varianti). Nessun dominio proprio: vive solo su `demo.bizery.it/casabizzi`.
+  È il primo tenant pubblicato **bilingue dal primo rilascio** (`it`, `en`), con i copy
+  in `src/lib/casabizzi-i18n.ts` e il catalogo in `src/lib/casabizzi-catalog.ts`.
+  La home segue la grammatica *galleria/catalogo*: nessun hero con claim sopra una
+  foto, la navigazione è l'indice degli oggetti, le didascalie dichiarano fatti
+  (tessuto, grammatura, origine) e non argomenti di vendita.
+  Il carrello **non** usa `shop-cart-store`: ha `src/store/casabizzi-bag-store.ts`
+  perché le sue righe hanno variante e taglia, e per non condividere lo spazio di
+  persistenza con gli altri tenant shop. Vedi [[casa-bizzi]].
 
 ## Stati tenant osservati
 

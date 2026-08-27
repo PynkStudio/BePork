@@ -26,6 +26,7 @@ Documenti già popolati a partire dai file della repo:
 - [[panoramica-tecnica]] — `docs/02-architecture/`
 - [[moduli-piattaforma]] — `docs/03-features/`
 - [[blog-editoriale]] — `docs/03-features/` (progetto a fasi: blog multilingua, rich text, MCP per tenant). Contiene la **bacheca di avanzamento** con lo stato di ogni lavoro: consultala e aggiornala a ogni intervento sul modulo blog.
+- [[pannello-pynkstudio]] — `docs/03-features/` (progetto a fasi: pannello admin.pynkstudio.eu, hub aziendale + portali prodotto). Contiene la **bacheca di avanzamento**: consultala e aggiornala a ogni intervento su `src/app/admin-pynkstudio/` o `src/components/admin/platform/`.
 - [[integrazioni-attive]] — `docs/06-integrations/`
 - [[endpoint-ia]] — `docs/07-prompts/`
 - [[cron-e-processi]] — `docs/08-processes/`
@@ -55,6 +56,14 @@ Non compilate perché **non deducibili con certezza** dalla repo (nessun contenu
 | [[docs/08-processes/README\|08-processes]] | Procedure operative |
 | [[docs/09-meetings/README\|09-meetings]] | Verbali e note meeting |
 | [[docs/kb/README\|kb]] | Knowledge base per l'assistente AI di supporto (RAG) |
+
+## Documenti di feature rilevanti
+
+- [[casa-bizzi]] — tenant demo moda del verticale services: grammatica della home,
+  il metro da sarto, i vincoli di `position: fixed` sotto `PageTransitionShell`,
+  e i limiti verificati del widget Slabbby.
+- [[blog-editoriale]] — progetto blog multilingua (bacheca di avanzamento).
+- [[pannello-pynkstudio]] — hub aziendale e portali prodotto (bacheca di avanzamento).
 
 ## Knowledge Base per l'assistente AI
 
