@@ -3,9 +3,10 @@
 /**
  * Cromatura di Casa Bizzi.
  *
- * La navigazione non è una barra con marchio e pulsante: è l'indice degli
- * oggetti della collezione, e salta. Il marchio sta nella targa d'apertura,
- * alla scala della composizione, non a 14px in una barra.
+ * La testata è sottile e non compete con niente: il marchio alla scala della
+ * composizione vive nel frontespizio, che si prende una schermata intera.
+ * L'indice non è una striscia di otto tab sopra la collezione: è un foglio
+ * che si apre quando serve e sparisce quando non serve.
  */
 
 import Link from "next/link";
@@ -17,8 +18,6 @@ import { bodyScrollLock, bodyScrollUnlock } from "@/lib/body-scroll-lock";
 import {
   CASABIZZI_COLLECTION,
   casabizziCatalog,
-  casabizziTapeLength,
-  casabizziVariantCount,
   formatCasabizziPrice,
 } from "@/lib/casabizzi-catalog";
 import {
@@ -28,7 +27,6 @@ import {
   useCasabizziLanguage,
   type CasaBizziLanguage,
 } from "@/lib/casabizzi-i18n";
-import { getTenantContent } from "@/lib/tenant-content";
 import { replaceTenantLocaleInPath } from "@/lib/tenant-localized-path";
 import { useTenantLocalizedHref } from "@/lib/use-tenant-localized-href";
 import { cbBagCount, cbBagTotal, useCbBagStore } from "@/store/casabizzi-bag-store";
@@ -49,12 +47,12 @@ export function CbLangSwitch() {
   }
 
   return (
-    <div className="cb-index-tools" role="group" aria-label={copy.langSwitchLabel}>
+    <div className="cb-lang" role="group" aria-label={copy.langSwitchLabel}>
       {(casabizziI18n.languages as CasaBizziLanguage[]).map((code) => (
         <button
           key={code}
           type="button"
-          className="cb-tool"
+          className="cb-topbar-btn cb-topbar-btn--lang"
           aria-pressed={code === language}
           onClick={() => switchTo(code)}
           lang={code}
@@ -66,78 +64,175 @@ export function CbLangSwitch() {
   );
 }
 
-/** L'indice: la navigazione di questo sito è l'elenco degli oggetti. */
-export function CbIndexBar({ activeIndex }: { activeIndex: number | null }) {
+/**
+ * La testata. Un filetto e tre voci: non deve mai togliere la scena ai capi.
+ *
+ * Resta trasparente finché la pagina non si muove, così il frontespizio si
+ * apre pulito; appena si scende prende il fondo della sezione sotto e un
+ * filetto, per non perdere il contrasto sopra le fotografie.
+ */
+/**
+ * Dichiara a Slabbby che questo sito decide da sé dove va il bottone.
+ *
+ * Serve sulle pagine SENZA segnaposto (collezione, ordine): senza questa
+ * dichiarazione l'estensione Chrome, che inietta il widget su ogni pagina,
+ * tornerebbe a cercarsi un posto da sola e finirebbe accanto al marchio.
+ * Sulla scheda oggetto basterebbe il segnaposto, ma l'header è su tutte le
+ * pagine ed è il punto giusto per dirlo una volta sola.
+ */
+function CbSlabbbyManual() {
+  useEffect(() => {
+    const root = document.documentElement;
+    root.setAttribute("data-slabbby-manual", "");
+    return () => root.removeAttribute("data-slabbby-manual");
+  }, []);
+  return null;
+}
+
+export function CbHeader() {
   const copy = useCasabizziCopy();
-  const language = useCasabizziLanguage();
   const tenantHref = useTenantLocalizedHref();
   const lines = useCbBagStore((state) => state.lines);
-  const setOpen = useCbBagStore((state) => state.setOpen);
+  const setBagOpen = useCbBagStore((state) => state.setOpen);
   const count = cbBagCount(lines);
+  const [stuck, setStuck] = useState(false);
+  const [indexOpen, setIndexOpen] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setStuck(window.scrollY > 24);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
-    <nav className="cb-index" aria-label={copy.nav.indexAria}>
-      <div className="cb-index-scroll" id="cb-index">
-        {casabizziCatalog.map((piece, index) => (
-          <Link
-            key={piece.id}
-            href={tenantHref(`/${piece.id}`)}
-            className="cb-index-item"
-            aria-current={index === activeIndex ? "true" : undefined}
-            onClick={(event) => {
-              const target = document.getElementById(`cb-${piece.id}`);
-              if (!target) return;
-              event.preventDefault();
-              target.scrollIntoView({ behavior: "smooth", block: "start" });
-            }}
+    <>
+      <CbSlabbbyManual />
+      <header className="cb-topbar" data-cb-stuck={stuck ? "true" : "false"}>
+        <p className="cb-topbar-mark">
+          <Link href={tenantHref("/")}>Casa&nbsp;Bizzi</Link>
+        </p>
+        <nav className="cb-topbar-nav" aria-label={copy.nav.indexAria}>
+          <button
+            type="button"
+            className="cb-topbar-btn"
+            onClick={() => setIndexOpen(true)}
+            aria-label={copy.nav.indexOpen}
           >
-            <span className="cb-index-num">{piece.number}</span>
-            <span className="cb-index-name">{piece.kind[language]}</span>
-          </Link>
-        ))}
-      </div>
-      <CbLangSwitch />
-      <div className="cb-index-tools">
-        <button type="button" className="cb-tool" onClick={() => setOpen(true)} aria-label={copy.nav.cartAria}>
-          {copy.nav.cart}
-          {count > 0 ? <span className="cb-tool-count">{count}</span> : null}
-        </button>
-      </div>
-    </nav>
+            {copy.nav.index}
+          </button>
+          <CbLangSwitch />
+          <button
+            type="button"
+            className="cb-topbar-btn"
+            onClick={() => setBagOpen(true)}
+            aria-label={copy.nav.cartAria}
+          >
+            {copy.nav.cart}
+            {count > 0 ? <span className="cb-topbar-count">{count}</span> : null}
+          </button>
+        </nav>
+      </header>
+      <CbIndexSheet open={indexOpen} onClose={() => setIndexOpen(false)} />
+    </>
   );
 }
 
 /**
- * Targa d'apertura: il marchio è composizione, non un elemento di barra.
- *
- * `heading` va lasciato true solo sulla collezione, dove il marchio È il
- * titolo della pagina. Sulla scheda oggetto l'h1 spetta al nome del capo.
+ * L'indice come foglio intero: gli otto oggetti letti uno sotto l'altro, alla
+ * scala della carta. Esce in portale sul body per la stessa ragione della
+ * borsa: un antenato trasformato romperebbe position: fixed.
  */
-export function CbPlate({ heading = false }: { heading?: boolean }) {
+function CbIndexSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const copy = useCasabizziCopy();
   const language = useCasabizziLanguage();
   const tenantHref = useTenantLocalizedHref();
-  const Wordmark = heading ? "h1" : "p";
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    if (!open) return;
+    bodyScrollLock();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      bodyScrollUnlock();
+    };
+  }, [open, onClose]);
+
+  if (!open || !mounted) return null;
+
+  return createPortal(
+    <div data-tenant-surface="casabizzi" className="cb-root" style={{ display: "contents" }}>
+      <div className="cb-sheet" role="dialog" aria-modal="true" aria-label={copy.nav.indexAria}>
+        <div className="cb-sheet-head">
+          <p className="cb-eyebrow">
+            {copy.nav.index} · {CASABIZZI_COLLECTION[language]}
+          </p>
+          <button
+            type="button"
+            className="cb-topbar-btn"
+            onClick={onClose}
+            aria-label={copy.nav.indexClose}
+          >
+            {copy.nav.close}
+          </button>
+        </div>
+
+        <ol className="cb-sheet-list">
+          {casabizziCatalog.map((piece) => (
+            <li key={piece.id}>
+              <Link className="cb-sheet-row" href={tenantHref(`/${piece.id}`)} onClick={onClose}>
+                <span className="cb-sheet-num">{piece.number}</span>
+                <span className="cb-sheet-name">{piece.name[language]}</span>
+                <span className="cb-sheet-kind">{piece.kind[language]}</span>
+                <span className="cb-sheet-price">{formatCasabizziPrice(piece.price, language)}</span>
+              </Link>
+            </li>
+          ))}
+        </ol>
+
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+/**
+ * Frontespizio: la prima schermata è tipografica e basta.
+ *
+ * Il marchio qui è l'h1 della collezione e ha una schermata tutta sua, che è
+ * il modo di dargli aria senza gonfiarlo in testata. Nessun claim, nessun
+ * bottone: si dichiarano fatti, incluso che cosa sia il nastro a sinistra.
+ */
+export function CbFrontispiece() {
+  const copy = useCasabizziCopy();
+  const language = useCasabizziLanguage();
 
   return (
-    <header className="cb-plate" data-cb-ground="bone">
-      <div className="cb-plate-row">
-        <Wordmark className="cb-wordmark">
-          <Link href={tenantHref("/")}>Casa&nbsp;Bizzi</Link>
-          <span className="cb-wordmark-sub">{copy.home.plate.city}</span>
-        </Wordmark>
-        <p className="cb-plate-meta">
-          <span>
-            {copy.home.plate.collection} {CASABIZZI_COLLECTION[language]}
-          </span>
-          <span>
-            {casabizziCatalog.length} {copy.home.plate.pieces}, {casabizziVariantCount()}{" "}
-            {copy.home.plate.variantsWord}
-          </span>
-          <span>{copy.home.plate.opening}</span>
-        </p>
+    <section className="cb-open" data-cb-ground="bone" aria-labelledby="cb-mark">
+      <div className="cb-open-top">
+        <span>{copy.home.plate.city}</span>
+        <span>{CASABIZZI_COLLECTION[language]}</span>
       </div>
-    </header>
+
+      <div className="cb-open-body">
+        <h1 className="cb-open-mark" id="cb-mark">
+          Casa&nbsp;Bizzi
+        </h1>
+        <p className="cb-open-house">{copy.home.opening.house}</p>
+      </div>
+
+      <div className="cb-open-foot">
+        <p className="cb-open-facts">{copy.home.plate.opening}</p>
+        <p className="cb-open-tape">{copy.home.opening.tape}</p>
+        <span className="cb-open-scroll" aria-hidden="true" />
+      </div>
+    </section>
   );
 }
 
@@ -189,7 +284,7 @@ export function CbBag() {
       <aside className="cb-bag" role="dialog" aria-modal="true" aria-label={copy.cart.title}>
         <div className="cb-bag-head">
           <h2>{copy.cart.title}</h2>
-          <button type="button" className="cb-tool" onClick={() => setOpen(false)}>
+          <button type="button" className="cb-topbar-btn" onClick={() => setOpen(false)}>
             {copy.nav.close}
           </button>
         </div>
@@ -268,22 +363,16 @@ export function CbBag() {
 
 export function CbColophon() {
   const copy = useCasabizziCopy();
-  const language = useCasabizziLanguage();
   const tenantHref = useTenantLocalizedHref();
-  const content = getTenantContent("casabizzi");
 
   return (
     <div className="cb-colophon">
       <span>{copy.footer.house}</span>
-      <span>{content.address.full}</span>
-      <span>
-        {copy.metro.total} {casabizziTapeLength()} {copy.metro.unit} ·{" "}
-        {CASABIZZI_COLLECTION[language]}
-      </span>
       <span>
         <Link href={tenantHref("/privacy")}>Privacy</Link> ·{" "}
-        <Link href={tenantHref("/cookie")}>Cookie</Link> · {copy.footer.demoNote}
+        <Link href={tenantHref("/cookie")}>Cookie</Link>
       </span>
+      <span>{copy.footer.demoNote}</span>
     </div>
   );
 }

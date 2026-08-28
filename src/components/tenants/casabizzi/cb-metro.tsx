@@ -1,16 +1,20 @@
 "use client";
 
 /**
- * IL METRO — la firma di Casa Bizzi.
+ * IL METRO DA SARTO — la firma di Casa Bizzi.
  *
- * Un metro da sarto fisso sul bordo sinistro per tutta la pagina. Non è una
- * barra di avanzamento travestita: ogni oggetto occupa il tratto di nastro
- * che servirebbe davvero a prenderne le misure (la somma delle sue misure),
- * e gli spilli si piantano ai centimetri cumulati esatti mentre li superi,
- * come fa un sarto che srotola il nastro una misura dopo l'altra.
+ * Un metro fisso sul bordo sinistro per tutta la pagina. Non è una barra di
+ * avanzamento travestita: ogni oggetto occupa il tratto di nastro che
+ * servirebbe davvero a prenderne le misure (la somma delle sue misure), e gli
+ * spilli si piantano ai centimetri cumulati esatti mentre li superi, come fa
+ * un sarto che srotola il nastro una misura dopo l'altra.
  *
  * Sull'oggetto 08 non c'è niente da misurare: il nastro si spegne e la
- * lettura diventa "taglia unica". È il silenzio prima del picco.
+ * lettura diventa "taglia unica".
+ *
+ * Il nastro non si spiega da solo a chi non sa cos'è: il frontespizio lo
+ * dichiara a parole (copy.home.opening.tape) e qui sotto resta il nome per
+ * esteso. Senza quelle due righe è un righello e basta.
  */
 
 import {
@@ -95,8 +99,8 @@ export const CbMetro = forwardRef<CbMetroHandle, Props>(function CbMetro({ onJum
 
   const numbers = useMemo(() => {
     const out: number[] = [];
-    const first = Math.ceil(windowStart / 10) * 10;
-    for (let cm = first; cm <= windowEnd; cm += 10) {
+    const first = Math.ceil(windowStart / 50) * 50;
+    for (let cm = first; cm <= windowEnd; cm += 50) {
       if (cm >= 0 && cm <= total) out.push(cm);
     }
     return out;
@@ -126,7 +130,9 @@ export const CbMetro = forwardRef<CbMetroHandle, Props>(function CbMetro({ onJum
             </span>
           ))}
         </div>
-        <span className="cb-metro-title">{copy.metro.title}</span>
+        <span className="cb-metro-title">
+          <b>{copy.metro.title}</b>
+        </span>
       </div>
       </div>
     );
@@ -186,12 +192,18 @@ export const CbMetro = forwardRef<CbMetroHandle, Props>(function CbMetro({ onJum
       </div>
 
       <p className="cb-metro-read" aria-live="off">
-        <small>{blank ? copy.metro.oneSize : copy.metro.unit}</small>
-        <span ref={readRef}>0</span>
+        <b>
+          <span ref={readRef}>0</span>
+          <i>{copy.metro.unit}</i>
+        </b>
+        {blank ? <small>{copy.metro.oneSize}</small> : null}
       </p>
 
       <span className="cb-metro-title">
-        {copy.metro.title} · {total}
+        <b>{copy.metro.title}</b>
+        <span>
+          {total} {copy.metro.unit}
+        </span>
       </span>
     </div>
     </div>

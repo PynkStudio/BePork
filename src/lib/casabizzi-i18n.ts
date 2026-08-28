@@ -21,11 +21,13 @@ export type CasaBizziCopy = {
   nav: {
     index: string;
     indexAria: string;
+    indexOpen: string;
+    indexClose: string;
     collection: string;
     maison: string;
     cart: string;
     cartAria: string;
-    skipToIndex: string;
+    skipToCollection: string;
     close: string;
   };
 
@@ -62,6 +64,12 @@ export type CasaBizziCopy = {
       variantsWord: string;
       opening: string;
     };
+    /* Frontespizio: la prima schermata è tipografica, senza foto e senza claim. */
+    opening: {
+      house: string;
+      /** La riga che rende leggibile il metro a chi non sa cos'è. */
+      tape: string;
+    };
     indexHeading: string;
     indexHint: string;
     peakEyebrow: string;
@@ -77,10 +85,10 @@ export type CasaBizziCopy = {
     back: string;
     chooseVariant: string;
     chooseSize: string;
-    sizeGuide: string;
     add: string;
     added: string;
     save: string;
+    saved: string;
     saveHint: string;
     measuresOn: string;
     nextObject: string;
@@ -146,11 +154,13 @@ const it: CasaBizziCopy = {
   nav: {
     index: "Indice",
     indexAria: "Indice degli oggetti della collezione",
+    indexOpen: "Apri l'indice della collezione",
+    indexClose: "Chiudi l'indice",
     collection: "Collezione",
     maison: "La casa",
     cart: "Borsa",
     cartAria: "Apri la borsa",
-    skipToIndex: "Vai all'indice",
+    skipToCollection: "Vai alla collezione",
     close: "Chiudi",
   },
 
@@ -162,7 +172,7 @@ const it: CasaBizziCopy = {
     details: "Dettagli",
     origin: "Origine",
     care: "Cura",
-    measures: "Misure",
+    measures: "Misure del capo",
     variants: "Varianti",
     sizes: "Taglie",
     price: "Prezzo",
@@ -170,7 +180,7 @@ const it: CasaBizziCopy = {
   },
 
   metro: {
-    title: "Metro",
+    title: "Metro da sarto",
     unit: "cm",
     oneSize: "Taglia unica",
     reducedNote: "Misure dell'oggetto a schermo",
@@ -187,8 +197,14 @@ const it: CasaBizziCopy = {
       variantsWord: "varianti",
       opening: "Showroom su appuntamento, via Solferino 18",
     },
+    opening: {
+      /* "Milanese" no: Milano è già scritto nella riga sopra il marchio. */
+      house: "Maison fondata da Michele Bizzi",
+      tape:
+        "A sinistra corre un metro da sarto. Srotola i centimetri di ogni oggetto: la collezione ne misura 2028.",
+    },
     indexHeading: "Indice",
-    indexHint: "Otto oggetti in ordine di peso, dal cappotto al foulard.",
+    indexHint: "Otto oggetti in ordine di peso, dalla giacca al foulard.",
     peakEyebrow: "Taglia unica",
     peakLine: "Non c'è niente da misurare.",
     peakSub: "Una sola linea, novanta centimetri per lato.",
@@ -198,7 +214,6 @@ const it: CasaBizziCopy = {
       { key: "Orari", value: "Da martedì a sabato, 10 alle 19" },
       { key: "Prova", value: "Ogni capo si prova prima di ordinarlo" },
       { key: "Su misura", value: "Presa misure il primo mercoledì del mese" },
-      { key: "Contatto", value: "showroom@casabizzi.it" },
     ],
     inquiryCta: "Scrivi allo showroom",
     viewObject: "Vedi l'oggetto",
@@ -208,10 +223,10 @@ const it: CasaBizziCopy = {
     back: "Torna alla collezione",
     chooseVariant: "Variante",
     chooseSize: "Taglia",
-    sizeGuide: "Le misure sono del capo, non del corpo.",
     add: "Aggiungi alla borsa",
     added: "Aggiunto",
     save: "Salvalo su Slabbby",
+    saved: "Salvato su Slabbby",
     saveHint: "Slabbby conserva l'oggetto nella tua lista fra i negozi.",
     measuresOn: "Misure dichiarate su",
     nextObject: "Oggetto seguente",
@@ -261,7 +276,7 @@ const it: CasaBizziCopy = {
   },
 
   footer: {
-    house: "Casa Bizzi, maison fondata da Michele Bizzi",
+    house: "Casa Bizzi, Milano",
     address: "Via Solferino 18, 20121 Milano",
     rights: "Tutti i diritti riservati",
     demoNote: "Sito dimostrativo su piattaforma Bizery",
@@ -277,11 +292,13 @@ const en: CasaBizziCopy = {
   nav: {
     index: "Index",
     indexAria: "Index of the objects in the collection",
+    indexOpen: "Open the index of the collection",
+    indexClose: "Close the index",
     collection: "Collection",
     maison: "The house",
     cart: "Bag",
     cartAria: "Open the bag",
-    skipToIndex: "Skip to index",
+    skipToCollection: "Skip to the collection",
     close: "Close",
   },
 
@@ -293,7 +310,7 @@ const en: CasaBizziCopy = {
     details: "Details",
     origin: "Origin",
     care: "Care",
-    measures: "Measurements",
+    measures: "Garment measurements",
     variants: "Variants",
     sizes: "Sizes",
     price: "Price",
@@ -301,7 +318,7 @@ const en: CasaBizziCopy = {
   },
 
   metro: {
-    title: "Tape",
+    title: "Tailor's tape",
     unit: "cm",
     oneSize: "One size",
     reducedNote: "Measurements of the object on screen",
@@ -318,8 +335,14 @@ const en: CasaBizziCopy = {
       variantsWord: "variants",
       opening: "Showroom by appointment, via Solferino 18",
     },
+    opening: {
+      /* No "Milanese": Milan is already set in the line above the wordmark. */
+      house: "Maison founded by Michele Bizzi",
+      tape:
+        "A tailor's tape runs down the left. It unrolls the centimetres of each object: the collection measures 2028 of them.",
+    },
     indexHeading: "Index",
-    indexHint: "Eight objects in order of weight, from the coat to the scarf.",
+    indexHint: "Eight objects in order of weight, from the jacket to the scarf.",
     peakEyebrow: "One size",
     peakLine: "There is nothing to measure.",
     peakSub: "A single line, ninety centimetres each side.",
@@ -329,7 +352,6 @@ const en: CasaBizziCopy = {
       { key: "Hours", value: "Tuesday to Saturday, 10 to 19" },
       { key: "Fitting", value: "Every piece is tried on before it is ordered" },
       { key: "Made to measure", value: "Measuring on the first Wednesday of the month" },
-      { key: "Contact", value: "showroom@casabizzi.it" },
     ],
     inquiryCta: "Write to the showroom",
     viewObject: "See the object",
@@ -339,10 +361,10 @@ const en: CasaBizziCopy = {
     back: "Back to the collection",
     chooseVariant: "Variant",
     chooseSize: "Size",
-    sizeGuide: "The measurements are of the garment, not of the body.",
     add: "Add to the bag",
     added: "Added",
     save: "Save it on Slabbby",
+    saved: "Saved on Slabbby",
     saveHint: "Slabbby keeps the object in your list across shops.",
     measuresOn: "Measurements taken on",
     nextObject: "Next object",
@@ -392,7 +414,7 @@ const en: CasaBizziCopy = {
   },
 
   footer: {
-    house: "Casa Bizzi, maison founded by Michele Bizzi",
+    house: "Casa Bizzi, Milan",
     address: "Via Solferino 18, 20121 Milan",
     rights: "All rights reserved",
     demoNote: "Demonstration site on the Bizery platform",

@@ -3,59 +3,52 @@
 /**
  * CASA BIZZI — la collezione.
  *
- * Grammatica: galleria/catalogo. La collezione comincia dal primo pixel, non
- * c'è un hero con una frase sopra una foto, la navigazione è l'indice degli
- * oggetti e la chiusura è una targa composta con lo stesso schema delle
- * etichette. Le didascalie dichiarano fatti (tessuto, grammatura, origine),
- * mai argomenti di vendita.
+ * Grammatica: galleria. Un frontespizio tipografico, poi una schermata per
+ * oggetto con la sua didascalia breve, poi l'indice stampato e la targa
+ * dell'appuntamento. Nessun claim sopra una foto, nessun bottone che chiede
+ * qualcosa: le didascalie dichiarano fatti (tessuto, origine, misura).
  *
- * Il moto è guidato da un solo listener di scroll passivo che scrive
- * --cb-p (percorso dell'atto), --cb-e (entrata) e --cb-pan (stecca) come
- * custom property sulle sezioni: la CSS fa il resto, senza runtime che
- * generi DOM.
+ * Due soli meccanismi di runtime, tenuti separati perché hanno bisogni
+ * diversi: un IntersectionObserver per le entrate (robusto anche a scheda
+ * nascosta, dove requestAnimationFrame non gira) e un listener di scroll
+ * passivo che alimenta il metro da sarto, che invece deve sapere la posizione
+ * esatta e continua.
  */
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import {
-  CASABIZZI_COLLECTION,
   casabizziCatalog,
   casabizziTape,
-  casabizziTapeLength,
   formatCasabizziPrice,
+  CASABIZZI_COLLECTION,
 } from "@/lib/casabizzi-catalog";
 import { useCasabizziCopy, useCasabizziLanguage } from "@/lib/casabizzi-i18n";
 import { getTenantContent } from "@/lib/tenant-content";
 import { useTenantLocalizedHref } from "@/lib/use-tenant-localized-href";
-import {
-  CbActCount,
-  CbActPan,
-  CbActParallax,
-  CbActReveal,
-  CbActTilt,
-  type CbActProps,
-} from "@/components/tenants/casabizzi/cb-acts";
+import { CbPlate, type CbPlateKind } from "@/components/tenants/casabizzi/cb-acts";
 import { CbMetro, type CbMetroHandle } from "@/components/tenants/casabizzi/cb-metro";
-import { CbShot } from "@/components/tenants/casabizzi/cb-shot";
 import {
   CbBag,
   CbColophon,
-  CbIndexBar,
-  CbPlate,
+  CbFrontispiece,
+  CbHeader,
 } from "@/components/tenants/casabizzi/cb-shell";
 
 /**
- * Lo spartito: un dispositivo per oggetto, mai lo stesso due volte di fila.
- * Cinque famiglie in otto atti, e il picco è l'ultimo oggetto.
+ * Lo spartito: tre composizioni che si alternano, mai la stessa due volte di
+ * fila. I due orizzontali (trench, pantalone) e il foulard cadono dove la
+ * composizione li regge.
  */
-const SCORE: Array<(props: CbActProps) => React.JSX.Element> = [
-  CbActReveal, // 01 giacca
-  CbActPan, // 02 trench
-  CbActTilt, // 03 abito
-  CbActCount, // 04 camicia
-  CbActPan, // 05 maglia
-  CbActParallax, // 06 pantalone
-  CbActReveal, // 07 denim
+const SCORE: Array<{ kind: CbPlateKind; side?: "left" | "right" }> = [
+  { kind: "side", side: "left" }, // 01 giacca
+  { kind: "centre" }, // 02 trench
+  { kind: "suite" }, // 03 abito
+  { kind: "side", side: "right" }, // 04 camicia
+  { kind: "centre" }, // 05 maglia
+  { kind: "suite" }, // 06 pantalone
+  { kind: "side", side: "left" }, // 07 denim
+  { kind: "centre" }, // 08 foulard
 ];
 
 const clamp = (value: number, min: number, max: number) =>
@@ -77,11 +70,9 @@ export function CasaBizziHomePage() {
 
   const rootRef = useRef<HTMLDivElement>(null);
   const metroRef = useRef<CbMetroHandle>(null);
-  const [activeIndex, setActiveIndex] = useState(0);
 
   const tape = useMemo(() => casabizziTape(), []);
-  const peak = casabizziCatalog[casabizziCatalog.length - 1];
-  const peakIndex = casabizziCatalog.length - 1;
+  const lastIndex = casabizziCatalog.length - 1;
 
   const jumpTo = useCallback((pieceIndex: number) => {
     const piece = casabizziCatalog[pieceIndex];
@@ -89,90 +80,81 @@ export function CasaBizziHomePage() {
     document.getElementById(`cb-${piece.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
 
+  // Entrate: una volta sola, e restano. Niente stato React, niente re-render.
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const nodes = Array.from(root.querySelectorAll<HTMLElement>("[data-cb-rise]"));
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    /*
+       La partenza invisibile la accende il JS, non il CSS: se l'osservatore
+       non parte (script fallito, pagina servita senza JS) la collezione deve
+       restare visibile, non sparire.
+    */
+    root.dataset.cbMotion = "on";
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          (entry.target as HTMLElement).dataset.cbIn = "true";
+          observer.unobserve(entry.target);
+        }
+      },
+      { rootMargin: "0px 0px -12% 0px", threshold: 0.06 },
+    );
+    for (const node of nodes) observer.observe(node);
+    return () => {
+      observer.disconnect();
+      delete root.dataset.cbMotion;
+    };
+  }, []);
+
+  // Il metro: unica cosa che ha bisogno della posizione continua di scroll.
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
 
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const acts = Array.from(root.querySelectorAll<HTMLElement>("[data-cb-act]"));
-    const counters = Array.from(root.querySelectorAll<HTMLElement>("[data-cb-count]"));
     let frame = 0;
-    let lastActive = -1;
 
     function measure() {
       frame = 0;
-      const vh = viewportHeight();
-      const half = vh * 0.5;
-      let activePiece = 0;
+      const half = viewportHeight() * 0.5;
       let cm = 0;
+      let active = 0;
       let blank = false;
-      let seenPiece = false;
+      let seen = false;
 
       for (const act of acts) {
-        const rect = act.getBoundingClientRect();
-        const sticky = act.dataset.cbDrive === "sticky";
-
-        const travel = sticky
-          ? clamp(-rect.top / Math.max(1, rect.height - vh), 0, 1)
-          : clamp((vh - rect.top) / (vh + rect.height), 0, 1);
-        const enter = clamp((vh * 0.9 - rect.top) / (vh * 0.55), 0, 1);
-
-        act.style.setProperty("--cb-p", travel.toFixed(4));
-        act.style.setProperty("--cb-e", enter.toFixed(4));
-
-        if (!reduced) {
-          const rail = act.querySelector<HTMLElement>("[data-cb-rail]");
-          const clip = rail?.parentElement;
-          if (rail && clip) {
-            const extra = Math.max(0, rail.scrollWidth - clip.clientWidth);
-            act.style.setProperty(
-              "--cb-pan",
-              (extra * clamp((travel - 0.14) / 0.66, 0, 1)).toFixed(1),
-            );
-          }
-        }
-
         const index = Number(act.dataset.cbPiece ?? "-1");
-        if (index < 0) continue;
-        const stop = tape.stops[index];
+        const stop = index >= 0 ? tape.stops[index] : undefined;
         if (!stop) continue;
+        const rect = act.getBoundingClientRect();
 
         if (rect.top <= half && rect.bottom >= half) {
-          activePiece = index;
-          seenPiece = true;
           const local = clamp((half - rect.top) / Math.max(1, rect.height), 0, 1);
+          active = index;
           cm = stop.start + local * stop.length;
           // Sull'ultimo oggetto non c'è niente da misurare: il nastro si spegne.
-          blank = index === peakIndex && local > 0.28;
+          blank = index === lastIndex && local > 0.34;
+          seen = true;
         } else if (rect.bottom < half) {
           // Superato: il nastro resta srotolato fino alla fine di quell'oggetto.
-          activePiece = index;
-          seenPiece = true;
+          active = index;
           cm = stop.start + stop.length;
           blank = false;
+          seen = true;
         }
       }
 
-      if (!seenPiece) {
-        activePiece = 0;
+      if (!seen) {
+        active = 0;
         cm = 0;
       }
-
-      metroRef.current?.update(cm, activePiece, blank);
-
-      if (activePiece !== lastActive) {
-        lastActive = activePiece;
-        setActiveIndex(activePiece);
-      }
-      if (!reduced) {
-        for (const counter of counters) {
-          const act = counter.closest<HTMLElement>("[data-cb-act]");
-          if (!act) continue;
-          const progress = Number(act.style.getPropertyValue("--cb-e") || "1");
-          const target = Number(counter.dataset.cbCount ?? "0");
-          counter.textContent = String(Math.round(target * clamp(progress, 0, 1)));
-        }
-      }
+      metroRef.current?.update(cm, active, blank);
     }
 
     /*
@@ -196,160 +178,86 @@ export function CasaBizziHomePage() {
       document.removeEventListener("visibilitychange", schedule);
       if (frame) cancelAnimationFrame(frame);
     };
-  }, [tape, peakIndex]);
-
-  // Il tilt vive nel puntatore, non nello scroll: listener a parte, sempre passivo.
-  useEffect(() => {
-    const root = rootRef.current;
-    if (!root) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    if (!window.matchMedia("(hover: hover)").matches) return;
-
-    const nodes = Array.from(root.querySelectorAll<HTMLElement>("[data-cb-tilt]"));
-    const cleanups = nodes.map((node) => {
-      const onMove = (event: PointerEvent) => {
-        const rect = node.getBoundingClientRect();
-        node.style.setProperty("--cb-tx", ((event.clientX - rect.left) / rect.width - 0.5).toFixed(3));
-        node.style.setProperty("--cb-ty", ((event.clientY - rect.top) / rect.height - 0.5).toFixed(3));
-        node.style.setProperty("--cb-lift", "1");
-      };
-      const onLeave = () => {
-        node.style.setProperty("--cb-tx", "0");
-        node.style.setProperty("--cb-ty", "0");
-        node.style.setProperty("--cb-lift", "0");
-      };
-      node.addEventListener("pointermove", onMove, { passive: true });
-      node.addEventListener("pointerleave", onLeave, { passive: true });
-      return () => {
-        node.removeEventListener("pointermove", onMove);
-        node.removeEventListener("pointerleave", onLeave);
-      };
-    });
-    return () => cleanups.forEach((off) => off());
-  }, []);
+  }, [tape, lastIndex]);
 
   return (
     <div className="cb-root" ref={rootRef}>
-      <a className="cb-skip" href="#cb-index">
-        {copy.nav.skipToIndex}
+      <a className="cb-skip" href={`#cb-${casabizziCatalog[0].id}`}>
+        {copy.nav.skipToCollection}
       </a>
 
       <CbMetro ref={metroRef} onJump={jumpTo} />
-      <CbPlate heading />
-      <CbIndexBar activeIndex={activeIndex} />
+      <CbHeader />
+      <CbFrontispiece />
 
-      {casabizziCatalog.slice(0, SCORE.length).map((piece, index) => {
-        const Act = SCORE[index];
+      {casabizziCatalog.map((piece, index) => {
+        const plate = SCORE[index] ?? { kind: "centre" as CbPlateKind };
         const previous = index > 0 ? casabizziCatalog[index - 1] : null;
         const from =
           previous && previous.groundHex !== piece.groundHex ? previous.groundHex : undefined;
         return (
-          <Act
+          <CbPlate
             key={piece.id}
             piece={piece}
             index={index}
             language={language}
             copy={copy}
             href={tenantHref(`/${piece.id}`)}
+            kind={plate.kind}
+            side={plate.side}
             from={from}
+            first={index === 0}
           />
         );
       })}
 
-      {/* L'indice stampato: la stessa navigazione, ma da leggere */}
+      {/* L'indice stampato: la stessa collezione, ma da leggere in una pagina */}
       <section className="cb-contents" data-cb-ground="concrete" aria-labelledby="cb-contents-h">
-        <div className="cb-contents-head">
-          <h2 id="cb-contents-h" style={{ fontSize: "clamp(1.8rem, 3.4vw, 2.8rem)" }}>
-            {copy.home.indexHeading}
-          </h2>
-          <p className="cb-note" style={{ maxWidth: "34ch" }}>
-            {copy.home.indexHint}
-          </p>
-        </div>
-        <ol className="cb-contents-list">
-          {casabizziCatalog.map((piece) => (
-            <li key={piece.id}>
-              <Link className="cb-contents-row" href={tenantHref(`/${piece.id}`)}>
-                <span>{piece.number}</span>
-                <span className="cb-contents-title">
-                  {piece.name[language]}
-                  <em>{piece.kind[language]}</em>
-                </span>
-                <span>{formatCasabizziPrice(piece.price, language)}</span>
-              </Link>
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      {/* Il picco: l'unico oggetto che non si può misurare */}
-      <section
-        id={`cb-${peak.id}`}
-        className="cb-peak"
-        data-cb-act=""
-        data-cb-piece={peakIndex}
-        data-cb-ground={peak.ground}
-        data-cb-drive="sticky"
-        style={{ ["--cb-ground" as string]: peak.groundHex } as React.CSSProperties}
-        aria-labelledby={`cb-h-${peak.id}`}
-      >
-        <div className="cb-peak-sticky">
-          <span className="cb-peak-tint" aria-hidden="true" />
-          <div className="cb-peak-frame">
-            <CbShot piece={peak} variant={peak.variants[0]} />
-            <CbShot piece={peak} variant={peak.variants[1]} />
+        <div className="cb-wrap">
+          <div className="cb-contents-head" data-cb-rise="">
+            <h2 id="cb-contents-h">{copy.home.indexHeading}</h2>
+            <p className="cb-note">{copy.home.indexHint}</p>
           </div>
-          <div className="cb-peak-copy">
-            <p className="cb-eyebrow">
-              {peak.number} · {copy.home.peakEyebrow}
-            </p>
-            <h2 id={`cb-h-${peak.id}`} className="cb-peak-line">
-              {copy.home.peakLine}
-            </h2>
-            <p className="cb-peak-sub">{copy.home.peakSub}</p>
-            <p className="cb-note" style={{ marginTop: "1rem" }}>
-              {peak.note[language]}
-            </p>
-            <Link
-              className="cb-inquiry-cta"
-              href={tenantHref(`/${peak.id}`)}
-              style={{ color: "var(--cb-accent)" }}
-            >
-              {copy.home.viewObject} · {formatCasabizziPrice(peak.price, language)}
-            </Link>
-          </div>
+          <ol className="cb-contents-list">
+            {casabizziCatalog.map((piece) => (
+              <li key={piece.id}>
+                <Link className="cb-contents-row" href={tenantHref(`/${piece.id}`)}>
+                  <span className="cb-contents-num">{piece.number}</span>
+                  <span className="cb-contents-title">{piece.name[language]}</span>
+                  <span className="cb-contents-price">
+                    {formatCasabizziPrice(piece.price, language)}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ol>
         </div>
-        <div className="cb-peak-spacer" aria-hidden="true" />
       </section>
 
       {/* Chiusura: l'invito è composto come un'etichetta, non come un bottone */}
       <section className="cb-inquiry" aria-labelledby="cb-inquiry-h">
-        <div className="cb-inquiry-grid">
-          <div>
-            <p className="cb-eyebrow">{CASABIZZI_COLLECTION[language]}</p>
-            <h2 id="cb-inquiry-h" className="cb-inquiry-title" style={{ marginTop: "1rem" }}>
-              {copy.home.inquiryHeading}
-            </h2>
-            <a className="cb-inquiry-cta" href={`mailto:${content.contact.email}`}>
-              {copy.home.inquiryCta}
-            </a>
-          </div>
-          <dl className="cb-label cb-label--tight">
-            {copy.home.inquiryLines.map((line) => (
-              <div key={line.key} style={{ display: "contents" }}>
-                <dt>{line.key}</dt>
-                <dd>{line.value}</dd>
-              </div>
-            ))}
-            <div style={{ display: "contents" }}>
-              <dt>{copy.metro.title}</dt>
-              <dd>
-                {casabizziTapeLength()} {copy.metro.unit}
-              </dd>
+        <div className="cb-wrap">
+          <div className="cb-inquiry-grid">
+            <div>
+              <p className="cb-eyebrow">{CASABIZZI_COLLECTION[language]}</p>
+              <h2 id="cb-inquiry-h" className="cb-inquiry-title">
+                {copy.home.inquiryHeading}
+              </h2>
+              <a className="cb-link cb-link--lg" href={`mailto:${content.contact.email}`}>
+                {copy.home.inquiryCta}
+              </a>
             </div>
-          </dl>
+            <dl className="cb-label cb-label--tight">
+              {copy.home.inquiryLines.map((line) => (
+                <div key={line.key} style={{ display: "contents" }}>
+                  <dt>{line.key}</dt>
+                  <dd>{line.value}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+          <CbColophon />
         </div>
-        <CbColophon />
       </section>
 
       <CbBag />

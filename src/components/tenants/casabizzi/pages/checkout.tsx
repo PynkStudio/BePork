@@ -12,10 +12,9 @@ import { useState, type FormEvent } from "react";
 import {
   CbBag,
   CbColophon,
-  CbIndexBar,
-  CbPlate,
+  CbHeader,
 } from "@/components/tenants/casabizzi/cb-shell";
-import { formatCasabizziPrice } from "@/lib/casabizzi-catalog";
+import { CASABIZZI_COLLECTION, formatCasabizziPrice } from "@/lib/casabizzi-catalog";
 import { useCasabizziCopy, useCasabizziLanguage } from "@/lib/casabizzi-i18n";
 import { useTenantLocalizedHref } from "@/lib/use-tenant-localized-href";
 import { cbBagCount, cbBagTotal, useCbBagStore } from "@/store/casabizzi-bag-store";
@@ -39,8 +38,7 @@ export function CasaBizziCheckoutPage() {
 
   return (
     <div className="cb-root">
-      <CbPlate />
-      <CbIndexBar activeIndex={null} />
+      <CbHeader />
 
       <main className="cb-order">
         {done ? (
@@ -49,7 +47,7 @@ export function CasaBizziCheckoutPage() {
             <h1 style={{ marginTop: "1rem" }}>{copy.checkout.doneTitle}</h1>
             <p className="cb-note">{copy.checkout.doneBody}</p>
             <p style={{ marginTop: "2rem" }}>
-              <Link className="cb-inquiry-cta" href={tenantHref("/")} style={{ marginTop: 0 }}>
+              <Link className="cb-link" href={tenantHref("/")}>
                 {copy.checkout.backHome}
               </Link>
             </p>
@@ -60,16 +58,17 @@ export function CasaBizziCheckoutPage() {
             <h1 style={{ marginTop: "1rem" }}>{copy.cart.empty}</h1>
             <p className="cb-note">{copy.cart.emptyHint}</p>
             <p style={{ marginTop: "2rem" }}>
-              <Link className="cb-inquiry-cta" href={tenantHref("/")} style={{ marginTop: 0 }}>
+              <Link className="cb-link" href={tenantHref("/")}>
                 {copy.checkout.backHome}
               </Link>
             </p>
           </div>
         ) : (
           <>
-            <p className="cb-eyebrow">{copy.checkout.title}</p>
+            {/* Il marchio è già in testata: qui l'h1 è la pagina, non la casa. */}
+            <p className="cb-eyebrow">{CASABIZZI_COLLECTION[language]}</p>
             <h1 style={{ fontSize: "clamp(2.2rem, 5vw, 3.4rem)", margin: "1rem 0 0.75rem" }}>
-              {copy.home.plate.house}
+              {copy.checkout.title}
             </h1>
             <p className="cb-note" style={{ marginBottom: "3rem" }}>
               {copy.checkout.intro}

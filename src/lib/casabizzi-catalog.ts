@@ -91,8 +91,8 @@ export const casabizziCatalog: CbPiece[] = [
     origin: { it: "Confezionata in Veneto", en: "Made up in Veneto" },
     care: { it: "Lavaggio a secco. Stiratura a vapore", en: "Dry clean. Steam press" },
     note: {
-      it: "Il doppiopetto chiude su sei bottoni e ne allaccia tre. La costruzione è a mezza tela.",
-      en: "Six buttons on the double breast, three of them fastening. Half canvas construction.",
+      it: "Sei bottoni sul davanti, tre allacciano. La costruzione è a mezza tela.",
+      en: "Six buttons on the front, three of them fasten. Half canvas construction.",
     },
     price: 1480,
     sizes: ["XS", "S", "M", "L", "XL"],
@@ -104,7 +104,7 @@ export const casabizziCatalog: CbPiece[] = [
       { key: "lunghezza", label: { it: "Lunghezza", en: "Length" }, cm: 72 },
     ],
     ground: "bone",
-    groundHex: "#efeeea",
+    groundHex: "#f0eeea",
     orientation: "portrait",
     variants: [
       { id: "nero", name: { it: "Nero ossidiana", en: "Obsidian black" }, hex: "#1B1A1D", ...img("giacca", "nero") },
@@ -142,7 +142,7 @@ export const casabizziCatalog: CbPiece[] = [
       { key: "lunghezza", label: { it: "Lunghezza", en: "Length" }, cm: 96 },
     ],
     ground: "bone",
-    groundHex: "#ebeae3",
+    groundHex: "#edece5",
     orientation: "landscape",
     variants: [
       { id: "sabbia", name: { it: "Sabbia", en: "Sand" }, hex: "#D2C1A2", ...img("trench", "sabbia") },
@@ -179,7 +179,7 @@ export const casabizziCatalog: CbPiece[] = [
       { key: "lunghezza", label: { it: "Lunghezza", en: "Length" }, cm: 118 },
     ],
     ground: "bone",
-    groundHex: "#eeeee6",
+    groundHex: "#f0efe8",
     orientation: "portrait",
     variants: [
       { id: "avorio", name: { it: "Avorio", en: "Off white" }, hex: "#E1DCCE", ...img("abito", "avorio") },
@@ -255,7 +255,7 @@ export const casabizziCatalog: CbPiece[] = [
       { key: "lunghezza", label: { it: "Lunghezza", en: "Length" }, cm: 68 },
     ],
     ground: "linen",
-    groundHex: "#f0eae0",
+    groundHex: "#f2eee3",
     orientation: "portrait",
     variants: [
       { id: "avorio", name: { it: "Avorio", en: "Ivory" }, hex: "#DBCAB7", ...img("maglia", "avorio") },
@@ -293,7 +293,7 @@ export const casabizziCatalog: CbPiece[] = [
       { key: "interno", label: { it: "Interno gamba", en: "Inseam" }, cm: 72 },
     ],
     ground: "concrete",
-    groundHex: "#cbcbcb",
+    groundHex: "#d0d0cf",
     orientation: "landscape",
     variants: [
       { id: "antracite", name: { it: "Grigio antracite", en: "Charcoal grey" }, hex: "#4D4D4D", ...img("pantalone", "antracite") },
@@ -331,7 +331,7 @@ export const casabizziCatalog: CbPiece[] = [
       { key: "interno", label: { it: "Interno gamba", en: "Inseam" }, cm: 70 },
     ],
     ground: "concrete",
-    groundHex: "#cdcccd",
+    groundHex: "#d0d0d1",
     orientation: "portrait",
     variants: [
       { id: "indaco", name: { it: "Indaco grezzo", en: "Raw indigo" }, hex: "#303747", ...img("denim", "indaco") },
@@ -361,7 +361,7 @@ export const casabizziCatalog: CbPiece[] = [
     sizeReference: { it: "Taglia unica", en: "One size" },
     measures: [{ key: "lato", label: { it: "Lato", en: "Side" }, cm: 90 }],
     ground: "concrete",
-    groundHex: "#cfccc7",
+    groundHex: "#cbcac4",
     orientation: "landscape",
     variants: [
       { id: "monocromo", name: { it: "Monocromo", en: "Monochrome" }, hex: "#E3E1D9", ...img("foulard", "monocromo") },

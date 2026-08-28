@@ -62,19 +62,31 @@ Il modulo ha due metà, che vanno tenute distinte:
 | `SlabbbyScriptGate` | `src/components/core/slabbby-script-gate.tsx` | Carica `https://slabbby.com/widget.js` se `features.slabbby` è attivo. Nel layout globale è montato con `skipInPreview`, quindi **in preview il gate lo monta la pagina del tenant**. |
 | `SlabbbyWishlistButton` | `src/components/modules/shop/slabbby-wishlist-btn.tsx` | Bottone della maison/negozio. Va **sotto** il tasto carrello nella scheda prodotto, mai in home/catalogo né sopra il titolo. |
 
-Verificato sul campo (2026-08-27, tenant `casabizzi`):
+Il widget ha **due modi**, e vanno tenuti distinti (contratto rivisto il 2026-08-27
+nella repo `siti/slabbby`, vedi lì `docs/obsidian/09 - Feature Partner B2B.md`):
 
-- `widget.js` si carica e apre un iframe `https://slabbby.com/widget-auth`.
-- Il widget **si aggancia da solo accanto al primo heading della pagina** e monta la
-  propria UI in uno **shadow root chiuso**: dall'esterno si può governare solo il box
-  del suo host `#slabbby-widget-host`, non il suo interno.
-  Conseguenza pratica: caricare il gate sulla pagina di collezione mette il bottone
-  Slabbby dentro il marchio. Per questo su `casabizzi` il gate è montato **solo nella
-  scheda oggetto**.
-- `window.Slabbby` **non esiste**: il ramo "prova prima l'API JS del widget" di
-  `SlabbbyWishlistButton` non scatta mai con la build attuale del widget, e il bottone
-  usa sempre il fallback `https://slabbby.com/save?...`. Il bottone funziona, ma
-  chi legge il codice non deve aspettarsi che passi dall'API.
+- **manuale**, per i siti nostri: il sito dichiara dove va il bottone e il widget
+  non tocca nient'altro. Si dichiara con un segnaposto
+  `<div data-slabbby>` oppure con `Slabbby.mount(el, opts)`. Sulle pagine senza
+  segnaposto (home, catalogo) si dichiara una volta sola a livello di documento
+  con `data-slabbby-manual` sull'elemento `<html>`.
+- **automatico**, per l'estensione Chrome sui siti di terzi: cerca il titolo
+  prodotto e si aggancia sotto.
+
+Senza dichiarazione un sito nostro ricade nell'automatico, e allora il bottone
+finisce accanto al primo `h1` della pagina: sul marchio in home, e in doppione
+con l'eventuale bottone del sito sulla scheda prodotto.
+
+`window.Slabbby` ora esiste (`mount`, `save`, `add`, `on`, `unmountAll`, `ready`).
+Prima non c'era: è il motivo per cui il ramo "prova prima l'API JS del widget" di
+`SlabbbyWishlistButton` non scattava mai e si cadeva sempre nel fallback URL.
+
+Lo stile del bottone si personalizza con le custom property `--slabbby-*` scritte
+sul segnaposto: attraversano lo shadow root chiuso per ereditarietà, quindi non
+servono `!important` né selettori dentro lo shadow DOM.
+
+> Le modifiche al widget arrivano ai siti **solo dopo il deploy di slabbby.com**:
+> `/widget.js` è servito con cache 1 ora browser e 24 ore CDN.
 
 Tenant con il modulo attivo: `libritech`, `casabizzi`.
 

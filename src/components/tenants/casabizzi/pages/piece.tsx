@@ -10,13 +10,11 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { SlabbbyWishlistButton } from "@/components/modules/shop/slabbby-wishlist-btn";
 import { CbLabel } from "@/components/tenants/casabizzi/cb-acts";
 import {
   CbBag,
   CbColophon,
-  CbIndexBar,
-  CbPlate,
+  CbHeader,
   CbSlabbbyGate,
 } from "@/components/tenants/casabizzi/cb-shell";
 import { CbShot } from "@/components/tenants/casabizzi/cb-shot";
@@ -49,15 +47,18 @@ export function CasaBizziPiecePage({ pieceId }: { pieceId: string }) {
   const variant = piece.variants.find((entry) => entry.id === variantId) ?? piece.variants[0];
   const previous = casabizziCatalog[index - 1];
   const next = casabizziCatalog[index + 1];
-  const productUrl =
-    typeof window === "undefined"
-      ? `https://demo.bizery.it${tenantHref(`/${piece.id}`)}`
-      : window.location.href;
+  /*
+     URL che Slabbby salva e poi va a leggere per estrarre i dati del prodotto.
+     Deve essere quello pubblico e uguale su server e client: con
+     window.location.href sarebbe diverso fra le due rese (mismatch di
+     idratazione sull'attributo) e in locale salverebbe un localhost che lo
+     scraper non può raggiungere.
+  */
+  const productUrl = `https://demo.bizery.it${tenantHref(`/${piece.id}`)}`;
 
   return (
     <div className="cb-root">
-      <CbPlate />
-      <CbIndexBar activeIndex={index} />
+      <CbHeader />
 
       <article
         className="cb-piece"
@@ -65,7 +66,7 @@ export function CasaBizziPiecePage({ pieceId }: { pieceId: string }) {
         style={{ ["--cb-ground" as string]: piece.groundHex } as React.CSSProperties}
       >
         <p style={{ marginBottom: "2rem" }}>
-          <Link className="cb-inquiry-cta" href={tenantHref("/")} style={{ marginTop: 0 }}>
+          <Link className="cb-link" href={tenantHref("/")}>
             {copy.piece.back}
           </Link>
         </p>
@@ -73,7 +74,7 @@ export function CasaBizziPiecePage({ pieceId }: { pieceId: string }) {
         <div className="cb-piece-grid">
           <div className="cb-piece-shot">
             <CbShot piece={piece} variant={variant} priority contain />
-            <div className="cb-piece-thumbs">
+            <div className="cb-piece-thumbs" role="group" aria-label={copy.piece.chooseVariant}>
               {piece.variants.map((entry) => (
                 <button
                   key={entry.id}
@@ -98,12 +99,8 @@ export function CasaBizziPiecePage({ pieceId }: { pieceId: string }) {
               href={tenantHref("/")}
               headingId={`cb-h-${piece.id}`}
               headingLevel="h1"
+              foot={false}
             />
-
-            <p className="cb-field-head">
-              <span>{copy.piece.chooseVariant}</span>
-              <b>{variant.name[language]}</b>
-            </p>
 
             <p className="cb-field-head">
               <span>{copy.piece.chooseSize}</span>
@@ -122,7 +119,6 @@ export function CasaBizziPiecePage({ pieceId }: { pieceId: string }) {
                 </button>
               ))}
             </div>
-            <p className="cb-slabbby-hint">{copy.piece.sizeGuide}</p>
 
             <div className="cb-object-foot" style={{ marginBottom: "1.25rem" }}>
               <span className="cb-price">{formatCasabizziPrice(piece.price, language)}</span>
@@ -148,17 +144,21 @@ export function CasaBizziPiecePage({ pieceId }: { pieceId: string }) {
               {copy.piece.add}
             </button>
 
-            {/* Slabbby: sotto il tasto borsa, mai sopra il titolo né in catalogo */}
-            <SlabbbyWishlistButton
-              className="cb-slabbby"
-              label={copy.piece.save}
-              product={{
-                id: `${piece.id}-${variant.id}`,
-                name: `${piece.name[language]}, ${variant.name[language]}`,
-                price: piece.price.toFixed(2),
-                imageUrl: variant.image,
-                productUrl,
-              }}
+            {/*
+              Slabbby, sotto il tasto borsa. È il segnaposto ufficiale del
+              widget: dichiarandolo, il widget monta QUI il proprio bottone e
+              smette di cercarsi un posto da solo. Un bottone solo, con la
+              logica di salvataggio vera; lo stile arriva dai token
+              --slabbby-* scritti in casabizzi.css.
+            */}
+            <div
+              className="cb-slabbby-slot"
+              data-slabbby
+              data-slabbby-label={copy.piece.save}
+              data-slabbby-saved-label={copy.piece.saved}
+              data-slabbby-url={productUrl}
+              data-slabbby-block
+              key={`${piece.id}-${variant.id}`}
             />
             <p className="cb-slabbby-hint">{copy.piece.saveHint}</p>
 

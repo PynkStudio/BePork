@@ -49,7 +49,9 @@
     --cb-10: 9rem;
 
     --cb-gutter: clamp(1.25rem, 4vw, 3.5rem);
-    --cb-metro-w: 96px;
+    --cb-metro-w: 88px;
+    --cb-topbar-h: 4.75rem;
+    --cb-wrap: 92rem;
     --cb-measure: 58ch;
   }
 
@@ -91,9 +93,9 @@
     outline-offset: 3px;
   }
 
-  .cb-root h1,
-  .cb-root h2,
-  .cb-root h3 {
+  :where(.cb-root) h1,
+  :where(.cb-root) h2,
+  :where(.cb-root) h3 {
     font-family: var(--cb-font-display);
     font-weight: 400;
     letter-spacing: -0.015em;
@@ -102,7 +104,7 @@
     margin: 0;
   }
 
-  .cb-root p {
+  :where(.cb-root) p {
     text-wrap: pretty;
     margin: 0;
   }
@@ -183,398 +185,331 @@
     letter-spacing: -0.01em;
   }
 
-  /* ── Targa d'apertura ──────────────────────────────────────────────────── */
-  .cb-plate {
-    position: relative;
-    z-index: 2;
-    padding: var(--cb-5) var(--cb-gutter) var(--cb-4);
-    padding-left: max(var(--cb-gutter), var(--cb-metro-w));
-    border-bottom: 1px solid var(--cb-rule);
-  }
-
-  .cb-plate-row {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: var(--cb-5);
-    flex-wrap: wrap;
-  }
-
-  .cb-wordmark {
-    font-family: var(--cb-font-display);
-    font-weight: 500;
-    font-size: clamp(2.4rem, 7.4vw, 5.6rem);
-    line-height: 0.9;
-    letter-spacing: 0.02em;
-    margin: 0;
-    color: var(--cb-ink);
-  }
-
-  .cb-wordmark a {
-    color: inherit;
-    text-decoration: none;
-  }
-
-  .cb-wordmark-sub {
-    display: block;
-    margin-top: 0.45rem;
-    font-family: var(--cb-font-body);
-    font-size: 0.6875rem;
-    font-weight: 500;
-    letter-spacing: 0.42em;
-    text-transform: uppercase;
-    color: var(--cb-accent);
-  }
-
-  .cb-plate-meta {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 0.2rem;
-    text-align: right;
-    font-size: 0.6875rem;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--cb-ink-faint);
-    font-variant-numeric: tabular-nums;
-  }
-
+  /* ── Testata ───────────────────────────────────────────────────────────── */
   /*
-     Il widget Slabbby si aggancia da solo accanto al primo heading della
-     pagina, quindi atterra dentro la riga della targa. Il widget è UI del
-     fornitore e non si tocca: gli si dà una riga propria così non si siede
-     sopra il marchio. Il tasto della maison resta quello sotto la borsa.
+     Un filetto e tre voci. Resta trasparente sul frontespizio e prende fondo
+     e filetto appena la pagina si muove: sopra le fotografie serve un piano
+     su cui appoggiare il testo, sulla prima schermata no.
   */
-  /*
-     Il widget monta in uno shadow root chiuso: dall'esterno si può governare
-     solo il suo box, non il suo interno. Gli si dà respiro dove atterra.
-  */
-  [data-tenant-surface="casabizzi"] #slabbby-widget-host {
-    display: block;
-    margin: var(--cb-3) 0 var(--cb-4);
-  }
-
-  [data-tenant-surface="casabizzi"] .cb-plate-row > #slabbby-widget-host {
-    order: 3;
-    flex-basis: 100%;
-    display: flex;
-    justify-content: flex-end;
-    margin-top: var(--cb-2);
-  }
-
-  /* ── Indice: la navigazione è l'elenco degli oggetti ───────────────────── */
-  .cb-index {
+  .cb-topbar {
     position: sticky;
     top: 0;
     z-index: 40;
     display: flex;
-    align-items: stretch;
-    gap: 0;
-    background: color-mix(in srgb, var(--cb-ground) 88%, transparent);
-    backdrop-filter: blur(14px) saturate(1.1);
-    border-bottom: 1px solid var(--cb-rule);
-    padding-left: var(--cb-metro-w);
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--cb-5);
+    height: var(--cb-topbar-h);
+    padding-inline: max(var(--cb-gutter), var(--cb-metro-w));
+    transition: background-color 420ms ease, box-shadow 420ms ease;
   }
 
-  .cb-index-scroll {
-    display: flex;
-    flex: 1 1 auto;
-    min-width: 0;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .cb-index-scroll::-webkit-scrollbar {
-    display: none;
+  .cb-topbar[data-cb-stuck="true"] {
+    background: color-mix(in srgb, var(--cb-bone) 84%, transparent);
+    backdrop-filter: blur(16px) saturate(1.06);
+    box-shadow: inset 0 -1px 0 var(--cb-rule-soft);
   }
 
-  .cb-index-item {
-    flex: 0 0 auto;
-    display: flex;
-    align-items: baseline;
-    gap: 0.5rem;
-    padding: 0.72rem var(--cb-4) 0.66rem;
-    border-right: 1px solid var(--cb-rule-soft);
-    background: none;
-    border-top: 0;
-    border-bottom: 0;
-    border-left: 0;
-    color: var(--cb-ink-soft);
-    font-family: var(--cb-font-body);
-    font-size: 0.75rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+  .cb-topbar-mark {
+    font-family: var(--cb-font-display);
+    font-size: clamp(1.05rem, 1.6vw, 1.4rem);
+    letter-spacing: 0.05em;
+    line-height: 1;
+    color: var(--cb-ink);
+  }
+
+  .cb-topbar-mark a {
+    color: inherit;
     text-decoration: none;
-    white-space: nowrap;
-    cursor: pointer;
-    transition: color 180ms ease, background-color 180ms ease;
   }
 
-  .cb-index-item:hover {
-    color: var(--cb-ink);
-    background: color-mix(in srgb, var(--cb-ink) 5%, transparent);
-  }
-
-  .cb-index-num {
-    font-variant-numeric: tabular-nums;
-    font-weight: 600;
-    color: var(--cb-ink);
-  }
-
-  .cb-index-name {
-    max-width: 0;
-    overflow: hidden;
-    opacity: 0;
-    transition: max-width 420ms cubic-bezier(0.22, 0.61, 0.36, 1), opacity 240ms ease;
-  }
-
-  .cb-index-item[aria-current="true"] {
-    color: var(--cb-ink);
-    background: color-mix(in srgb, var(--cb-accent) 10%, transparent);
-    box-shadow: inset 0 -2px 0 var(--cb-accent);
-  }
-
-  .cb-index-item[aria-current="true"] .cb-index-num {
-    color: var(--cb-accent);
-  }
-
-  .cb-index-item[aria-current="true"] .cb-index-name {
-    max-width: 22ch;
-    opacity: 1;
-  }
-
-  .cb-index-tools {
-    flex: 0 0 auto;
+  .cb-topbar-nav {
     display: flex;
-    align-items: stretch;
-    border-left: 1px solid var(--cb-rule);
+    align-items: center;
   }
 
-  .cb-tool {
+  .cb-topbar-nav > * + * {
+    margin-left: var(--cb-3);
+    padding-left: var(--cb-3);
+    border-left: 1px solid var(--cb-rule-soft);
+  }
+
+  .cb-lang {
+    display: flex;
+    align-items: center;
+  }
+
+  .cb-topbar-btn {
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
-    padding: 0 var(--cb-4);
+    gap: 0.45rem;
     min-height: 44px;
+    padding-inline: var(--cb-2);
     background: none;
     border: 0;
-    border-left: 1px solid var(--cb-rule-soft);
-    color: var(--cb-ink);
+    color: var(--cb-ink-soft);
     font-family: var(--cb-font-body);
     font-size: 0.6875rem;
     font-weight: 500;
-    letter-spacing: 0.16em;
+    letter-spacing: 0.2em;
     text-transform: uppercase;
     text-decoration: none;
     cursor: pointer;
-    transition: background-color 180ms ease, color 180ms ease;
+    transition: color 200ms ease;
   }
-  .cb-tool:first-child {
-    border-left: 0;
+
+  .cb-topbar-btn:hover {
+    color: var(--cb-ink);
   }
-  .cb-tool:hover {
-    background: var(--cb-ink);
-    color: var(--cb-bone);
+
+  .cb-topbar-btn--lang {
+    padding-inline: 0.35rem;
+    letter-spacing: 0.12em;
   }
-  .cb-tool[aria-pressed="true"],
-  .cb-tool[aria-current="true"] {
+
+  .cb-topbar-btn--lang[aria-pressed="true"] {
     color: var(--cb-accent);
   }
 
-  .cb-tool-count {
+  .cb-topbar-count {
     display: inline-grid;
     place-items: center;
-    min-width: 1.35rem;
-    height: 1.35rem;
-    padding: 0 0.28rem;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding: 0 0.26rem;
     border-radius: 999px;
     background: var(--cb-accent);
     color: var(--cb-accent-ink);
-    font-size: 0.6875rem;
+    font-size: 0.625rem;
     font-variant-numeric: tabular-nums;
     letter-spacing: 0;
   }
 
-  /* ── IL METRO — la firma della casa ────────────────────────────────────── */
-  /*
-     Il metro NON può usare position: fixed. La shell della piattaforma
-     (PageTransitionShell) mette un transform sul wrapper di pagina, e un
-     antenato trasformato diventa il blocco contenitore dei discendenti fixed:
-     il nastro verrebbe dimensionato sull'intera pagina invece che sul
-     viewport, e scorrerebbe via. Un dock sticky alto zero non ha questo
-     problema e non occupa spazio nel flusso.
-  */
-  .cb-metro-dock {
-    position: sticky;
-    top: 0;
-    height: 0;
-    z-index: 45;
-  }
-
-  .cb-metro {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100svh;
-    width: var(--cb-metro-w);
-    pointer-events: none;
-    background: color-mix(in srgb, var(--cb-ground) 92%, white);
-    border-right: 1px solid var(--cb-rule);
-    overflow: hidden;
-    font-variant-numeric: tabular-nums;
-    transition: background-color 600ms linear;
-  }
-
-  .cb-metro-strip {
-    position: absolute;
-    inset: 0 0 auto 0;
-    height: 1px;
-    will-change: transform;
-  }
-
-  /* Tacche: un centimetro ogni --cb-cm px, decina lunga. Nessun nodo DOM. */
-  .cb-metro-ticks {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 26px;
-    height: var(--cb-tape-h, 4000px);
-    background-image:
-      repeating-linear-gradient(
-        to bottom,
-        var(--cb-rule) 0 1px,
-        transparent 1px var(--cb-cm)
-      ),
-      repeating-linear-gradient(
-        to bottom,
-        transparent 0 calc(var(--cb-cm) * 5 - 1px),
-        var(--cb-ink-faint) calc(var(--cb-cm) * 5 - 1px) calc(var(--cb-cm) * 5)
-      );
-    background-size: 12px 100%, 20px 100%;
-    background-repeat: repeat-y;
-    background-position: 0 0, 0 0;
-  }
-
-  .cb-metro-num {
-    position: absolute;
-    left: 26px;
-    transform: translateY(-50%);
-    font-size: 0.625rem;
-    letter-spacing: 0.06em;
-    color: var(--cb-ink-faint);
-    line-height: 1;
-  }
-
-  .cb-metro-mark {
-    position: absolute;
-    left: 0;
-    width: var(--cb-metro-w);
-    height: 0;
-    border-top: 1px solid var(--cb-ink);
-    pointer-events: auto;
-  }
-
-  .cb-metro-mark > span {
-    position: absolute;
-    left: 30px;
-    top: 3px;
-    font-family: var(--cb-font-display);
-    font-size: 0.9rem;
+  /* ── L'indice come foglio ──────────────────────────────────────────────── */
+  .cb-sheet {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    display: flex;
+    flex-direction: column;
+    gap: var(--cb-6);
+    padding: var(--cb-5) max(var(--cb-gutter), var(--cb-metro-w)) var(--cb-6);
+    background: var(--cb-bone);
     color: var(--cb-ink);
+    overflow-y: auto;
+    animation: cb-sheet-in 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 
-  .cb-metro-pin {
-    position: absolute;
-    left: 0;
-    width: var(--cb-metro-w);
-    transform: translateY(-50%);
-    display: block;
-    font-style: normal;
+  @keyframes cb-sheet-in {
+    from {
+      opacity: 0;
+      transform: translate3d(0, -1.25rem, 0);
+    }
   }
 
-  .cb-metro-pin::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 50%;
-    width: 26px;
-    height: 2px;
-    background: var(--cb-accent);
+  .cb-sheet-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--cb-4);
+    padding-bottom: var(--cb-4);
+    border-bottom: 1px solid var(--cb-rule);
   }
 
-  .cb-metro-pin > span {
-    display: block;
-    padding-left: 30px;
-    padding-right: 2px;
-    font-size: 0.5rem;
-    font-weight: 600;
-    letter-spacing: 0.13em;
-    text-transform: uppercase;
+  .cb-sheet-list {
+    list-style: none;
+    margin: auto 0;
+    padding: 0;
+  }
+
+  .cb-sheet-row {
+    display: grid;
+    grid-template-columns: 3.5rem minmax(0, 1fr) auto;
+    grid-template-areas:
+      "num name price"
+      "num kind price";
+    align-items: baseline;
+    column-gap: var(--cb-5);
+    padding: clamp(0.6rem, 1.5vh, 1.1rem) 0;
+    border-bottom: 1px solid var(--cb-rule-soft);
+    color: inherit;
+    text-decoration: none;
+    font-variant-numeric: tabular-nums;
+    transition: color 220ms ease, padding-left 460ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .cb-sheet-row:hover {
     color: var(--cb-accent);
-    line-height: 1.25;
-    opacity: var(--cb-pin-o, 0);
-    transform: translateX(calc(-6px + 6px * var(--cb-pin-o, 0)));
-    transition: opacity 260ms ease, transform 260ms ease;
+    padding-left: 1rem;
   }
 
-  /* La riga di lettura: dove il metro sta misurando adesso */
-  .cb-metro-read {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    padding: 0.3rem 0.3rem 0.3rem 26px;
-    background: var(--cb-ink);
-    color: var(--cb-bone);
-    font-size: 0.625rem;
+  .cb-sheet-num {
+    grid-area: num;
+    font-size: 0.6875rem;
     font-weight: 600;
-    letter-spacing: 0.08em;
-    line-height: 1.15;
+    letter-spacing: 0.18em;
+    color: var(--cb-accent);
   }
 
-  .cb-metro-read small {
-    display: block;
-    font-size: 0.5rem;
-    font-weight: 500;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    opacity: 0.62;
+  .cb-sheet-name {
+    grid-area: name;
+    font-family: var(--cb-font-display);
+    font-size: clamp(1.4rem, 3.2vw, 2.4rem);
+    line-height: 1.1;
   }
 
-  .cb-metro-title {
-    position: absolute;
-    left: 0;
-    bottom: var(--cb-4);
-    width: var(--cb-metro-w);
-    text-align: center;
-    font-size: 0.5625rem;
-    font-weight: 500;
-    letter-spacing: 0.3em;
+  .cb-sheet-kind {
+    grid-area: kind;
+    margin-top: 0.3rem;
+    font-size: 0.625rem;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
     color: var(--cb-ink-faint);
   }
 
-  /* Il picco: il metro non ha niente da misurare e si spegne */
-  .cb-metro[data-cb-blank="true"] .cb-metro-ticks,
-  .cb-metro[data-cb-blank="true"] .cb-metro-num,
-  .cb-metro[data-cb-blank="true"] .cb-metro-mark {
-    opacity: 0;
-    transition: opacity 700ms ease;
+  .cb-sheet-price {
+    grid-area: price;
+    font-size: 0.8125rem;
+    color: var(--cb-ink-soft);
+    white-space: nowrap;
   }
 
-  .cb-metro[data-cb-blank="true"] .cb-metro-read {
-    background: none;
-    color: var(--cb-accent);
-    transition: background-color 700ms ease, color 700ms ease;
+  .cb-sheet-foot {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--cb-2) var(--cb-6);
+    justify-content: space-between;
+    padding-top: var(--cb-4);
+    border-top: 1px solid var(--cb-rule);
+    font-size: 0.625rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--cb-ink-faint);
   }
 
-  /* ── Atti ──────────────────────────────────────────────────────────────── */
+  /* ── Frontespizio ──────────────────────────────────────────────────────── */
+  /*
+     Prima schermata tipografica: il marchio ha una pagina tutta sua, che è il
+     modo di dargli aria senza gonfiarlo in testata. In fondo, fra i dati
+     della casa, la riga che dichiara che cos'è il nastro sul bordo sinistro.
+  */
+  .cb-open {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: var(--cb-7);
+    min-height: calc(100svh - var(--cb-topbar-h));
+    padding: var(--cb-6) max(var(--cb-gutter), var(--cb-metro-w)) var(--cb-6);
+    background: var(--cb-ground);
+  }
+
+  .cb-open-top {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--cb-4);
+    padding-bottom: var(--cb-3);
+    border-bottom: 1px solid var(--cb-rule);
+    font-size: 0.625rem;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--cb-ink-faint);
+  }
+
+  .cb-open-body {
+    align-self: center;
+    max-width: 46rem;
+  }
+
+  .cb-open-mark {
+    font-family: var(--cb-font-display);
+    font-weight: 400;
+    font-size: clamp(3rem, 12.5vw, 10.5rem);
+    line-height: 0.86;
+    letter-spacing: -0.005em;
+    color: var(--cb-ink);
+    animation: cb-mark-in 1500ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .cb-open-house {
+    margin-top: var(--cb-7);
+    max-width: 34ch;
+    font-size: clamp(0.95rem, 1.3vw, 1.15rem);
+    line-height: 1.6;
+    color: var(--cb-ink-soft);
+    animation: cb-mark-in 1500ms 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes cb-mark-in {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 1.6rem, 0);
+    }
+  }
+
+  .cb-open-foot {
+    display: grid;
+    gap: var(--cb-5);
+    padding-top: var(--cb-4);
+    border-top: 1px solid var(--cb-rule);
+    animation: cb-mark-in 1500ms 480ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @media (min-width: 62rem) {
+    .cb-open-foot {
+      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr) auto;
+      gap: var(--cb-8);
+      align-items: start;
+    }
+  }
+
+  .cb-open-facts {
+    font-size: 0.625rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--cb-ink-faint);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* La nota che rende leggibile il metro: filetto d'accento, come il nastro */
+  .cb-open-tape {
+    max-width: 48ch;
+    padding-left: var(--cb-4);
+    border-left: 1px solid var(--cb-accent);
+    font-size: 0.8125rem;
+    line-height: 1.75;
+    color: var(--cb-ink-soft);
+  }
+
+  .cb-open-scroll {
+    display: block;
+    width: 1px;
+    height: 3.2rem;
+    justify-self: end;
+    background: var(--cb-ink-faint);
+    transform-origin: top center;
+    animation: cb-drop 2600ms cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  }
+
+  @keyframes cb-drop {
+    0%,
+    100% {
+      transform: scaleY(0.2);
+      opacity: 0.35;
+    }
+    45% {
+      transform: scaleY(1);
+      opacity: 1;
+    }
+  }
+
+  /* ── I piani: una schermata, un oggetto ────────────────────────────────── */
   .cb-act {
     position: relative;
+    display: flex;
+    align-items: center;
+    min-height: 100svh;
+    padding: clamp(3.5rem, 12vh, 8rem) max(var(--cb-gutter), var(--cb-metro-w));
     background: var(--cb-ground);
     color: var(--cb-ink);
-    padding: clamp(2.25rem, 7vw, 4.5rem) var(--cb-gutter);
-    padding-left: max(var(--cb-gutter), calc(var(--cb-metro-w) + var(--cb-5)));
   }
 
   /* Deriva del fondo: la transizione fra due fondi è una fascia, non un taglio */
@@ -587,80 +522,227 @@
     pointer-events: none;
   }
 
-  .cb-act > * {
+  .cb-wrap {
     position: relative;
-  }
-
-  /* L'oggetto 01 è il primo schermo: la collezione comincia subito */
-  .cb-act--first {
-    padding-top: var(--cb-6);
-    min-height: calc(100svh - 44px);
-    display: flex;
-    align-items: center;
-  }
-
-  .cb-act--first > * {
     width: 100%;
+    max-width: var(--cb-wrap);
+    margin-inline: auto;
   }
 
-  /* Griglia dell'oggetto: due composizioni alternate, mai la stessa due volte */
-  .cb-object {
+  .cb-act .cb-wrap {
     display: grid;
     gap: var(--cb-7);
-    align-items: center;
   }
 
-  @media (min-width: 62rem) {
-    .cb-object {
-      grid-template-columns: minmax(0, 1.35fr) minmax(19rem, 0.65fr);
-      gap: var(--cb-8);
-    }
-    .cb-object[data-cb-anchor="lead"] {
-      grid-template-columns: minmax(19rem, 0.65fr) minmax(0, 1.35fr);
-    }
-    .cb-object[data-cb-anchor="lead"] .cb-object-stage {
-      order: 2;
-    }
-    .cb-object[data-cb-anchor="lead"] .cb-object-label {
-      order: 1;
-    }
-    .cb-object[data-cb-anchor="wide"] {
-      grid-template-columns: minmax(0, 1fr);
-    }
+  /* Entrata: sale e basta. Un solo movimento per tutta la collezione. */
+  [data-cb-motion="on"] [data-cb-rise] {
+    opacity: 0;
+    transform: translate3d(0, 1.75rem, 0);
+    transition: opacity 900ms cubic-bezier(0.16, 1, 0.3, 1),
+      transform 1100ms cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .cb-object-stage {
-    position: relative;
-    min-width: 0;
+  [data-cb-motion="on"] [data-cb-rise][data-cb-in="true"] {
+    opacity: 1;
+    transform: none;
   }
 
-  .cb-object-label {
-    min-width: 0;
+  [data-cb-motion="on"] [data-cb-rise] > * {
+    opacity: 0;
+    transform: translate3d(0, 0.9rem, 0);
+    transition: opacity 760ms cubic-bezier(0.16, 1, 0.3, 1),
+      transform 900ms cubic-bezier(0.16, 1, 0.3, 1);
+    transition-delay: calc(var(--cb-i, 0) * 80ms);
   }
 
-  .cb-object-name {
-    font-size: clamp(1.9rem, 3.6vw, 3.1rem);
-    margin-bottom: var(--cb-2);
+  [data-cb-motion="on"] [data-cb-rise][data-cb-in="true"] > * {
+    opacity: 1;
+    transform: none;
   }
 
-  .cb-object-num {
-    display: block;
+  .cb-frame {
+    display: grid;
+    place-items: center;
+    justify-self: center;
+    width: 100%;
+    margin: 0;
+  }
+
+  .cb-frame .cb-shot--set {
+    max-height: min(66svh, 44rem);
+  }
+
+  .cb-act[data-cb-orient="portrait"] .cb-frame {
+    max-width: 34rem;
+  }
+
+  .cb-act[data-cb-orient="landscape"] .cb-frame {
+    max-width: 68rem;
+  }
+
+  /*
+     Al centro la didascalia sta sotto il capo, quindi le due cose devono
+     stare nella stessa schermata: la fotografia cede l'altezza che serve
+     alle sei righe di etichetta.
+  */
+  .cb-act[data-cb-plate="centre"] .cb-frame .cb-shot--set {
+    max-height: min(42svh, 28rem);
+  }
+
+  .cb-act[data-cb-plate="centre"] {
+    padding-block: clamp(2.5rem, 8vh, 5rem);
+  }
+
+  /* ── Didascalia di collezione: due righe di fatto, il prezzo, il rimando ── */
+  .cb-cap-num {
     font-family: var(--cb-font-body);
-    font-size: 0.6875rem;
+    font-size: 0.625rem;
     font-weight: 600;
-    letter-spacing: 0.28em;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
     color: var(--cb-accent);
-    margin-bottom: var(--cb-3);
   }
 
-  .cb-object-foot {
+  .cb-cap-name {
+    margin-top: var(--cb-4);
+    font-size: clamp(1.9rem, 3.6vw, 3.2rem);
+  }
+
+  .cb-cap-kind {
+    margin-top: var(--cb-3);
+    font-size: 0.6875rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--cb-ink-faint);
+  }
+
+  .cb-cap-note {
+    margin-top: var(--cb-5);
+    max-width: 42ch;
+    font-size: 1rem;
+    line-height: 1.75;
+    color: var(--cb-ink-soft);
+  }
+
+  .cb-cap-meta {
+    margin-top: var(--cb-4);
+    max-width: 42ch;
+    font-size: 0.6875rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--cb-ink-faint);
+  }
+
+  .cb-cap-foot {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    gap: var(--cb-4);
-    margin-top: var(--cb-5);
+    gap: var(--cb-5);
+    margin-top: var(--cb-6);
     padding-top: var(--cb-4);
     border-top: 1px solid var(--cb-rule);
+  }
+
+  /* Composizione al centro: il capo, e la didascalia sotto su due colonne */
+  @media (min-width: 62rem) {
+    .cb-act[data-cb-plate="centre"] .cb-wrap {
+      justify-items: center;
+    }
+
+    .cb-act[data-cb-plate="centre"] .cb-cap {
+      display: grid;
+      width: 100%;
+      max-width: 72rem;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-areas:
+        "num  note"
+        "name note"
+        "kind meta"
+        "foot foot";
+      column-gap: var(--cb-9);
+      align-items: start;
+    }
+
+    .cb-act[data-cb-plate="centre"] .cb-cap-num {
+      grid-area: num;
+    }
+    .cb-act[data-cb-plate="centre"] .cb-cap-name {
+      grid-area: name;
+    }
+    .cb-act[data-cb-plate="centre"] .cb-cap-kind {
+      grid-area: kind;
+    }
+    .cb-act[data-cb-plate="centre"] .cb-cap-note {
+      grid-area: note;
+      margin-top: 0;
+    }
+    .cb-act[data-cb-plate="centre"] .cb-cap-meta {
+      grid-area: meta;
+    }
+    .cb-act[data-cb-plate="centre"] .cb-cap-foot {
+      grid-area: foot;
+    }
+  }
+
+  /* Composizione affiancata: il capo di lato, la didascalia alla sua altezza */
+  @media (min-width: 62rem) {
+    .cb-act[data-cb-plate="side"] .cb-wrap {
+      grid-template-columns: minmax(0, 1.2fr) minmax(19rem, 0.8fr);
+      gap: var(--cb-9);
+      align-items: center;
+    }
+
+    .cb-act[data-cb-plate="side"][data-cb-side="right"] .cb-frame {
+      order: 2;
+    }
+  }
+
+  /* Composizione a cartella: le varianti in fila, la didascalia di fianco */
+  @media (min-width: 62rem) {
+    .cb-act[data-cb-plate="suite"] .cb-wrap {
+      grid-template-columns: minmax(17rem, 0.72fr) minmax(0, 2fr);
+      gap: var(--cb-9);
+      align-items: center;
+    }
+  }
+
+  .cb-suite {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(clamp(7rem, 18vw, 15rem), 1fr));
+    gap: var(--cb-6);
+    align-items: end;
+  }
+
+  .cb-suite-item {
+    margin: 0;
+  }
+
+  .cb-suite-item .cb-shot {
+    margin-inline: auto;
+    max-height: 46svh;
+    object-fit: contain;
+  }
+
+  .cb-suite-cap {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: var(--cb-3);
+    padding-top: 0.6rem;
+    border-top: 1px solid var(--cb-rule);
+    font-size: 0.625rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--cb-ink-soft);
+  }
+
+  .cb-swatch-dot {
+    display: inline-block;
+    width: 0.58rem;
+    height: 0.58rem;
+    border-radius: 999px;
+    background: var(--cb-sw);
+    box-shadow: inset 0 0 0 1px rgb(26 26 24 / 0.24);
   }
 
   /* Il capo galleggia: nessuna card, nessun bordo, nessuna ombra */
@@ -677,180 +759,89 @@
   }
 
   .cb-shot--set {
-    max-height: 70vh;
+    max-height: 70svh;
     object-fit: contain;
     object-position: center;
   }
 
-  .cb-rail-item .cb-shot,
-  .cb-triptych .cb-shot,
-  .cb-depth-item .cb-shot {
-    margin-inline: auto;
+  /* ── Etichetta lunga: sette righe. Vive sulla scheda oggetto ───────────── */
+  .cb-object-label {
+    min-width: 0;
   }
 
-  .cb-rail-item .cb-shot {
-    max-height: 46vh;
+  .cb-object-name {
+    font-size: clamp(1.9rem, 3.4vw, 2.9rem);
+    margin-bottom: var(--cb-3);
   }
 
-  .cb-triptych .cb-shot {
-    max-height: 40vh;
-  }
-
-  .cb-depth-item .cb-shot {
-    max-height: 32vh;
-  }
-
-  /* Atto reveal: il capo entra da sotto una linea netta */
-  .cb-reveal .cb-shot {
-    clip-path: inset(calc((1 - var(--cb-e, 1)) * 100%) 0 0 0);
-    transform: translate3d(0, calc((1 - var(--cb-e, 1)) * 3.2rem), 0);
-  }
-
-  .cb-stagger > * {
-    --cb-in: clamp(0, calc(var(--cb-e, 1) * 1.9 - var(--cb-i, 0) * 0.14), 1);
-    opacity: var(--cb-in);
-    transform: translate3d(0, calc(1.1rem * (1 - var(--cb-in))), 0);
-  }
-
-  /* Atto pan: la stecca delle varianti scorre di lato mentre si scende */
-  .cb-rail-clip {
-    overflow: hidden;
-    margin-inline: calc(var(--cb-gutter) * -1);
-    padding-inline: var(--cb-gutter);
-  }
-
-  .cb-rail {
-    display: flex;
-    gap: var(--cb-6);
-    align-items: flex-end;
-    will-change: transform;
-    transform: translate3d(calc(var(--cb-pan, 0) * -1px), 0, 0);
-  }
-
-  .cb-rail-item {
-    flex: 0 0 auto;
-    width: clamp(15rem, 34vw, 30rem);
-  }
-
-  .cb-rail-item[data-cb-wide="true"] {
-    width: clamp(20rem, 56vw, 46rem);
-  }
-
-  .cb-rail-cap {
-    display: flex;
-    align-items: baseline;
-    gap: var(--cb-2);
-    margin-top: var(--cb-3);
-    padding-top: 0.55rem;
-    border-top: 1px solid var(--cb-rule);
-    font-size: 0.6875rem;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--cb-ink-soft);
-  }
-
-  /* Atto tilt: gli oggetti reagiscono al puntatore come se li prendessi in mano */
-  .cb-triptych {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(clamp(7.5rem, 26vw, 13rem), 1fr));
-    gap: var(--cb-6);
-    align-items: end;
-  }
-
-  .cb-tilt {
-    transform: perspective(1200px) rotateX(calc(var(--cb-ty, 0) * -3.4deg))
-      rotateY(calc(var(--cb-tx, 0) * 3.4deg)) translate3d(0, calc(var(--cb-lift, 0) * -0.6rem), 0);
-    transition: transform 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
-    will-change: transform;
-  }
-
-  /* Atto parallasse: tre profondità, con scala e contrasto che le accompagnano */
-  .cb-depth {
-    display: grid;
-    gap: var(--cb-5);
-  }
-
-  @media (min-width: 62rem) {
-    .cb-depth {
-      grid-template-columns: repeat(3, 1fr);
-      align-items: start;
-      gap: var(--cb-6);
-    }
-  }
-
-  .cb-depth-item {
-    transform: translate3d(0, calc(var(--cb-rate, 0) * (var(--cb-p, 0.5) - 0.5) * 22vh), 0)
-      scale(var(--cb-scale, 1));
-    will-change: transform;
-  }
-
-  /* Atto count: le cifre di specifica salgono, e sono cifre vere */
-  .cb-specs {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
-    gap: var(--cb-5) var(--cb-6);
-    margin-top: var(--cb-6);
-    padding-top: var(--cb-5);
-    border-top: 1px solid var(--cb-rule);
-  }
-
-  .cb-swatch-dot {
-    display: inline-block;
-    width: 0.62rem;
-    height: 0.62rem;
-    border-radius: 999px;
-    background: var(--cb-sw);
-    box-shadow: inset 0 0 0 1px rgb(26 26 24 / 0.24);
-  }
-
-  .cb-spec-value b {
-    font-weight: 400;
-  }
-
-  .cb-spec-value {
+  .cb-object-num {
     display: block;
-    font-family: var(--cb-font-display);
-    font-size: clamp(2.2rem, 4.4vw, 3.4rem);
-    line-height: 0.95;
-    font-variant-numeric: tabular-nums;
-    letter-spacing: -0.02em;
-  }
-
-  .cb-spec-value sup {
     font-family: var(--cb-font-body);
-    font-size: 0.75rem;
-    font-weight: 500;
-    letter-spacing: 0.1em;
-    vertical-align: super;
-    color: var(--cb-ink-faint);
-  }
-
-  .cb-spec-key {
-    display: block;
-    margin-top: 0.4rem;
     font-size: 0.625rem;
-    font-weight: 500;
-    letter-spacing: 0.2em;
+    font-weight: 600;
+    letter-spacing: 0.3em;
     text-transform: uppercase;
-    color: var(--cb-ink-faint);
+    color: var(--cb-accent);
+    margin-bottom: var(--cb-4);
   }
 
-  /* ── L'indice stampato, subito dopo l'oggetto 01 ───────────────────────── */
-  .cb-contents {
-    padding: clamp(2.25rem, 7vw, 4.5rem) var(--cb-gutter);
-    padding-left: max(var(--cb-gutter), calc(var(--cb-metro-w) + var(--cb-5)));
-    background: var(--cb-ground);
-    border-top: 1px solid var(--cb-rule);
-    border-bottom: 1px solid var(--cb-rule);
-  }
-
-  .cb-contents-head {
+  .cb-object-foot {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    gap: var(--cb-5);
-    flex-wrap: wrap;
-    margin-bottom: var(--cb-6);
+    gap: var(--cb-4);
+    margin-top: var(--cb-6);
+    padding-top: var(--cb-4);
+    border-top: 1px solid var(--cb-rule);
+  }
+
+  /* ── Il rimando: mai un bottone, sempre una riga sottolineata ──────────── */
+  .cb-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding-bottom: 0.28rem;
+    border-bottom: 1px solid color-mix(in srgb, currentColor 45%, transparent);
+    color: var(--cb-accent);
+    font-family: var(--cb-font-body);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color 200ms ease, border-color 200ms ease;
+  }
+
+  .cb-link:hover {
+    color: var(--cb-ink);
+    border-bottom-color: currentColor;
+  }
+
+  .cb-link--lg {
+    margin-top: var(--cb-6);
+    font-size: 0.8125rem;
+  }
+
+  /* ── L'indice stampato ─────────────────────────────────────────────────── */
+  .cb-contents {
+    padding: clamp(4rem, 11vh, 7.5rem) max(var(--cb-gutter), var(--cb-metro-w));
+    background: var(--cb-ground);
+    border-top: 1px solid var(--cb-rule);
+  }
+
+  .cb-contents-head {
+    display: grid;
+    gap: var(--cb-3);
+    margin-bottom: var(--cb-7);
+  }
+
+  .cb-contents-head h2 {
+    font-size: clamp(2.2rem, 5vw, 3.6rem);
+  }
+
+  .cb-contents-head .cb-note {
+    max-width: 40ch;
   }
 
   .cb-contents-list {
@@ -862,118 +853,38 @@
 
   .cb-contents-row {
     display: grid;
-    grid-template-columns: 3.2rem minmax(0, 1fr) auto;
+    grid-template-columns: 3.4rem minmax(0, 1fr) auto;
     align-items: baseline;
-    gap: var(--cb-4);
-    padding: 0.85rem 0;
+    gap: var(--cb-5);
+    padding: clamp(0.85rem, 1.7vh, 1.35rem) 0;
     border-bottom: 1px solid var(--cb-rule-soft);
     color: inherit;
     text-decoration: none;
     font-variant-numeric: tabular-nums;
-    transition: padding-left 260ms cubic-bezier(0.22, 0.61, 0.36, 1), color 200ms ease;
+    transition: padding-left 460ms cubic-bezier(0.16, 1, 0.3, 1), color 220ms ease;
   }
 
   .cb-contents-row:hover {
-    padding-left: 0.9rem;
+    padding-left: 1rem;
     color: var(--cb-accent);
   }
 
-  .cb-contents-row > span:first-child {
-    font-size: 0.75rem;
+  .cb-contents-num {
+    font-size: 0.6875rem;
     font-weight: 600;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.18em;
     color: var(--cb-accent);
   }
 
   .cb-contents-title {
     font-family: var(--cb-font-display);
-    font-size: clamp(1.05rem, 2vw, 1.5rem);
+    font-size: clamp(1.1rem, 2vw, 1.6rem);
   }
 
-  .cb-contents-title em {
-    font-style: normal;
-    font-family: var(--cb-font-body);
-    font-size: 0.6875rem;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--cb-ink-faint);
-    margin-left: 0.7rem;
-  }
-
-  .cb-contents-row > span:last-child {
+  .cb-contents-price {
     font-size: 0.8125rem;
     color: var(--cb-ink-soft);
     white-space: nowrap;
-  }
-
-  /* ── Il picco: il foulard ──────────────────────────────────────────────── */
-  .cb-peak {
-    position: relative;
-    background: var(--cb-ground, var(--cb-concrete));
-    color: var(--cb-ink);
-    --cb-ink-soft: #46443c;
-    --cb-ink-faint: #46443c;
-    padding: 0;
-  }
-
-  .cb-peak-sticky {
-    position: sticky;
-    top: 0;
-    height: 100svh;
-    display: grid;
-    place-items: center;
-    overflow: hidden;
-  }
-
-  .cb-peak-tint {
-    position: absolute;
-    inset: 0;
-    background: #c29338;
-    opacity: calc(clamp(0, (var(--cb-p, 0) - 0.62) * 3.2, 1) * 0.24);
-    pointer-events: none;
-  }
-
-  .cb-peak-frame {
-    position: relative;
-    width: min(94%, 78rem);
-    aspect-ratio: 1376 / 768;
-  }
-
-  .cb-peak-frame img {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-  }
-
-  /* La variante senape entra con una lama verticale, non con una dissolvenza */
-  .cb-peak-frame img + img {
-    clip-path: inset(0 calc((1 - clamp(0, (var(--cb-p, 0) - 0.58) * 2.9, 1)) * 100%) 0 0);
-  }
-
-  .cb-peak-copy {
-    position: absolute;
-    left: max(var(--cb-gutter), calc(var(--cb-metro-w) + var(--cb-5)));
-    bottom: var(--cb-7);
-    max-width: 30rem;
-    opacity: clamp(0, (var(--cb-p, 0) - 0.2) * 4, 1);
-  }
-
-  .cb-peak-line {
-    font-family: var(--cb-font-display);
-    font-size: clamp(1.8rem, 4.4vw, 3.6rem);
-    line-height: 1.02;
-    margin: var(--cb-3) 0 var(--cb-2);
-  }
-
-  .cb-peak-sub {
-    font-size: 0.9375rem;
-    color: var(--cb-ink-soft);
-  }
-
-  .cb-peak-spacer {
-    height: 180vh;
   }
 
   /* ── Chiusura: la targa dell'appuntamento, composta come un'etichetta ──── */
@@ -991,8 +902,8 @@
     --cb-ink-faint: #b9b5a8;
     --cb-accent: #d99aa1;
     color: var(--cb-ink);
-    padding: var(--cb-9) var(--cb-gutter) var(--cb-7);
-    padding-left: max(var(--cb-gutter), calc(var(--cb-metro-w) + var(--cb-5)));
+    padding: clamp(4.5rem, 13vh, 9rem) max(var(--cb-gutter), var(--cb-metro-w))
+      clamp(2rem, 6vh, 3rem);
   }
 
   .cb-inquiry-grid {
@@ -1000,40 +911,18 @@
     gap: var(--cb-7);
   }
 
-  .cb-inquiry {
-    padding-block: clamp(3rem, 9vw, 6.5rem) clamp(2rem, 6vw, 3rem);
-  }
-
   @media (min-width: 62rem) {
     .cb-inquiry-grid {
-      grid-template-columns: minmax(0, 1fr) minmax(22rem, 34rem);
+      grid-template-columns: minmax(0, 1fr) minmax(22rem, 32rem);
       gap: var(--cb-9);
       align-items: start;
     }
   }
 
   .cb-inquiry-title {
-    font-size: clamp(2.4rem, 6vw, 4.6rem);
+    margin-top: var(--cb-4);
+    font-size: clamp(2.4rem, 6vw, 4.4rem);
     line-height: 0.98;
-  }
-
-  .cb-inquiry-cta {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.6rem;
-    margin-top: var(--cb-5);
-    padding-bottom: 0.3rem;
-    border-bottom: 1px solid currentColor;
-    color: var(--cb-accent);
-    font-size: 0.8125rem;
-    font-weight: 500;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    text-decoration: none;
-  }
-
-  .cb-inquiry-cta:hover {
-    color: var(--cb-bone);
   }
 
   .cb-colophon {
@@ -1044,8 +933,8 @@
     flex-wrap: wrap;
     gap: var(--cb-3) var(--cb-6);
     justify-content: space-between;
-    font-size: 0.6875rem;
-    letter-spacing: 0.14em;
+    font-size: 0.625rem;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
     color: var(--cb-ink-soft);
     font-variant-numeric: tabular-nums;
@@ -1060,12 +949,225 @@
     border-bottom-color: currentColor;
   }
 
+
+  /* ── IL METRO DA SARTO — la firma della casa ───────────────────────────── */
+  /*
+     Il metro NON può usare position: fixed. La shell della piattaforma
+     (PageTransitionShell) mette un transform sul wrapper di pagina, e un
+     antenato trasformato diventa il blocco contenitore dei discendenti fixed:
+     il nastro verrebbe dimensionato sull'intera pagina invece che sul
+     viewport, e scorrerebbe via. Un dock sticky alto zero non ha questo
+     problema e non occupa spazio nel flusso.
+
+     Nessun fondo e nessun filetto di chiusura: con il pannello dipinto il
+     nastro leggeva come un righello di sistema appiccicato al bordo. Così
+     resta un segno sulla pagina, e chi vuole capirlo trova la riga che lo
+     dichiara nel frontespizio.
+  */
+  .cb-metro-dock {
+    position: sticky;
+    top: 0;
+    height: 0;
+    z-index: 45;
+  }
+
+  .cb-metro {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100svh;
+    width: var(--cb-metro-w);
+    pointer-events: none;
+    overflow: hidden;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cb-metro-strip {
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 1px;
+    will-change: transform;
+  }
+
+  /* Tacche: un centimetro ogni --cb-cm px, decina lunga. Nessun nodo DOM. */
+  .cb-metro-ticks {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 18px;
+    height: var(--cb-tape-h, 4000px);
+    background-image:
+      repeating-linear-gradient(
+        to bottom,
+        rgb(26 26 24 / 0.17) 0 1px,
+        transparent 1px var(--cb-cm)
+      ),
+      repeating-linear-gradient(
+        to bottom,
+        transparent 0 calc(var(--cb-cm) * 10 - 1px),
+        rgb(26 26 24 / 0.42) calc(var(--cb-cm) * 10 - 1px) calc(var(--cb-cm) * 10)
+      );
+    background-size: 7px 100%, 16px 100%;
+    background-repeat: repeat-y;
+    background-position: 0 0, 0 0;
+  }
+
+  .cb-metro-num {
+    position: absolute;
+    left: 24px;
+    transform: translateY(-50%);
+    font-size: 0.5625rem;
+    letter-spacing: 0.14em;
+    color: var(--cb-ink-faint);
+    line-height: 1;
+  }
+
+  /* Inizio di un oggetto: un filetto pieno e il suo numero */
+  .cb-metro-mark {
+    position: absolute;
+    left: 0;
+    width: var(--cb-metro-w);
+    height: 0;
+    border-top: 1px solid var(--cb-rule);
+    background: none;
+    padding: 0;
+    pointer-events: auto;
+    cursor: pointer;
+  }
+
+  .cb-metro-mark > span {
+    position: absolute;
+    left: 24px;
+    top: 4px;
+    font-family: var(--cb-font-body);
+    font-size: 0.5625rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    color: var(--cb-ink-soft);
+  }
+
+  .cb-metro-pin {
+    position: absolute;
+    left: 0;
+    width: var(--cb-metro-w);
+    transform: translateY(-50%);
+    display: block;
+    font-style: normal;
+  }
+
+  .cb-metro-pin::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 18px;
+    height: 1px;
+    background: var(--cb-accent);
+    opacity: var(--cb-pin-o, 0);
+    transition: opacity 260ms ease;
+  }
+
+  .cb-metro-pin > span {
+    display: block;
+    padding-left: 24px;
+    padding-right: 2px;
+    font-size: 0.5rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--cb-accent);
+    line-height: 1.25;
+    opacity: var(--cb-pin-o, 0);
+    transform: translateX(calc(-5px + 5px * var(--cb-pin-o, 0)));
+    transition: opacity 260ms ease, transform 260ms ease;
+  }
+
+  /* La riga di lettura: un filetto d'accento e la cifra, senza riquadro */
+  .cb-metro-read {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .cb-metro-read::before {
+    content: "";
+    width: 24px;
+    height: 1px;
+    background: var(--cb-accent);
+  }
+
+  .cb-metro-read b {
+    font-family: var(--cb-font-display);
+    font-size: 1.05rem;
+    font-weight: 400;
+    line-height: 1;
+    color: var(--cb-accent);
+  }
+
+  .cb-metro-read b i {
+    margin-left: 0.15rem;
+    font-family: var(--cb-font-body);
+    font-style: normal;
+    font-size: 0.5rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    vertical-align: 0.45em;
+  }
+
+  .cb-metro-read small {
+    flex: 1 0 100%;
+    padding-left: 24px;
+    font-size: 0.5rem;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--cb-accent);
+  }
+
+  /* Il nome per esteso: senza, il nastro resta un righello */
+  .cb-metro-title {
+    position: absolute;
+    left: 0;
+    bottom: var(--cb-5);
+    width: var(--cb-metro-w);
+    padding-right: var(--cb-3);
+    display: grid;
+    gap: 0.3rem;
+    font-size: 0.5rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--cb-ink-faint);
+  }
+
+  .cb-metro-title b {
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--cb-ink-soft);
+  }
+
+  /* L'ultimo oggetto non si misura: il nastro si spegne */
+  .cb-metro[data-cb-blank="true"] .cb-metro-ticks,
+  .cb-metro[data-cb-blank="true"] .cb-metro-num,
+  .cb-metro[data-cb-blank="true"] .cb-metro-mark,
+  .cb-metro[data-cb-blank="true"] .cb-metro-read b {
+    opacity: 0;
+    transition: opacity 700ms ease;
+  }
+
   /* ── Scheda oggetto ────────────────────────────────────────────────────── */
   .cb-piece {
     background: var(--cb-ground);
     color: var(--cb-ink);
-    padding: var(--cb-7) var(--cb-gutter) var(--cb-9);
-    padding-left: max(var(--cb-gutter), calc(var(--cb-metro-w) + var(--cb-5)));
+    max-width: var(--cb-wrap);
+    margin-inline: auto;
+    padding: var(--cb-7) max(var(--cb-gutter), var(--cb-metro-w)) var(--cb-9);
   }
 
   .cb-piece-grid {
@@ -1083,7 +1185,7 @@
 
   .cb-piece-shot {
     position: sticky;
-    top: calc(44px + var(--cb-5));
+    top: calc(var(--cb-topbar-h) + var(--cb-4));
   }
 
   .cb-piece-thumbs {
@@ -1228,28 +1330,41 @@
   }
 
   /*
-     Slabbby: il modulo condiviso porta il verde del widget ufficiale come stile
-     inline, riscritto anche dagli handler di hover. Qui lo si riveste per la
-     maison senza toccare il componente, quindi servono gli !important.
+     Slabbby: il bottone lo monta il widget dentro questo segnaposto. Il widget
+     lo disegna in uno shadow root chiuso, quindi non lo si può raggiungere con
+     un selettore: si vestono i suoi token --slabbby-*, che attraversano lo
+     shadow DOM per ereditarietà. Nessun !important, nessuna lotta con gli
+     stili inline del widget.
   */
-  .cb-slabbby {
-    background: none !important;
-    color: var(--cb-accent) !important;
-    border: 1px solid var(--cb-accent) !important;
-    border-radius: 0 !important;
-    min-height: 52px !important;
-    margin-top: 0.6rem !important;
-    font-family: var(--cb-font-body) !important;
-    font-size: 0.75rem !important;
-    font-weight: 600 !important;
-    letter-spacing: 0.2em !important;
-    text-transform: uppercase;
-    transition: background-color 200ms ease, color 200ms ease !important;
-  }
+  .cb-slabbby-slot {
+    display: block;
+    margin-top: 0.6rem;
 
-  .cb-slabbby:hover {
-    background: var(--cb-accent) !important;
-    color: var(--cb-accent-ink) !important;
+    --slabbby-bg: transparent;
+    --slabbby-color: var(--cb-accent);
+    --slabbby-border: 1px solid var(--cb-accent);
+    --slabbby-radius: 0;
+    --slabbby-min-height: 52px;
+    --slabbby-padding: 0 var(--cb-5);
+    --slabbby-font: var(--cb-font-body);
+    --slabbby-font-size: 0.75rem;
+    --slabbby-font-weight: 600;
+    --slabbby-letter-spacing: 0.2em;
+    --slabbby-text-transform: uppercase;
+    --slabbby-shadow: none;
+    --slabbby-animation: none;
+
+    --slabbby-bg-hover: var(--cb-accent);
+    --slabbby-color-hover: var(--cb-accent-ink);
+    --slabbby-shadow-hover: none;
+    --slabbby-transform-hover: none;
+
+    --slabbby-bg-saved: var(--cb-ink);
+    --slabbby-color-saved: var(--cb-bone);
+    --slabbby-shadow-saved: none;
+
+    --slabbby-focus-outline: 2px solid var(--cb-accent);
+    --slabbby-focus-offset: 3px;
   }
 
   .cb-slabbby-hint {
@@ -1418,9 +1533,10 @@
   .cb-order {
     background: var(--cb-bone);
     color: var(--cb-ink);
-    min-height: 100vh;
-    padding: var(--cb-8) var(--cb-gutter) var(--cb-9);
-    padding-left: max(var(--cb-gutter), calc(var(--cb-metro-w) + var(--cb-5)));
+    min-height: 100svh;
+    max-width: var(--cb-wrap);
+    margin-inline: auto;
+    padding: var(--cb-8) max(var(--cb-gutter), var(--cb-metro-w)) var(--cb-9);
   }
 
   .cb-order-grid {
@@ -1508,7 +1624,7 @@
 
   .cb-summary {
     position: sticky;
-    top: calc(44px + var(--cb-5));
+    top: calc(var(--cb-topbar-h) + var(--cb-4));
     padding: var(--cb-5);
     background: var(--cb-linen);
     border: 1px solid var(--cb-rule);
@@ -1537,92 +1653,97 @@
   @media (max-width: 61.9375rem) {
     [data-tenant-surface="casabizzi"] {
       --cb-metro-w: 0px;
+      --cb-topbar-h: 3.75rem;
     }
 
+    /* Il nastro chiede una colonna che su telefono non c'è: si toglie. */
     .cb-metro {
       display: none;
     }
 
-    .cb-rail-item .cb-shot {
-      max-height: 38vh;
+    /* E con lui la riga che lo dichiara: senza nastro descriverebbe il nulla. */
+    .cb-open-tape {
+      display: none;
     }
 
-    .cb-triptych .cb-shot {
-      max-height: 26vh;
+    .cb-topbar-nav > * + * {
+      margin-left: var(--cb-1);
+      padding-left: var(--cb-2);
     }
 
-    .cb-depth-item .cb-shot {
-      max-height: 24vh;
+    .cb-topbar-btn {
+      padding-inline: var(--cb-1);
+      font-size: 0.625rem;
+      letter-spacing: 0.12em;
+    }
+
+    .cb-topbar-btn--lang {
+      padding-inline: 0.25rem;
+      letter-spacing: 0.08em;
+    }
+
+    .cb-open-top {
+      letter-spacing: 0.22em;
+    }
+
+    .cb-open-facts {
+      letter-spacing: 0.14em;
+    }
+
+    /* Senza la nota del nastro il piede è una riga sola: il filetto
+       tornerebbe a destra da solo, spaesato. Si mette sotto, allineato. */
+    .cb-open-scroll {
+      justify-self: start;
+      height: 2.4rem;
+    }
+
+    .cb-act {
+      min-height: 0;
+      padding-block: clamp(3rem, 9vh, 4.5rem);
+    }
+
+    .cb-act .cb-wrap {
+      gap: var(--cb-6);
     }
 
     .cb-shot--set {
-      max-height: 44vh;
+      max-height: 52svh;
     }
 
-    .cb-specs {
-      grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr));
-      gap: var(--cb-4) var(--cb-5);
-      margin-top: var(--cb-4);
-      padding-top: var(--cb-4);
+    .cb-suite-item .cb-shot {
+      max-height: 30svh;
     }
 
-    .cb-spec-value {
-      font-size: clamp(1.6rem, 9vw, 2.4rem);
+    .cb-suite {
+      grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
+      gap: var(--cb-4);
     }
 
-    .cb-contents-row {
-      padding: 0.62rem 0;
+    .cb-cap-note {
+      font-size: 0.9375rem;
     }
 
-    .cb-contents-head {
-      margin-bottom: var(--cb-4);
-    }
-
-    .cb-rail-item {
-      width: clamp(11rem, 62vw, 18rem);
-    }
-
-    .cb-rail-item[data-cb-wide="true"] {
-      width: clamp(15rem, 82vw, 26rem);
-    }
-
-    .cb-wordmark {
-      font-size: clamp(2.2rem, 12vw, 3.4rem);
-    }
-
-    .cb-plate-row {
-      align-items: flex-start;
-    }
-
-    .cb-plate-meta {
-      align-items: flex-start;
-      text-align: left;
-    }
-
-    .cb-peak-copy {
-      left: var(--cb-gutter);
-      right: var(--cb-gutter);
-      bottom: var(--cb-5);
-    }
-
-    .cb-peak-spacer {
-      height: 140vh;
-    }
-
-    .cb-piece-shot {
-      position: static;
-    }
-
-    .cb-summary {
-      position: static;
+    .cb-sheet-row {
+      grid-template-columns: 2.6rem minmax(0, 1fr);
+      grid-template-areas:
+        "num name"
+        "num kind"
+        ".   price";
+      row-gap: 0.2rem;
     }
 
     .cb-contents-row {
       grid-template-columns: 2.6rem minmax(0, 1fr);
+      gap: var(--cb-2) var(--cb-4);
     }
 
-    .cb-contents-row > span:last-child {
+    .cb-contents-price {
       grid-column: 2;
+    }
+
+    .cb-piece-shot,
+    .cb-summary {
+      position: static;
     }
   }
 
@@ -1636,70 +1757,29 @@
       transition-duration: 0.001ms !important;
     }
 
-    .cb-reveal .cb-shot {
-      clip-path: none;
-      transform: none;
-    }
-
-    .cb-stagger > * {
-      --cb-in: 1;
+    [data-cb-rise],
+    [data-cb-rise] > * {
       opacity: 1;
       transform: none;
     }
 
-    .cb-rail {
+    .cb-open-mark,
+    .cb-open-house,
+    .cb-open-foot {
+      animation: none;
+    }
+
+    .cb-open-scroll::after {
+      animation: none;
       transform: none;
-      flex-wrap: wrap;
-    }
-
-    .cb-rail-clip {
-      overflow: visible;
-    }
-
-    .cb-tilt,
-    .cb-depth-item {
-      transform: none;
-    }
-
-    .cb-peak-sticky {
-      position: static;
-      height: auto;
-      padding: var(--cb-8) var(--cb-gutter);
-    }
-
-    .cb-peak-spacer {
-      display: none;
-    }
-
-    .cb-peak-frame img + img {
-      clip-path: none;
-      position: static;
-      margin-top: var(--cb-5);
-    }
-
-    .cb-peak-frame {
-      aspect-ratio: auto;
-    }
-
-    .cb-peak-frame img {
-      position: static;
-    }
-
-    .cb-peak-copy {
-      position: static;
-      opacity: 1;
-      margin-top: var(--cb-5);
-    }
-
-    .cb-peak-tint {
-      display: none;
     }
 
     .cb-metro-strip {
       transform: none !important;
     }
 
-    .cb-metro-pin > span {
+    .cb-metro-pin > span,
+    .cb-metro-pin::before {
       opacity: 1;
       transform: none;
     }

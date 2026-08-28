@@ -55,58 +55,101 @@ cade in `notFound()`.
 
 ## Come è fatta la home
 
-La home segue una **grammatica galleria/catalogo**, non la forma "hero con frase
-sopra una foto":
+La home segue una **grammatica galleria**, non la forma "hero con frase sopra una
+foto" e non la forma landing page. Ridisegnata il 2026-08-27: la versione
+precedente impilava marchio, meta e una striscia di otto tab in duecento pixel, e
+metteva la scheda tecnica completa accanto a ogni capo. Era una toolbar sotto
+un'insegna, con un catalogo dati sotto.
 
-- La collezione comincia dal primo schermo: l'oggetto 01 è già in vista e già
-  etichettato. Il marchio sta nella targa d'apertura, alla scala della composizione.
-- **La navigazione è l'indice degli oggetti** (`CbIndexBar`), e salta.
-- Ogni oggetto porta lo **stesso schema di etichetta**: numero, linea, tessuto,
-  dettagli, origine, misure, varianti, taglie, prezzo. Lo schema fisso è ciò che
-  rende la pagina una collezione invece di una griglia di prodotti.
-- Le didascalie dichiarano **fatti**, non argomenti di vendita ("Lana vergine
-  340 g/m², filata a Biella", non "eleganza senza tempo").
-- La chiusura è una **targa d'appuntamento** composta con lo stesso schema delle
-  etichette, non un bottone isolato.
+L'impianto attuale, nell'ordine in cui si legge:
 
-Un dispositivo per oggetto, mai lo stesso due volte di fila (`SCORE` in
-`pages/home.tsx`): reveal, pan, tilt, count, pan, parallasse, reveal, e il picco.
-Il **picco** è l'oggetto 08, il foulard: l'unico che non si può misurare.
+1. **Testata sottile** (`CbHeader`, 4,75rem): marchio a sinistra, `Indice`,
+   `IT/EN`, `Borsa` a destra. Trasparente sul frontespizio, prende fondo e filetto
+   appena la pagina si muove (`data-cb-stuck`). Non c'è più la striscia di otto tab.
+2. **Frontespizio** (`CbFrontispiece`): una schermata tipografica, senza foto e
+   senza claim. Il marchio è l'`h1` della collezione e ha una pagina tutta sua —
+   è il modo di dargli aria senza gonfiarlo in testata. In fondo, i dati della
+   casa e **la riga che dichiara che cos'è il nastro sul bordo sinistro**.
+3. **Otto piani**, uno per oggetto, ciascuno alto una schermata (`CbPlate`).
+4. **Indice stampato** (`cb-contents`): numero, nome, prezzo. Solo quello: il
+   tipo dell'oggetto è già scritto sul suo piano e nel foglio indice.
+5. **Targa d'appuntamento** e colophon.
 
-Il moto è guidato da **un solo listener di scroll passivo** che scrive
-`--cb-p` (percorso dell'atto), `--cb-e` (entrata) e `--cb-pan` (stecca) come custom
-property sulle sezioni. La CSS fa il resto: nessun runtime che generi DOM.
+Le composizioni dei piani sono **tre** e si alternano (`SCORE` in `pages/home.tsx`),
+mai la stessa due volte di fila:
 
-## Il metro (`cb-metro.tsx`)
+| `kind` | Composizione |
+|---|---|
+| `centre` | Il capo al centro, la didascalia sotto su due colonne |
+| `side` | Il capo di fianco alla didascalia, lato alternato (`data-cb-side`) |
+| `suite` | La cartella delle varianti in fila, la didascalia di fianco |
 
-Un metro da sarto fisso sul bordo sinistro per tutta la pagina. **Non è una barra
-di avanzamento travestita**: ogni oggetto occupa il tratto di nastro che servirebbe
-davvero a prenderne le misure, cioè la somma delle sue misure, e gli spilli si
-piantano ai centimetri cumulati esatti mentre li superi. Il totale (2028 cm) è
-quanto nastro serve per misurare l'intera collezione, e compare nel colophon.
+Non ci sono più dispositivi di scena: **niente tilt, niente parallasse, niente
+cifre che salgono**. L'unico movimento è la salita in entrata, uguale per tutti,
+governata da un `IntersectionObserver` che marca `data-cb-in` una volta sola.
 
-Sull'oggetto 08 non c'è niente da misurare: il nastro si spegne e la lettura
-diventa "taglia unica".
+La **didascalia di collezione** (`.cb-cap`) porta sei righe: numero, nome, tipo,
+una frase di fatto, tessuto e origine, prezzo e rimando. La scheda tecnica completa
+a sette righe (`CbLabel`) è rimasta, ma vive **solo sulla scheda oggetto**: in
+collezione una tabella accanto a ogni capo trasformava la pagina in un listino.
 
-Vincoli tecnici da conoscere prima di toccarlo:
+Le didascalie dichiarano **fatti**, non argomenti di vendita ("Lana vergine
+340 g/m², filata a Biella", non "eleganza senza tempo").
 
-- **Non può usare `position: fixed`.** `PageTransitionShell` mette un `transform`
-  sul wrapper di pagina, e un antenato trasformato diventa il blocco contenitore
-  dei discendenti `fixed`: il nastro verrebbe dimensionato sull'intera pagina.
-  Si usa un **dock `sticky` alto zero** con dentro un figlio assoluto a `100svh`.
-  Stessa ragione per cui il drawer della borsa esce in **portale sul `body`**.
-- `window.innerHeight` può valere 0 in contesti occlusi: si misura con
-  `document.documentElement.clientHeight`.
-- Il frame in coda si **sostituisce** invece di ignorare la richiesta: con la
-  scheda in secondo piano `requestAnimationFrame` non gira, e un flag
-  "c'è già un frame" resterebbe alzato per sempre.
-- Sotto i 62rem il metro è nascosto e le misure restano leggibili in etichetta.
-  Con `prefers-reduced-motion` il nastro non trasla e mostra la lista delle misure.
+### Regole di copy
+
+Il registro è quello del cartellino di museo: si dichiara un fatto, non si
+persuade. Alla passata di pulizia del 2026-08-28 si aggiunge una regola operativa:
+
+> **Ogni fatto compare una volta sola.** Se una riga ripete qualcosa che il
+> lettore ha già letto in quella schermata, si toglie: non si riformula.
+
+Dove vive ciascun fatto, in modo che non ricompaia altrove:
+
+| Fatto | Sta qui | Non deve stare |
+|---|---|---|
+| Milano | riga sopra il marchio, nel frontespizio | nella riga della casa ("Maison fondata da Michele Bizzi", non "milanese") |
+| Indirizzo | riga `Showroom su appuntamento` del frontespizio, riga `Luogo` della chiusura | nel foglio indice, nel colophon |
+| Metratura della collezione (2028 cm) | nota del nastro nel frontespizio, piede del metro | nella tabella dell'appuntamento, nel colophon |
+| Email dello showroom | il rimando `Scrivi allo showroom` | come riga `Contatto` accanto |
+| Tipo dell'oggetto | didascalia del piano, foglio indice | indice stampato |
+| Nome della variante scelta | etichetta sotto il campione colore | come riga `Variante` nella colonna a fianco |
+| "Le misure sono del capo, non del corpo" | la chiave stessa: `Misure del capo` | come riga di nota sotto le taglie |
+
+Tolti nello stesso passaggio, perché non dicevano nulla al lettore: il conteggio
+di magazzino sul frontespizio ("8 oggetti, 22 varianti"), la parola "Scorri"
+(resta il filetto animato) e la riga "Metro da sarto — 2028 cm" in mezzo a luogo,
+orari e prova.
+
+Due soli meccanismi di runtime, tenuti separati perché hanno bisogni diversi:
+
+- l'`IntersectionObserver` delle entrate, che regge anche a scheda nascosta;
+- **un listener di scroll passivo** che alimenta il metro, che invece ha bisogno
+  della posizione continua.
+
+La partenza invisibile delle entrate la accende il JS (`data-cb-motion="on"` sulla
+radice), non il CSS: se l'osservatore non parte, la collezione resta visibile
+invece di sparire.
+
+### Indice a foglio
+
+`Indice` in testata apre `CbIndexSheet`: gli otto oggetti letti uno sotto l'altro
+alla scala della carta, con tipo e prezzo. Esce in **portale sul `body`** per la
+stessa ragione del drawer della borsa (vedi sotto), si chiude con `Esc` e blocca lo
+scroll del fondo. Non porta il piede con l'indirizzo: è un indice, non una scheda
+contatti, e l'indirizzo sta già in altri due punti della pagina.
+
+Lo **skip link** salta al primo oggetto, non all'indice stampato: nell'ordine del
+DOM il nastro viene prima della testata, e il salto serve a scavalcare le sue
+tacche, non la collezione.
 
 ## Colore
 
 Fondo pagina e fondo dei packshot **coincidono**: ogni sezione si dipinge del
-`groundHex` del proprio oggetto, campionato dagli angoli dei file. È il motivo per
+`groundHex` del proprio oggetto. I valori sono stati **ricampionati il 2026-08-27**
+sulla mediana di un anello di 1px lungo i quattro bordi di ogni file, non sui
+quattro angoli: gli angoli cadono nella vignettatura del packshot e davano fino a
+cinque livelli di scarto, abbastanza da far ricomparire il rettangolo della foto. È il motivo per
 cui i capi galleggiano senza card, senza bordi e senza ombre.
 
 > Non usare `mix-blend-mode: multiply` sui packshot: con fondo pagina uguale a
@@ -128,14 +171,27 @@ Gli inchiostri secondari si scuriscono sul fondo cemento, altrimenti cadono sott
 
 ## Slabbby
 
-Il gate `SlabbbyScriptGate` è montato **solo nella scheda oggetto**, non in home:
-il widget si aggancia da solo accanto al primo heading della pagina, e in
-collezione finirebbe dentro il marchio. Il bottone della maison
-(`SlabbbyWishlistButton`, ristilato via `className="cb-slabbby"` senza toccare il
-modulo) sta sotto "aggiungi alla borsa".
+Casa Bizzi monta il bottone Slabbby **ufficiale** nel punto che sceglie lei,
+invece di disegnarne uno proprio. È il modo manuale del widget:
 
-Limiti del widget verificati sul campo: shadow root chiuso, nessun
-`window.Slabbby`. Dettagli in [[moduli-piattaforma]].
+- `pages/piece.tsx` rende un segnaposto `<div data-slabbby>` sotto il tasto
+  "aggiungi alla borsa", con `data-slabbby-label`, `data-slabbby-saved-label`,
+  `data-slabbby-url` e `data-slabbby-block`;
+- `CbSlabbbyManual` (in `cb-shell.tsx`, montato dentro `CbHeader`, quindi su
+  tutte le pagine) mette `data-slabbby-manual` sull'elemento `<html>`. Serve
+  sulle pagine **senza** segnaposto: senza quella riga l'estensione Chrome, che
+  inietta il widget ovunque, tornerebbe a piazzare il bottone accanto al marchio;
+- lo stile arriva dai token `--slabbby-*` scritti su `.cb-slabbby-slot` in
+  `casabizzi.css`. Niente `!important`: le custom property attraversano lo
+  shadow root chiuso del widget per ereditarietà.
+
+Il click apre il flusso vero del widget (login se serve, poi scelta della lista e
+`POST /api/extension/save`). `data-slabbby-url` porta l'URL pubblico del capo,
+scritto in modo deterministico: con `window.location.href` sarebbe diverso fra
+resa server e client, e in locale si salverebbe un `localhost` che lo scraper di
+Slabbby non può raggiungere.
+
+Il vecchio `SlabbbyWishlistButton` non è più usato qui (resta a LibriTech).
 
 ## Da verificare
 
