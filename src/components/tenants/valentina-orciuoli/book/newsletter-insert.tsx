@@ -101,11 +101,12 @@ export function VoNewsletterInsert({
           <span className="sr-only">Chiudi</span>
         </button>
 
-        <span className="vo-insert-kicker">Cedola d&apos;iscrizione</span>
-        <h2 id="vo-insert-title">Vuoi saperne di più su Valentina?</h2>
+        <span className="vo-insert-kicker">Le Lettere dell&apos;Autrice</span>
+        <h2 id="vo-insert-title">Vuoi restare vicino al racconto?</h2>
         <p>
-          Lascia la tua email: riceverai notizie sui nuovi libri, cover reveal e
-          contenuti che non finiscono sui social.
+          Una corrispondenza diretta tra me e te. Niente rumore di fondo, solo frammenti
+          inediti, novita in anteprima e pensieri intimi che partono dal mio tavolo di
+          lavoro per arrivare al tuo schermo.
         </p>
         <ValentinaNewsletterForm compact sent={sent} pending={pending} error={error} onSubmit={onSubmit} />
         <span className="vo-insert-mark" aria-hidden="true">

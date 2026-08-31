@@ -137,31 +137,29 @@ export function ValentinaOrciuoliStaticPage({ page }: { page: ValentinaPageKind 
         <section className="vo-section vo-author-section vo-author-section-full vo-subpage-section">
           <div className="vo-author-copy vo-author-copy-long">
             <span className="vo-dragon-mark">Profilo</span>
-            <h2>Tra magia e sentimento</h2>
+            <h2>C&apos;era una volta il bisogno antico di dare un senso al mondo attraverso il racconto.</h2>
             <p>
-              Valentina costruisce mondi in cui l&apos;emozione non resta sottotraccia: diventa creatura,
-              scelta, ferita e potere. Il suo immaginario parte dal fantasy orientale e incontra il romance,
-              con protagonisti chiamati a dare un nome a cio che li attraversa.
-            </p>
-            <p>
-              Dopo la laurea in Relazioni Internazionali e gli studi in Comunicazione e Marketing, porta nella
-              scrittura uno sguardo attento ai legami, ai conflitti interiori e alla forza simbolica delle storie.
+              Mi chiamo Valentina Orciuoli e credo che le storie non servano solo a fuggire
+              dalla realta, ma a capirla davvero. Nei miei libri ogni simbolo, ogni figura e
+              ogni ombra sono metafore della nostra societa e dell&apos;intricato universo delle
+              emozioni umane. Scrivo per trasformare cio che non riusciamo a spiegare a voce
+              in viaggi indimenticabili.
             </p>
             <div className="vo-author-pillars">
               <article>
                 <span>01</span>
-                <strong>Fantasy orientale</strong>
-                <p>Draghi, corti imperiali, magia e atmosfere luminose ma taglienti.</p>
+                <strong>The Emotion Dragons Trilogy</strong>
+                <p>Dragoni che non sono nemici da abbattere, ma simboli viventi di cio che proviamo.</p>
               </article>
               <article>
                 <span>02</span>
-                <strong>Romantasy emotivo</strong>
-                <p>Relazioni intense, introspezione e sentimenti che diventano destino narrativo.</p>
+                <strong>Thriller Psicologico</strong>
+                <p>Il racconto scende nelle crepe piu intime della realta contemporanea.</p>
               </article>
               <article>
                 <span>03</span>
-                <strong>Nuove ombre</strong>
-                <p>Con Tra fumo e ombre apre anche una venatura dark-noir, piu urbana e psicologica.</p>
+                <strong>Simboli e metafore</strong>
+                <p>Ogni dettaglio e lo specchio della societa, ogni pagina mette alla prova le certezze.</p>
               </article>
             </div>
             <Link className="vo-text-link" href={`${valentinaBasePath}/libri`}>
@@ -170,7 +168,7 @@ export function ValentinaOrciuoliStaticPage({ page }: { page: ValentinaPageKind 
           </div>
           <div className="vo-author-seal">
             <img src="/valentina-orciuoli/valentina-autrice.webp" alt="Valentina Orciuoli" />
-            <p>Author · Romantasy · Dark-noir</p>
+            <p>Author · Fantasy · Thriller</p>
           </div>
         </section>
       )}
@@ -182,9 +180,10 @@ export function ValentinaOrciuoliStaticPage({ page }: { page: ValentinaPageKind 
               <span>In aggiornamento</span>
               <h3>Nuove date in arrivo</h3>
               <p>
-                Presentazioni, firmacopie e incontri con i lettori verranno pubblicati qui appena confermati.
-                Per inviti, festival e collaborazioni editoriali puoi contattare Valentina{" "}
-                <Link href={`${valentinaBasePath}/contatti`}>qui</Link>.
+                Una storia prende respiro solo quando incontra lo sguardo di chi la legge.
+                Lungo il cammino lascio la scrivania per raggiungere librerie, fiere e festival
+                letterari. E in questi momenti dal vivo che ci confrontiamo, decifriamo insieme
+                i simboli nascosti tra le righe e diamo un volto a chi condivide questa passione.
               </p>
             </article>
           </div>
@@ -199,10 +198,10 @@ export function ValentinaOrciuoliStaticPage({ page }: { page: ValentinaPageKind 
             <div className="vo-event-list" aria-label="Blog">
               <article>
                 <span>In aggiornamento</span>
-                <h3>I primi articoli sono in arrivo</h3>
+                <h3>I primi appunti sono in arrivo</h3>
                 <p>
-                  I contenuti verranno pubblicati qui appena pronti. Per novità nel frattempo
-                  puoi seguire Valentina sui social o contattarla{" "}
+                  I contenuti verranno pubblicati qui appena pronti. Nel frattempo puoi seguire
+                  Valentina sui social o contattarla{" "}
                   <Link href={`${valentinaBasePath}/contatti`}>qui</Link>.
                 </p>
               </article>
@@ -249,7 +248,7 @@ export function ValentinaOrciuoliStaticPage({ page }: { page: ValentinaPageKind 
       <footer id="contatti" className="vo-footer">
         <div>
           <strong>Valentina Orciuoli</strong>
-          <p>Author site ufficiale · fantasy, draghi ed emozioni.</p>
+          <p>Author site ufficiale · fantasy, thriller ed emozioni.</p>
         </div>
         <div className="vo-footer-links">
           <a href={instagramHref} target="_blank" rel="noopener noreferrer">

@@ -29,6 +29,8 @@ export type ValentinaCreativeWork = {
   backgroundMediaUrl: string;
   ctaLabel: string;
   ctaHref: string;
+  secondaryCtaLabel?: string;
+  secondaryCtaHref?: string;
   enabled: boolean;
 };
 
@@ -37,32 +39,36 @@ export const valentinaCreativeWorks: ValentinaCreativeWork[] = [
     id: "44acaaba-1814-46ef-923d-a4f50aa11901",
     slug: "anxiety",
     title: "Anxiety",
-    description: "E se l'ansia fosse un potere? E se questo potere si manifestasse nella forma di un dragone?",
-    secondaryText: "Quando non è più possibile mentire a sé stessi, quando il vero combatte per uscire allo scoperto il potere dell'ansia si sprigiona, più feroce che mai.",
+    description: "La nebbia fitta del dubbio, il peso sul petto che toglie il respiro ma costringe a guardarsi dentro con sincerita.",
+    secondaryText: "Quando non e piu possibile mentire a se stessi, quando il vero combatte per uscire allo scoperto il potere dell'ansia si sprigiona, piu feroce che mai.",
     coverImageUrl: anxietyCoverSrc,
     backgroundMediaUrl: "/valentina-orciuoli/sfondo-anxiety.webp",
-    ctaLabel: "Leggilo qui",
+    ctaLabel: "Leggi la trama",
     ctaHref: amazonHref,
+    secondaryCtaLabel: "Porta a casa il libro",
+    secondaryCtaHref: amazonHref,
     enabled: true,
   },
   {
     id: "44acaaba-1814-46ef-923d-a4f50aa11902",
     slug: "fury",
     title: "Fury",
-    description: "E se perdere se stessi fosse l'unico modo per salvare chi ami? Quando la rabbia prende il sopravvento, cosa resta del proprio io?",
+    description: "Il fuoco improvviso che brucia dentro: una rabbia che puo distruggere tutto oppure accendere il coraggio di cambiare.",
     secondaryText: "Un secolo prima dell'apparizione del Dragone Nero dell'ansia, il Primo Long era l'incarnazione della rabbia.",
     coverImageUrl: furyCoverSrc,
     backgroundMediaUrl: "/valentina-orciuoli/sfondo-fury-girato.webp",
-    ctaLabel: "Leggilo qui",
+    ctaLabel: "Leggi la trama",
     ctaHref: furyHref,
+    secondaryCtaLabel: "Porta a casa il libro",
+    secondaryCtaHref: furyHref,
     enabled: true,
   },
   {
     id: "44acaaba-1814-46ef-923d-a4f50aa11903",
     slug: "tra-fumo-e-ombre",
     title: "Tra fumo e ombre",
-    description: "E se il fumo fosse l'unico posto dove poter nascondere la verità?",
-    secondaryText: "Nella Milano cupa degli anni '70, tra nebbia, silenzi e ombre che sembrano respirare, una donna cerca di dimenticare ciò che ha perduto. Ma ogni sigaretta accesa riporta a galla un ricordo, ogni strada bagnata riflette un volto che non vuole più vedere.",
+    description: "Il racconto cambia passo, abbandona i cieli del fantasy e scende nelle crepe piu intime della realta contemporanea.",
+    secondaryText: "Un thriller psicologico fitto di simboli, indizi sottili e ombre quotidiane. Un'indagine in cui ogni dettaglio e lo specchio della societa e ogni pagina mette alla prova le tue certezze.",
     coverImageUrl: darkNoirCoverSrc,
     backgroundMediaUrl: "/valentina-orciuoli/sfondo-dark.webp",
     ctaLabel: "Preordina qui",
@@ -124,7 +130,7 @@ export const trilogy: Array<{
   {
     n: "I",
     title: "Anxiety",
-    desc: "Neirè scopre che l'ansia può diventare drago, potere e via di liberazione.",
+    desc: "La nebbia fitta del dubbio, il peso sul petto che toglie il respiro ma costringe a guardarsi dentro con sincerita.",
     state: "Disponibile su Kindle",
     href: amazonHref,
     coverSrc: anxietyCoverSrc,
@@ -133,7 +139,7 @@ export const trilogy: Array<{
   {
     n: "II",
     title: "Fury",
-    desc: "Un secolo prima del Dragone Nero dell'ansia, il Primo Long incarna la rabbia.",
+    desc: "Il fuoco improvviso che brucia dentro: una rabbia che puo distruggere tutto oppure accendere il coraggio di cambiare.",
     state: "Disponibile su Kindle",
     href: furyHref,
     coverSrc: furyCoverSrc,
@@ -141,9 +147,9 @@ export const trilogy: Array<{
   },
   {
     n: "III",
-    title: "Volume III",
-    desc: "La chiusura della saga portera ogni emozione davanti alla sua forma piu antica.",
-    state: "Cover reveal in arrivo",
+    title: "Il Terzo Canto",
+    desc: "La trilogia trovera presto il suo compimento.",
+    state: "In arrivo",
     href: null,
     coverSrc: null,
     coverAlt: "",

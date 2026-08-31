@@ -21,18 +21,13 @@ export function VoBackCover({ hidden }: { hidden: boolean }) {
           <span className="vo-back-kicker">L&apos;autrice</span>
           <h2>Valentina Orciuoli</h2>
           <p className="vo-back-blurb">
-            «Scrivo storie in cui l&apos;emozione non resta sottotraccia: diventa creatura,
-            scelta, ferita e potere.»
+            «Credo che le storie non servano solo a fuggire dalla realta, ma a capirla
+            davvero.»
           </p>
           <p>
-            Dopo la laurea in Relazioni Internazionali e gli studi in Comunicazione e
-            Marketing, Valentina porta nella scrittura uno sguardo attento ai legami, ai
-            conflitti interiori e alla forza simbolica delle storie. Il suo immaginario parte
-            dal fantasy orientale — draghi, corti imperiali, magia — e incontra il romance.
-          </p>
-          <p>
-            Con <em>Tra fumo e ombre</em> apre anche una venatura dark-noir, più urbana e
-            psicologica.
+            Nei miei libri ogni simbolo, ogni figura e ogni ombra sono metafore della nostra
+            societa e dell&apos;intricato universo delle emozioni umane. Scrivo per trasformare
+            cio che non riusciamo a spiegare a voce in viaggi indimenticabili.
           </p>
         </div>
 

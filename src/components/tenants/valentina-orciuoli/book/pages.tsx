@@ -6,7 +6,6 @@ import type { CSSProperties, FormEvent, ReactNode } from "react";
 import { ValentinaContactForm } from "@/components/tenants/valentina-orciuoli/contact-form";
 import {
   amazonStoreHref,
-  darkNoirCoverSrc,
   instagramHref,
   tiktokHref,
   valentinaEmail,
@@ -164,14 +163,26 @@ function renderWorkFace(work: ValentinaCreativeWork, side: VoFaceSide, ordinal: 
       {work.description ? <p className="vo-face-lead">{work.description}</p> : null}
       {work.secondaryText ? <p>{work.secondaryText}</p> : null}
       {work.ctaHref ? (
-        <a
-          className="vo-face-cta"
-          href={work.ctaHref}
-          target={work.ctaHref.startsWith("http") ? "_blank" : undefined}
-          rel={work.ctaHref.startsWith("http") ? "noopener noreferrer" : undefined}
-        >
-          {work.ctaLabel} <ArrowRight size={15} />
-        </a>
+        <div className="vo-face-ctas">
+          <a
+            className="vo-face-cta"
+            href={work.ctaHref}
+            target={work.ctaHref.startsWith("http") ? "_blank" : undefined}
+            rel={work.ctaHref.startsWith("http") ? "noopener noreferrer" : undefined}
+          >
+            {work.ctaLabel} <ArrowRight size={15} />
+          </a>
+          {work.secondaryCtaHref ? (
+            <a
+              className="vo-face-cta vo-face-cta-secondary"
+              href={work.secondaryCtaHref}
+              target={work.secondaryCtaHref.startsWith("http") ? "_blank" : undefined}
+              rel={work.secondaryCtaHref.startsWith("http") ? "noopener noreferrer" : undefined}
+            >
+              {work.secondaryCtaLabel} <ArrowRight size={15} />
+            </a>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );
@@ -229,9 +240,9 @@ export function renderVoFace(spread: VoSpread, side: VoFaceSide, ctx: VoBookCont
             龍
           </span>
           <p className="vo-dedication" data-writing={ctx.writeDedication || undefined}>
-            A chi ha imparato a dare un nome
+            Avvicinati e prendi posto.
             <br />
-            a ciò che lo attraversa.
+            Le storie migliori non iniziano mai per caso.
           </p>
           <span className="vo-dedication-sign">v.o.</span>
         </div>
@@ -243,20 +254,16 @@ export function renderVoFace(spread: VoSpread, side: VoFaceSide, ctx: VoBookCont
           <h1 className="vo-face-name">valentina orciuoli</h1>
           <span className="vo-face-rule" aria-hidden="true" />
           <div className="vo-face-announce">
-            <span className="vo-photo vo-photo-inline" data-diagonal="a">
-              <span className="vo-photo-tape vo-photo-tape-a" aria-hidden="true" />
-              <span className="vo-photo-print">
-                <img src={darkNoirCoverSrc} alt="Copertina di Tra fumo e ombre" />
-                <span className="vo-photo-gloss" aria-hidden="true" />
-              </span>
-            </span>
-            <h2>Una nuova storia sta per arrivare</h2>
+            <h2>C&apos;era una volta il bisogno antico di dare un senso al mondo attraverso il racconto.</h2>
             <p>
-              Questo autunno Valentina torna con un thriller psicologico ancora avvolto nel
-              mistero. Una cosa è certa: un nuovo viaggio sta per iniziare.
+              Mi chiamo Valentina Orciuoli e credo che le storie non servano solo a fuggire
+              dalla realta, ma a capirla davvero. Nei miei libri ogni simbolo, ogni figura e
+              ogni ombra sono metafore della nostra societa e dell&apos;intricato universo delle
+              emozioni umane. Scrivo per trasformare cio che non riusciamo a spiegare a voce
+              in viaggi indimenticabili.
             </p>
             <VoInternalLink ctx={ctx} to="libri" className="vo-face-cta">
-              Sfoglia le opere <ArrowRight size={15} />
+              La narrazione comincia adesso <ArrowRight size={15} />
             </VoInternalLink>
           </div>
         </div>
@@ -268,10 +275,10 @@ export function renderVoFace(spread: VoSpread, side: VoFaceSide, ctx: VoBookCont
         <div className="vo-face vo-face-intro">
           <span className="vo-face-kicker">The Emotion Dragons Trilogy</span>
           <h2>I libri</h2>
-          <p className="vo-face-lead">Storie che uniscono l&apos;oriente e il cuore.</p>
+          <p className="vo-face-lead">Cosa accadrebbe se le nostre emozioni diventassero dei poteri?</p>
           <p>
-            Draghi, corti imperiali e sentimenti che prendono corpo: ogni volume dà forma a
-            un&apos;emozione e la mette davanti alla sua origine più antica.
+            In questa saga fantastica, i dragoni non sono nemici da abbattere, ma simboli
+            viventi di ci&ograve; che proviamo.
           </p>
           <span className="vo-face-glyph vo-face-glyph-watermark" aria-hidden="true">
             龍
@@ -317,14 +324,14 @@ export function renderVoFace(spread: VoSpread, side: VoFaceSide, ctx: VoBookCont
     case "blog-left":
       return (
         <div className="vo-face vo-face-intro">
-          <span className="vo-face-kicker">Appunti</span>
+          <span className="vo-face-kicker">I taccuini e le lettere</span>
           <h2>Dal taccuino</h2>
           <p className="vo-face-lead">
-            Note a margine e piccole cronache dal mondo dei draghi.
+            E per continuare a camminare insieme anche a libro chiuso.
           </p>
           <p>
-            Per riceverle in anticipo c&apos;è la cedola d&apos;iscrizione infilata fra le
-            pagine: sporge dal taglio in alto, basta prenderla.
+            Gli appunti presi a margine della scrittura, le analisi sui simboli del mondo
+            moderno e le riflessioni aperte sul mestiere di raccontare.
           </p>
         </div>
       );
@@ -356,7 +363,7 @@ export function renderVoFace(spread: VoSpread, side: VoFaceSide, ctx: VoBookCont
             </ul>
           ) : (
             <div className="vo-face-empty">
-              <h3>I primi articoli sono in arrivo</h3>
+              <h3>I primi appunti sono in arrivo</h3>
               <p>
                 I contenuti verranno pubblicati qui appena pronti. Nel frattempo puoi seguire
                 Valentina sui social o{" "}
@@ -377,7 +384,7 @@ export function renderVoFace(spread: VoSpread, side: VoFaceSide, ctx: VoBookCont
           <span className="vo-face-kicker">Calendario</span>
           <h2>Eventi</h2>
           <p className="vo-face-lead">
-            Presentazioni, firmacopie e incontri con i lettori, via via che vengono confermati.
+            Una storia prende respiro solo quando incontra lo sguardo di chi la legge.
           </p>
         </div>
       );
@@ -388,11 +395,9 @@ export function renderVoFace(spread: VoSpread, side: VoFaceSide, ctx: VoBookCont
             <span>In aggiornamento</span>
             <h3>Nuove date in arrivo</h3>
             <p>
-              Per inviti, festival e collaborazioni editoriali puoi contattare Valentina{" "}
-              <VoInternalLink ctx={ctx} to="contatti">
-                qui
-              </VoInternalLink>
-              .
+              Lungo il cammino lascio la scrivania per raggiungere librerie, fiere e festival
+              letterari. E in questi momenti dal vivo che ci confrontiamo, decifriamo insieme
+              i simboli nascosti tra le righe e diamo un volto a chi condivide questa passione.
             </p>
           </article>
         </div>

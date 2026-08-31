@@ -511,7 +511,7 @@ const valentinaOrciuoliContent: TenantContent = {
   showcaseLogoSrc: "/valentina-orciuoli/anxiety-mockup-standup.png",
   showcaseLogoAlt: "Anxiety di Valentina Orciuoli",
   description:
-    "Valentina Orciuoli scrive fantasy orientale: emozioni antiche, draghi cinesi e mondi in cui la luce combatte dentro l'ombra.",
+    "Valentina Orciuoli crede che le storie non servano solo a fuggire dalla realta, ma a capirla davvero. Nei suoi libri ogni simbolo e una metafora della societa e delle emozioni umane.",
   url: "https://demo.weuseorpheo.com/valentina-orciuoli/link",
   social: {
     instagram: "https://www.instagram.com/di.vale_in.peggio/",
@@ -537,20 +537,20 @@ const valentinaOrciuoliContent: TenantContent = {
     embedUrl: "https://www.google.com/maps?q=Italia&output=embed",
   },
   hero: {
-    eyebrow: "Author site fantasy · Orpheo",
+    eyebrow: "Author site · Fantasy & Thriller",
     titleLead: "Valentina",
     titleAccent: "Orciuoli.",
     body:
-      "Fantasy orientale, emozioni antiche e draghi che respirano luce. Il primo capitolo della saga e Anxiety.",
+      "Le storie migliori non iniziano mai per caso: cominciano quando qualcuno ha il coraggio di sedersi, fare silenzio e ascoltare ci che si agita sottopelle.",
     backdrop: "/valentina-orciuoli/anxiety-mockup-standup.png",
-    ctaLabel: "Scopri Anxiety",
+    ctaLabel: "La narrazione comincia adesso",
   },
   soulsIntro: {
     eyebrow: "The Emotion Dragons Trilogy",
     titleLead: "Ogni emozione",
     titleAccent: "ha il suo drago.",
     body:
-      "Una saga fantasy dove il mondo interiore dei personaggi prende forma in creature imperiali, cieli notturni e prove di coraggio.",
+      "Cosa accadrebbe se le nostre emozioni diventassero dei poteri? In questa saga fantastica, i dragoni non sono nemici da abbattere, ma simboli viventi di cio che proviamo.",
   },
   souls: [],
   dishesIntro: {
@@ -567,7 +567,7 @@ const valentinaOrciuoliContent: TenantContent = {
     mapTitle: "Link Valentina Orciuoli",
   },
   footer: {
-    tagline: "Fantasy orientale, draghi ed emozioni.",
+    tagline: "Fantasy, thriller ed emozioni.",
     body:
       "Author site per Valentina Orciuoli: libri, social, eventi e contenuti editoriali in un'unica esperienza.",
   },
