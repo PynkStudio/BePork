@@ -1,9 +1,9 @@
 # Feature: Blog editoriale multilingua
 
-- **Stato:** in sviluppo — F1 completata, F2 in lavorazione (bacheca in § 15)
+- **Stato:** in sviluppo — F1 completata, F2 in lavorazione, F3 in test (bacheca in § 15)
 - **Modulo:** `src/components/modules/blog/`
 - **Feature flag:** `blog` in `tenant-registry.ts` (già esistente)
-- **Data:** 2026-08-16
+- **Data:** 2026-08-16 — aggiornato 2026-09-01 (F3, vedi [[adr-0005-valentina-blog-fuori-dal-libro]])
 
 > **Come leggere questo documento.** La sezione "Stato attuale" è **dedotta dal codice**. Il resto è **progetto**. Dove una scelta non è ancora presa è scritto **Da decidere**. L'avanzamento reale vive nella bacheca di § 15.
 
@@ -55,16 +55,20 @@ Il confronto che ha originato il progetto è con la piattaforma editoriale di BI
 | Editor Gestione | `src/components/gestione/blog-manager.tsx` | 476 righe, textarea, salvataggio bulk |
 | Scrittura dati | `src/app/api/gestione/blog/route.ts` | `PUT` unico per tutti i post del tenant |
 | Commenti pubblici | `src/app/api/tenant/[tenantId]/blog/comments/route.ts` | Insert `pending`, IP hashato |
-| Rendering pubblico | `src/components/modules/blog/blog-section.tsx` | 6 tipi di blocco, classi `tenant-blog-*` |
+| Rendering pubblico (legacy, ancora attivo per `TenantBlogSection`) | `src/components/modules/blog/blog-section.tsx` | 6 tipi di blocco, classi `tenant-blog-*` |
+| Renderer documento Tiptap (nuovo, F3) | `src/components/modules/blog/render-doc.tsx` | `BlogDocRenderer`, classi `tenant-blog-doc-*` |
 | Schema | `supabase/migrations/20260620_tenant_blog.sql` | RLS pubblica già corretta (`published_at <= now()`) |
-| Route pubblica | `src/app/[previewSlug]/blog/[postSlug]/page.tsx` | Solo preview, gated a `valentina-orciuoli` |
+| Route pubblica indice + articolo, preview | `src/app/[previewSlug]/blog/page.tsx`, `.../blog/[postSlug]/page.tsx` | Legge `src/lib/blog/data.ts` (F1), gated su `tenant.features.blog` |
+| Route pubblica indice + articolo, dominio custom | `src/app/blog/page.tsx`, `src/app/blog/[postSlug]/page.tsx` | Stessi componenti, `resolveTenantFromHost` |
+| Testatina/piede/pagine dedicate | `src/components/tenants/valentina-orciuoli/blog/` | Non condividono chrome col libro — vedi [[adr-0005-valentina-blog-fuori-dal-libro]] |
+| Sitemap | `src/app/sitemap.ts` | Route statiche + un ingresso per traduzione pubblicata di ogni post |
 
 ### Difetti trovati all'avvio del progetto
 
 1. ~~**La data di pubblicazione futura non rinvia nulla.**~~ `getTenantBlogPosts` filtrava solo `status = 'published'`: la RLS applicava `published_at <= now()`, ma il client service-role la bypassa, quindi un post "programmato" era online subito. **Corretto in F0.**
 2. ~~**Il salvataggio è distruttivo.**~~ Il `PUT` cancellava tutti i post del tenant non presenti nel payload. **Corretto in F0**: si cancella solo ciò che il client elenca in `deletedPostIds`.
 3. ~~Moderazione commenti: una `UPDATE` per commento in loop.~~ **Corretto in F0**: una `UPDATE` per stato.
-4. I post tenant non compaiono in `src/app/sitemap.ts` e non hanno una route sul dominio custom: oggi il blog non è pubblicabile fuori dalla preview. **Aperto — F3.**
+4. ~~I post tenant non compaiono in `src/app/sitemap.ts` e non hanno una route sul dominio custom.~~ **Corretto in F3**: route pubbliche + sitemap scrivono già per entrambi i modi. Resta aperto solo l'aggancio del dominio custom **del resto del sito** (il libro), fuori scope di F3 — vedi [[adr-0005-valentina-blog-fuori-dal-libro]] §Conseguenze.
 
 ---
 
@@ -338,14 +342,14 @@ In sintesi: endpoint `/api/mcp/[tenantId]`, token per tenant emesso dal pannello
 ## 15. Bacheca di avanzamento
 
 Stati e regole di aggiornamento: § 0. Stime in giornate-uomo, indicative.
-**Ultimo aggiornamento:** 2026-08-16 — migration applicata, articoli convertiti, livello di scrittura in test.
+**Ultimo aggiornamento:** 2026-09-01 — renderer, route indice/articolo (preview + dominio custom), canonical/hreflang e sitemap in test; verificati in preview locale.
 
 | Fase | Uscita | ~gg | Stato |
 |---|---|---|---|
 | F0 | Nessun bug noto sul modulo attuale | 0,5 | 🔵 in test |
 | F1 | DB e lib pronti, modulo attuale ancora funzionante | 2 | ✅ completata |
 | F2 | L'utente scrive articoli veri | 4 | 🟡 in lavorazione |
-| F3 | Blog pubblicabile sul dominio del tenant | 3 | ⬜ da iniziare |
+| F3 | Blog pubblicabile sul dominio del tenant | 3 | 🔵 in test |
 | F4 | Programmazione affidabile | 2 | ⬜ da iniziare |
 | F5 | Il blog porta traffico agli altri moduli | 2 | ⬜ da iniziare |
 | F6 | Engagement misurabile | 2 | ⬜ da iniziare |
@@ -369,9 +373,9 @@ Stati e regole di aggiornamento: § 0. Stime in giornate-uomo, indicative.
 | Tipi e sanitizzazione del documento | ✅ completata | `src/lib/blog/doc.ts`. Provata su dati reali: nodo sconosciuto scartato, link `javascript:` rimosso, minuti di lettura calcolati |
 | Modello di dominio | ✅ completata | `src/lib/blog/types.ts` |
 | Slug per lingua | ✅ completata | `slugifyBlogSlug` / `uniqueBlogSlug` provati (slug duplicato → `-2`) |
-| Alternate `hreflang` con slug per lingua | 🔵 in test | `blogPostLanguageAlternates` scritto ma non ancora usato da nessuna pagina — si verifica in F3 |
+| Alternate `hreflang` con slug per lingua | ✅ completata | `blogPostLanguageAlternates`, usata da F3. Verificato in browser: `<link rel="canonical">` e `alternate hreflang="it"`/`x-default` corretti sulla pagina articolo |
 | Gate traduzioni incomplete (n lingue) | 🔵 in test | `src/lib/blog/translation-gaps.ts`. Nessun tenant ha ancora due lingue attive sul blog |
-| Lettura post + fallback dai blocchi legacy | 🔵 in test | `src/lib/blog/data.ts`. Nessuna pagina lo usa ancora: si verifica in F3 |
+| Lettura post + fallback dai blocchi legacy | ✅ completata | `src/lib/blog/data.ts`, usata dalle route F3. Verificato: i 3 articoli migrati si aprono con contenuto reale in indice e pagina articolo |
 | Script di migrazione blocchi → documento | ✅ completata | Eseguito: 3 articoli `valentina-orciuoli`, conteggio blocchi e tipi corrispondenti |
 | Rigenerare `database.types.ts` dopo la migration | ✅ completata | Innestate **solo** le tabelle blog: la rigenerazione completa cancellava le tabelle `rider_*`, presenti nei tipi ma **non nel DB di produzione** |
 | Rimuovere le colonne legacy `title`/`slug`/`excerpt` da `tenant_blog_posts` | ⬜ da iniziare | Ancora `not null`: la creazione le valorizza per compatibilità. Da togliere quando `tenant_blog_blocks` viene eliminata |
@@ -398,15 +402,17 @@ Stati e regole di aggiornamento: § 0. Stime in giornate-uomo, indicative.
 
 | Lavoro | Stato | Note |
 |---|---|---|
-| Renderer `renderTiptapDoc` server-side | ⬜ da iniziare | |
-| Route localizzate: indice, articolo, tag, autore | ⬜ da iniziare | Rimuove il gate a `valentina-orciuoli` |
-| Sommario, tempo di lettura, correlati, condivisione | ⬜ da iniziare | |
-| Canonical, `hreflang` + `x-default`, `noindex` in preview | ⬜ da iniziare | |
-| Post nella sitemap con `alternates.languages` | ⬜ da iniziare | |
+| Renderer documento Tiptap server-side | 🔵 in test | `src/components/modules/blog/render-doc.tsx` (`BlogDocRenderer`). Copre i nodi prodotti dalla migrazione blocchi→documento (paragrafo, heading, quotePull, mediaFigure, gallery, videoEmbed) più liste/tabelle/callout/FAQ/CTA/ricetta, non ancora prodotti da alcun editor. **Non provati**: nessun editor scrive ancora `menuItemCard`/`productGrid`/`galleryRef`/`newsletterInline` (out of scope, richiedono dati di altri moduli) |
+| Route indice + articolo, preview e dominio custom | 🔵 in test | `src/app/[previewSlug]/blog/page.tsx`, `.../blog/[postSlug]/page.tsx`, `src/app/blog/page.tsx`, `src/app/blog/[postSlug]/page.tsx`. Gate su `tenant.features.blog` (oggi solo `valentina-orciuoli`), non più sull'id. Verificate in preview locale: indice con 3 articoli reali, apertura articolo, redirect su slug cambiato onorato in lettura. **Non provate**: le route sul dominio custom (nessun tenant ha ancora un dominio proprio — vedi [[adr-0005-valentina-blog-fuori-dal-libro]] §Conseguenze) |
+| Route tag, autore | ⬜ da iniziare | Rimandate: nessun tenant ha ancora tag/autori sufficienti a giustificarle |
+| Testatina/piede dedicati, non quelli del libro | ✅ completata | `src/components/tenants/valentina-orciuoli/blog/vo-blog-header.tsx`, `vo-blog-footer.tsx`. Verificato in browser |
+| Sommario, tempo di lettura, correlati, condivisione | ✅ completata | Nella pagina articolo (`blog-article-page.tsx`): TOC da `blogDocHeadings`, minuti da `blogReadingMinutes`, 3 correlati, link X/WhatsApp/email. Verificato in browser |
+| Canonical, `hreflang` + `x-default`, `noindex` in preview | ✅ completata | Verificato in browser: canonical e `alternate hreflang` corretti su indice e articolo, `robots: noindex,nofollow` in preview |
+| Post nella sitemap con slug per lingua | 🔵 in test | `src/app/sitemap.ts`. Scritta, non ancora vista contro un dominio reale (nessun tenant col blog ha ancora `domains` popolato) |
 | JSON-LD `BlogPosting` / `Recipe` / `FAQPage` / breadcrumb | ⬜ da iniziare | |
 | Feed RSS / Atom / JSON per lingua | ⬜ da iniziare | |
 | `/llms.txt` per tenant | ⬜ da iniziare | |
-| Redirect 301 sugli slug cambiati | ⬜ da iniziare | Tabella già in migration F1 |
+| Redirect 301 sugli slug cambiati (UI/HTTP) | 🔵 in test | La lettura onora già `tenant_blog_slug_redirects` (redirect Next lato route); manca ancora la UI in Gestione per registrarli quando si cambia uno slug |
 | Cache per tag `blog:{tenantId}` e invalidazione | ⬜ da iniziare | |
 
 ### F4 — Programmazione
@@ -530,5 +536,6 @@ Ogni fase chiude con: migration applicata, doc aggiornati (questo file + [[modul
 
 - [[adr-0003-blog-contenuto-tiptap-multilingua]]
 - [[adr-0004-mcp-tenant-blog]]
+- [[adr-0005-valentina-blog-fuori-dal-libro]]
 - [[adr-0001-route-module-gating]]
 - [[moduli-piattaforma]]

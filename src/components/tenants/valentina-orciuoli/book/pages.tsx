@@ -18,11 +18,9 @@ import type {
   VoSpread,
   VoStaticSpreadId,
 } from "@/components/tenants/valentina-orciuoli/book/book-map";
-import type { TenantBlogPost } from "@/lib/tenant-blog";
 
 export type VoBookContext = {
   works: ValentinaCreativeWork[];
-  posts: TenantBlogPost[];
   newsletter: {
     sent: boolean;
     pending: boolean;
@@ -37,10 +35,6 @@ export type VoBookContext = {
   hasPage: (id: string) => boolean;
   /** La dedica si scrive da sé una volta per apertura del libro, non a ogni ritorno. */
   writeDedication: boolean;
-  /** Indirizzo di un appunto sulla scrivania, con la lingua corrente preservata. */
-  articleHref: (slug: string) => string;
-  /** Apre l'appunto spostando la vista sulla scrivania. */
-  openArticle: (slug: string) => void;
 };
 
 /** Link che resta un vero `<a href>` per crawler e "apri in nuova scheda", ma dentro il libro sfoglia. */
@@ -68,13 +62,6 @@ function VoInternalLink({
       {children}
     </a>
   );
-}
-
-function formatPostDate(value: string | null) {
-  if (!value) return null;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-  return date.toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" });
 }
 
 const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
@@ -317,63 +304,6 @@ export function renderVoFace(spread: VoSpread, side: VoFaceSide, ctx: VoBookCont
                 ),
               )}
           </ol>
-        </div>
-      );
-
-    // ── Appunti (blog) ───────────────────────────────────────────────────────
-    case "blog-left":
-      return (
-        <div className="vo-face vo-face-intro">
-          <span className="vo-face-kicker">I taccuini e le lettere</span>
-          <h2>Dal taccuino</h2>
-          <p className="vo-face-lead">
-            E per continuare a camminare insieme anche a libro chiuso.
-          </p>
-          <p>
-            Gli appunti presi a margine della scrittura, le analisi sui simboli del mondo
-            moderno e le riflessioni aperte sul mestiere di raccontare.
-          </p>
-        </div>
-      );
-    case "blog-right":
-      return (
-        <div className="vo-face vo-face-posts">
-          {ctx.posts.length > 0 ? (
-            <ul>
-              {ctx.posts.map((post) => (
-                <li key={post.id}>
-                  <a
-                    href={ctx.articleHref(post.slug)}
-                    onClick={(event) => {
-                      if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
-                      event.preventDefault();
-                      ctx.openArticle(post.slug);
-                    }}
-                  >
-                    {formatPostDate(post.publishedAt) ? (
-                      <time dateTime={post.publishedAt ?? undefined}>
-                        {formatPostDate(post.publishedAt)}
-                      </time>
-                    ) : null}
-                    <h3>{post.title}</h3>
-                    {post.excerpt ? <p>{post.excerpt}</p> : null}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <div className="vo-face-empty">
-              <h3>I primi appunti sono in arrivo</h3>
-              <p>
-                I contenuti verranno pubblicati qui appena pronti. Nel frattempo puoi seguire
-                Valentina sui social o{" "}
-                <VoInternalLink ctx={ctx} to="contatti">
-                  scriverle
-                </VoInternalLink>
-                .
-              </p>
-            </div>
-          )}
         </div>
       );
 

@@ -1,8 +1,15 @@
 # ADR-0002: Il sito del tenant valentina-orciuoli è un libro sfogliabile
 
-- **Stato:** accettata
+- **Stato:** accettata — **parzialmente sostituita da [[adr-0005-valentina-blog-fuori-dal-libro]]**
 - **Data:** 2026-08-14
 - **Autore:** Massimo Pernozzoli
+
+> **Nota (2026-09-01):** la parte di questo ADR sulla scrivania (`VoDesk`, la panoramica di
+> camera, "il blog non sta nel libro: sta sulla scrivania") è superata da [[adr-0005-valentina-blog-fuori-dal-libro]].
+> Il blog oggi non ha più alcuna pagina nel volume: "Blog" in nav è un link che esce dal
+> libro verso `/it/blog`, una sezione a sé con testatina propria. Il resto di questo
+> documento — cerimonia d'apertura, sfogliare, quarta di copertina, appendice legale —
+> resta invariato e valido.
 
 ## Contesto
 

@@ -17,4 +17,7 @@ Usa il template [[adr-template]] per ogni nuova decisione. Numera i file progres
 | ADR | Titolo |
 |---|---|
 | 0001 | [[adr-0001-route-module-gating]] |
-| 0002 | [[adr-0002-valentina-book-shell]] — il sito `valentina-orciuoli` è un libro sfogliabile |
+| 0002 | [[adr-0002-valentina-book-shell]] — il sito `valentina-orciuoli` è un libro sfogliabile (parzialmente sostituita da 0005) |
+| 0003 | [[adr-0003-blog-contenuto-tiptap-multilingua]] — contenuto del blog come documento Tiptap per lingua |
+| 0004 | [[adr-0004-mcp-tenant-blog]] — server MCP per tenant per la redazione del blog |
+| 0005 | [[adr-0005-valentina-blog-fuori-dal-libro]] — il blog di valentina-orciuoli vive fuori dal libro, sullo stesso dominio |

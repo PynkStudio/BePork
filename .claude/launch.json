@@ -69,6 +69,19 @@
       ],
       "port": 3123,
       "url": "http://demo.bizery.localhost:3123"
+    },
+    {
+      "name": "valentina-preview",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--",
+        "-p",
+        "3131"
+      ],
+      "port": 3131,
+      "url": "http://demo.weuseorpheo.localhost:3131"
     }
   ]
 }

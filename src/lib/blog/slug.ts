@@ -56,7 +56,7 @@ export function blogPostLanguageAlternates({
   origin: string;
   defaultLocale: string;
   previewSlug?: string;
-}) {
+}): Record<string, string> | null {
   const entries = Object.values(post.translations)
     .filter((translation) => translation.translationStatus !== "draft")
     .map((translation) => [

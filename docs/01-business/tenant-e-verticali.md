@@ -33,7 +33,11 @@ Estratti da `TENANTS[]` in `src/lib/tenant-registry.ts` (campi `id`, `name`, `ve
   `src/components/tenants/valentina-orciuoli/book/book-map.ts`. Vedi
   [[adr-0002-valentina-book-shell]]. `/autrice` non è una pagina ma la **quarta di
   copertina**: il volume si chiude e si rigira per mostrarla. La pagina `/link` (linktree)
-  resta fuori dal libro.
+  resta fuori dal libro. **Il blog non è (più) una pagina del libro**: vive a
+  `/it/blog/**`, sullo stesso dominio del sito ma con testatina e impaginazione proprie
+  (`src/components/tenants/valentina-orciuoli/blog/`) — vedi
+  [[adr-0005-valentina-blog-fuori-dal-libro]]. "Blog" in nav è un link che esce dal
+  volume, non una pagina che si sfoglia.
 
 - **`casabizzi`** — maison di moda demo del verticale services, usata per mostrare
   il modulo `shop` e l'integrazione **Slabbby** su un catalogo reale (otto capi in

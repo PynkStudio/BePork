@@ -7,6 +7,10 @@ import { resolveTenantFromHost } from "@/lib/tenant-runtime";
 import { getTenantLocaleConfig } from "@/lib/tenant-locales";
 import { governanceBlogArticles, governanceServices } from "@/components/tenants/pynkstudio/ai-governance-data";
 import { pynkSolutions } from "@/components/tenants/pynkstudio/pynk-solutions";
+import { voAppendix, voBackCover, voSpreads } from "@/components/tenants/valentina-orciuoli/book/book-map";
+import { valentinaBasePath } from "@/components/tenants/valentina-orciuoli/content";
+import { getBlogPosts } from "@/lib/blog/data";
+import { blogPostPath } from "@/lib/blog/slug";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const h = await headers();
@@ -41,16 +45,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           "/consulenza",
           "/contattaci",
         ]
-      : [
-          "",
-          "/menu",
-          "/chi-siamo",
-          "/galleria",
-          "/recensioni",
-          "/contatti",
-          "/privacy",
-          "/cookie",
-        ];
+      : tenant.id === "valentina-orciuoli"
+        ? [
+            ...voSpreads.map((spread) => spread.path.slice(valentinaBasePath.length) || ""),
+            voBackCover.path.slice(valentinaBasePath.length),
+            ...voAppendix.map((entry) => entry.path.slice(valentinaBasePath.length)),
+          ]
+        : [
+            "",
+            "/menu",
+            "/chi-siamo",
+            "/galleria",
+            "/recensioni",
+            "/contatti",
+            "/privacy",
+            "/cookie",
+          ];
   const localePrefixes = tenantLocaleConfig?.locales ?? [];
   // Rimuove l'eventuale prefisso lingua per classificare la route a fini SEO.
   const routeOf = (fullPath: string): string => {
@@ -72,14 +82,36 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (route.startsWith("/ai-governance/")) return { priority: 0.8, changeFrequency: "monthly" };
     if (route === "/menu") return { priority: 0.8, changeFrequency: "weekly" };
     if (route === "/servizi" || route === "/settori" || route === "/ai-act") return { priority: 0.7, changeFrequency: "monthly" };
+    if (route === "/blog") return { priority: 0.7, changeFrequency: "weekly" };
+    if (route.startsWith("/blog/")) return { priority: 0.6, changeFrequency: "monthly" };
     return { priority: 0.6, changeFrequency: "monthly" };
   };
 
   const localizedRoutes = tenantLocaleConfig
     ? tenantLocaleConfig.locales.flatMap((locale) => routes.map((path) => `/${locale}${path}`))
     : routes;
-  return localizedRoutes.map((path) => ({
+
+  const entries: MetadataRoute.Sitemap = localizedRoutes.map((path) => ({
     url: `${base}${path}`,
     ...seoFor(routeOf(path)),
   }));
+
+  // L'indice del blog è già incluso in `routes` (voSpreads lo elenca come
+  // sezione del libro): qui si aggiungono solo gli articoli, che hanno uno
+  // slug proprio per lingua e non seguono lo schema "path ripetuto" sopra.
+  if (tenant.features.blog) {
+    const posts = await getBlogPosts(tenant.id, { publishedOnly: true, includeContent: false });
+    for (const post of posts) {
+      for (const translation of Object.values(post.translations)) {
+        if (translation.translationStatus === "draft" || translation.noindex) continue;
+        entries.push({
+          url: `${base}${blogPostPath(translation.locale, translation.slug)}`,
+          lastModified: translation.updatedAt,
+          ...seoFor("/blog/post"),
+        });
+      }
+    }
+  }
+
+  return entries;
 }

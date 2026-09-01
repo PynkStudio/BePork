@@ -2,9 +2,8 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { TenantProvider } from "@/components/core/tenant-provider";
+import { requireBlogTenant } from "@/components/tenants/valentina-orciuoli/resolve-tenant";
 import { VoBlogArticlePage } from "@/components/tenants/valentina-orciuoli/blog/blog-article-page";
-import { getPlatformModeFromHost } from "@/lib/platform";
-import { resolveTenantFromPreviewSlug } from "@/lib/tenant-runtime";
 import { tenantThemeCssVars } from "@/lib/tenant-theme";
 import { getTenantLocaleConfig } from "@/lib/tenant-locales";
 import { getBlogPosts, getPublishedBlogPost } from "@/lib/blog/data";
@@ -13,37 +12,35 @@ import { firstBlogDocImage } from "@/lib/blog/doc";
 import { getTenantGestioneExternalHref } from "@/lib/gestione-routing";
 import { LOCALE_HEADER } from "@/i18n/locales";
 
-async function loadArticle(previewSlug: string, postSlug: string) {
-  const tenant = resolveTenantFromPreviewSlug(previewSlug);
-  if (!tenant || tenant.previewSlug !== previewSlug || !tenant.features.blog) return null;
+async function loadArticle(postSlug: string) {
+  const tenant = await requireBlogTenant();
   const localeConfig = getTenantLocaleConfig(tenant.id);
   const locale = localeConfig?.defaultLocale ?? "it";
   const found = await getPublishedBlogPost(tenant.id, locale, postSlug);
-  if (!found) return null;
+  if (!found) notFound();
   return { tenant, locale, localeConfig, ...found };
 }
 
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ previewSlug: string; postSlug: string }>;
+  params: Promise<{ postSlug: string }>;
 }): Promise<Metadata> {
-  const { previewSlug, postSlug } = await params;
-  const found = await loadArticle(previewSlug, postSlug);
-  if (!found) return { robots: { index: false, follow: false } };
-  const { locale, post } = found;
+  const { postSlug } = await params;
+  const { tenant, locale, post } = await loadArticle(postSlug);
   const translation = post.translations[locale];
-  if (!translation) return { robots: { index: false, follow: false } };
+  if (!translation) return {};
 
-  const origin = "https://demo.weuseorpheo.com";
+  const h = await headers();
+  const origin = `https://${h.get("host")}`;
   const ogImage = post.coverImageUrl ?? firstBlogDocImage(translation.content) ?? undefined;
-  const alternates = blogPostLanguageAlternates({ post, origin, defaultLocale: locale, previewSlug });
+  const alternates = blogPostLanguageAlternates({ post, origin, defaultLocale: locale });
 
   return {
     metadataBase: new URL(origin),
-    title: { absolute: translation.seoTitle ?? `${translation.title} — Valentina Orciuoli` },
+    title: { absolute: translation.seoTitle ?? `${translation.title} — ${tenant.name}` },
     description: translation.seoDescription ?? translation.excerpt ?? undefined,
-    robots: { index: false, follow: false, nocache: true },
+    robots: translation.noindex ? { index: false, follow: true } : undefined,
     openGraph: {
       type: "article",
       title: translation.title,
@@ -56,33 +53,26 @@ export async function generateMetadata({
   };
 }
 
-export default async function PreviewBlogArticleRoute({
+export default async function BlogArticleRoute({
   params,
 }: {
-  params: Promise<{ previewSlug: string; postSlug: string }>;
+  params: Promise<{ postSlug: string }>;
 }) {
-  const requestHeaders = await headers();
-  const host = requestHeaders.get("host");
-  const mode = getPlatformModeFromHost(host);
-  const isLocalPreviewDev = host?.includes("localhost") || host?.includes("127.0.0.1");
-  if (mode !== "preview" && mode !== "preview-bizery" && mode !== "preview-orpheo" && !isLocalPreviewDev) notFound();
-
-  const { previewSlug, postSlug } = await params;
-  const found = await loadArticle(previewSlug, postSlug);
-  if (!found) notFound();
-  const { tenant, locale, localeConfig, post, redirectedFrom } = found;
+  const { postSlug } = await params;
+  const { tenant, locale, localeConfig, post, redirectedFrom } = await loadArticle(postSlug);
   const translation = post.translations[locale];
   if (!translation) notFound();
 
   if (redirectedFrom) {
-    redirect(blogPostPath(locale, translation.slug, previewSlug));
+    redirect(blogPostPath(locale, translation.slug));
   }
 
-  const currentLocale = requestHeaders.get(LOCALE_HEADER) ?? locale;
+  const h = await headers();
+  const currentLocale = h.get(LOCALE_HEADER) ?? locale;
   const allPosts = await getBlogPosts(tenant.id, { publishedOnly: true, includeContent: false });
   const related = allPosts.filter((item) => item.id !== post.id).slice(0, 3);
   const themeVars = tenantThemeCssVars(tenant.theme);
-  const shareUrl = `https://demo.weuseorpheo.com${blogPostPath(currentLocale, translation.slug, previewSlug)}`;
+  const shareUrl = `https://${h.get("host")}${blogPostPath(currentLocale, translation.slug)}`;
 
   return (
     <TenantProvider tenant={tenant}>
@@ -92,7 +82,6 @@ export default async function PreviewBlogArticleRoute({
           translation={translation}
           locale={currentLocale}
           defaultLocale={localeConfig?.defaultLocale ?? "it"}
-          previewSlug={previewSlug}
           shareUrl={shareUrl}
           related={related}
           gestioneHref={getTenantGestioneExternalHref(tenant.id)}

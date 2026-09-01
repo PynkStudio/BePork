@@ -1,18 +1,16 @@
 "use client";
 
-import { animate, motion, useMotionValue, useTransform } from "framer-motion";
+import { animate, motion, useMotionValue } from "framer-motion";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getTenantGestioneExternalHref } from "@/lib/gestione-routing";
-import type { TenantBlogPost } from "@/lib/tenant-blog";
 import {
   VoBookShell,
   WHEEL_LINE_PX,
   WHEEL_MAX_STEP,
 } from "@/components/tenants/valentina-orciuoli/book/book-shell";
 import { VoBackCover } from "@/components/tenants/valentina-orciuoli/book/back-cover";
-import { VoDesk } from "@/components/tenants/valentina-orciuoli/book/desk";
 import { VoCover } from "@/components/tenants/valentina-orciuoli/book/cover";
 import {
   renderVoAppendixFace,
@@ -70,19 +68,10 @@ const CEREMONY_FOLLOW = { type: "spring", stiffness: 210, damping: 30, mass: 0.7
 const CEREMONY_OPEN_TRANSITION = { duration: 0.85, ease: [0.42, 0.02, 0.18, 1] } as const;
 /** Durata dell'inchiostro sulla dedica, allineata a `vo-inking` nel CSS. */
 const DEDICATION_MS = 3200;
-/** La panoramica fra il volume e la scrivania: lenta, come girare la testa. */
-const PAN_TRANSITION = { duration: 1.15, ease: [0.62, 0.02, 0.16, 1] } as const;
-
 export function ValentinaOrciuoliBookSite({
   initialSpread,
-  article = null,
-  deskPosts = [],
 }: {
   initialSpread: number;
-  /** Articolo aperto: quando c'è, la vista si sposta dal libro alla scrivania. */
-  article?: TenantBlogPost | null;
-  /** Tutti gli appunti, per il mucchio sulla scrivania. */
-  deskPosts?: TenantBlogPost[];
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -92,42 +81,6 @@ export function ValentinaOrciuoliBookSite({
 
   const showsBackCover = isBackCoverPathname(pathname);
   const appendix = appendixByPathname(pathname);
-  const onDesk = article !== null;
-
-  /**
-   * La camera. Le due scene — il volume e la scrivania — stanno affiancate nello
-   * stesso mondo e resta montata sia l'una sia l'altra: è questo che rende la
-   * panoramica un movimento continuo invece di uno stacco. Un libro e i suoi
-   * appunti stanno sullo stesso tavolo, e il gesto per passare dall'uno agli
-   * altri è spostare lo sguardo, non girare una pagina.
-   */
-  const [cameraEntry] = useState(() =>
-    voBookMemoryAvailable && voBookMemory.opened ? voBookMemory.desk : onDesk,
-  );
-  const pan = useMotionValue(cameraEntry ? 1 : 0);
-
-  // Il carrello. La traslazione da sola è un carosello: una panoramica vera ha
-  // anche profondità, così la scena che si lascia arretra e quella che arriva
-  // viene incontro invece di scivolare di fianco.
-  const worldX = useTransform(pan, [0, 1], ["0%", "-50%"]);
-  const bookScale = useTransform(pan, [0, 1], [1, 0.84]);
-  const bookTurn = useTransform(pan, [0, 1], [0, -13]);
-  // In una panoramica gli oggetti restano illuminati: cambia l'inquadratura, non
-  // la luce. Sfumare fino al nero apriva una valle buia a metà movimento.
-  const bookFade = useTransform(pan, [0, 1], [1, 0.42]);
-  const bookDrift = useTransform(pan, [0, 1], ["0%", "7%"]);
-  const deskScale = useTransform(pan, [0, 1], [0.86, 1]);
-  const deskTurn = useTransform(pan, [0, 1], [15, 0]);
-  const deskFade = useTransform(pan, [0, 0.8], [0.34, 1]);
-  const deskDrift = useTransform(pan, [0, 1], ["-7%", "0%"]);
-
-  useEffect(() => {
-    const controls = animate(pan, onDesk ? 1 : 0, PAN_TRANSITION);
-    controls.then(() => {
-      voBookMemory.desk = onDesk;
-    });
-    return () => controls.stop();
-  }, [onDesk, pan]);
 
   // Da dove parte il volume in questo montaggio: se la scheda ha già visto il
   // libro si riprende il suo stato, altrimenti è un ingresso vero e lo stato lo
@@ -155,7 +108,6 @@ export function ValentinaOrciuoliBookSite({
   const closed = !opened && !showsBackCover && !appendix;
 
   const [works, setWorks] = useState<ValentinaCreativeWork[]>(valentinaCreativeWorks);
-  const [posts, setPosts] = useState<TenantBlogPost[]>([]);
 
   const stageRef = useRef<HTMLDivElement | null>(null);
   const ceremonyAccRef = useRef(0);
@@ -339,12 +291,6 @@ export function ValentinaOrciuoliBookSite({
         if (alive && Array.isArray(data.works) && data.works.length) setWorks(data.works);
       })
       .catch(() => {});
-    fetch("/api/tenant/valentina-orciuoli/blog")
-      .then((res) => res.json())
-      .then((data) => {
-        if (alive && Array.isArray(data.posts)) setPosts(data.posts);
-      })
-      .catch(() => {});
     return () => {
       alive = false;
     };
@@ -362,14 +308,9 @@ export function ValentinaOrciuoliBookSite({
     [localePrefix],
   );
 
-  const articleHref = useCallback(
-    (slug: string) => `${valentinaBasePath}${localePrefix}/blog/${slug}`,
-    [localePrefix],
-  );
-  const openArticle = useCallback(
-    (slug: string) => router.push(articleHref(slug), { scroll: false }),
-    [articleHref, router],
-  );
+  // Il taccuino non è più una pagina del libro (vedi ADR-0004): resta un link
+  // di navigazione che porta fuori dal volume, calcolato come tutti gli altri.
+  const blogHref = `${valentinaBasePath}${localePrefix}/blog`;
 
   // Il folio stampato: la pagina destra di uno spread porta sempre un numero dispari.
   const folioFor = useCallback((id: string) => spreadIndexById(id) * 2 + 1, []);
@@ -386,7 +327,6 @@ export function ValentinaOrciuoliBookSite({
   const ctx: VoBookContext = useMemo(
     () => ({
       works,
-      posts,
       newsletter: {
         sent: newsletter.newsletterSent,
         pending: newsletter.newsletterPending,
@@ -398,20 +338,15 @@ export function ValentinaOrciuoliBookSite({
       folioFor,
       hasPage: hasSpread,
       writeDedication,
-      articleHref,
-      openArticle,
     }),
     [
-      articleHref,
       folioFor,
       goTo,
       hrefFor,
-      openArticle,
       newsletter.handleNewsletterSubmit,
       newsletter.newsletterError,
       newsletter.newsletterPending,
       newsletter.newsletterSent,
-      posts,
       works,
       writeDedication,
     ],
@@ -472,17 +407,28 @@ export function ValentinaOrciuoliBookSite({
         <nav>
           {voSpreads
             .filter((entry) => entry.inNav)
-            .map((entry) => (
-            <Link
-              key={entry.id}
-              data-vo-nav={entry.id}
-              href={spreadHref(entry, localePrefix)}
-              scroll={false}
-              aria-current={currentSpread === spreadIndexById(entry.id) ? "page" : undefined}
-            >
-              {entry.navLabel}
-            </Link>
-          ))}
+            .flatMap((entry) => {
+              const link = (
+                <Link
+                  key={entry.id}
+                  data-vo-nav={entry.id}
+                  href={spreadHref(entry, localePrefix)}
+                  scroll={false}
+                  aria-current={currentSpread === spreadIndexById(entry.id) ? "page" : undefined}
+                >
+                  {entry.navLabel}
+                </Link>
+              );
+              // Il taccuino non è una pagina del volume (ADR-0004): il link sta
+              // in mezzo alla nav come le altre voci, ma porta fuori dal libro.
+              if (entry.id !== "libri") return [link];
+              return [
+                link,
+                <Link key="blog" href={blogHref} scroll={false}>
+                  Blog
+                </Link>,
+              ];
+            })}
           <Link
             href={backCoverHref(localePrefix)}
             scroll={false}
@@ -493,25 +439,13 @@ export function ValentinaOrciuoliBookSite({
         </nav>
       </header>
 
-      <motion.div className="vo-world" style={{ x: worldX }}>
+      <div className="vo-world">
       <motion.div
         className="vo-book-viewport"
         ref={stageRef}
         data-ceremony={closed || undefined}
         onClick={closed ? openBook : undefined}
-        // Senza una fuga il `rotateY` è solo uno schiacciamento orizzontale: la
-        // panoramica sembrava un carosello che stringe le scene invece di una
-        // camera che gira. La prospettiva sta sulla trasformazione della scena
-        // stessa, non sul mondo — il mondo è largo due schermi e il suo centro
-        // cade sul bordo di quello che si sta guardando.
-        style={{
-          opacity: bookFade,
-          scale: bookScale,
-          rotateY: bookTurn,
-          x: bookDrift,
-          transformPerspective: 1500,
-        }}
-        inert={onDesk || undefined}
+        style={{ transformPerspective: 1500 }}
       >
         <div className="vo-volume">
             <VoBookShell
@@ -592,26 +526,7 @@ export function ValentinaOrciuoliBookSite({
           </div>
         ) : null}
       </motion.div>
-
-        <motion.div
-          className="vo-desk-scene"
-          inert={!onDesk || undefined}
-          style={{
-            opacity: deskFade,
-            scale: deskScale,
-            rotateY: deskTurn,
-            x: deskDrift,
-            transformPerspective: 1500,
-          }}
-        >
-          <VoDesk
-            posts={deskPosts}
-            current={article}
-            onOpen={openArticle}
-            onBackToBook={() => router.push(hrefFor("blog"), { scroll: false })}
-          />
-        </motion.div>
-      </motion.div>
+      </div>
 
       <footer className="vo-book-footer">
         <span>Valentina Orciuoli · sito ufficiale</span>

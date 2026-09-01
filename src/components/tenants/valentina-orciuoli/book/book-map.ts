@@ -27,7 +27,7 @@ export type VoSpread = {
 };
 
 /** Le sezioni fisse, quelle che hanno una voce di menu. */
-export type VoStaticSpreadId = "home" | "libri" | "blog" | "eventi" | "contatti";
+export type VoStaticSpreadId = "home" | "libri" | "eventi" | "contatti";
 
 const workSpreads: VoSpread[] = valentinaCreativeWorks.map((work) => ({
   id: work.slug,
@@ -42,7 +42,6 @@ export const voSpreads: readonly VoSpread[] = [
   { id: "home", kind: "static", path: valentinaBasePath, navLabel: "Home", runningHead: "Frontespizio", inNav: true },
   { id: "libri", kind: "static", path: `${valentinaBasePath}/libri`, navLabel: "Libri", runningHead: "Le opere", inNav: true },
   ...workSpreads,
-  { id: "blog", kind: "static", path: `${valentinaBasePath}/blog`, navLabel: "Blog", runningHead: "Appunti", inNav: true },
   { id: "eventi", kind: "static", path: `${valentinaBasePath}/eventi`, navLabel: "Eventi", runningHead: "Calendario", inNav: true },
   { id: "contatti", kind: "static", path: `${valentinaBasePath}/contatti`, navLabel: "Contatti", runningHead: "Scrivimi", inNav: true },
 ];

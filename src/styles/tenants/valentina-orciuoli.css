@@ -4476,352 +4476,632 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   Il mondo: due scene affiancate, il volume e la scrivania.
-   La camera trasla fra le due invece di sostituirle. Il libro è la cosa finita,
-   la scrivania è il pensiero in corso: sono due oggetti sullo stesso tavolo, e
-   passare dall'uno agli altri è spostare lo sguardo, non girare una pagina.
+   Il mondo: il volume, con la prospettiva per la copertina che si apre e le
+   pagine che girano in 3D.
    ───────────────────────────────────────────────────────────────────────────── */
 @layer components {
   .vo-world {
-    display: grid;
-    /* Il mondo è largo due viewport, quindi ogni scena è la *metà* del mondo:
-       una percentuale qui si risolve sulla griglia, non sullo schermo. */
-    grid-template-columns: repeat(2, 50%);
-    width: 200%;
     height: 100%;
     min-height: 0;
-  }
-
-  .vo-world > * {
-    height: 100%;
-    min-width: 0;
-    min-height: 0;
-  }
-
-  .vo-desk-scene,
-  .vo-world > .vo-book-viewport {
-    min-width: 0;
-    min-height: 0;
-  }
-
-  .vo-desk {
-    position: relative;
-    display: grid;
-    place-items: center;
-    height: 100%;
-    min-height: 0;
-    padding: clamp(0.6rem, 2vh, 1.4rem) clamp(0.8rem, 3vw, 2.5rem);
-    overflow: hidden;
-  }
-
-  /* Il piano: legno scuro sotto una luce radente da lampada. */
-  .vo-desk-surface {
-    position: absolute;
-    inset: 0;
-    background:
-      radial-gradient(120% 80% at 32% 8%, rgba(216, 173, 90, 0.16), transparent 58%),
-      radial-gradient(90% 70% at 70% 100%, rgba(70, 40, 22, 0.5), transparent 72%),
-      linear-gradient(168deg, #2a1a10 0%, #1a1009 46%, #241608 100%);
-  }
-
-  .vo-desk-surface::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background-image: repeating-linear-gradient(
-      92deg,
-      rgba(0, 0, 0, 0.16) 0 2px,
-      transparent 2px 9px
-    );
-    opacity: 0.5;
-  }
-
-  /* ── Il mucchio: gli altri appunti che sbucano da sotto ───────────────────── */
-  .vo-desk-pile {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-  }
-
-  .vo-desk-scrap {
-    position: absolute;
-    top: calc(50% + var(--vo-sheet-y, 0%));
-    left: calc(50% + var(--vo-sheet-x, 0%));
-    width: clamp(150px, 22%, 260px);
-    padding: 0.8rem 0.9rem 1.6rem;
-    border: 0;
-    background: linear-gradient(170deg, #efe6cf 0%, #e2d6ba 100%);
-    box-shadow: 0 14px 30px -16px rgba(0, 0, 0, 0.85);
-    font-family: Georgia, "Times New Roman", serif;
-    text-align: left;
-    cursor: pointer;
-    pointer-events: auto;
-    transform: translate(-50%, -50%) rotate(var(--vo-sheet-tilt, -3deg));
-    transition: transform 0.35s cubic-bezier(0.34, 1.2, 0.5, 1);
-  }
-
-  .vo-desk-scrap:hover,
-  .vo-desk-scrap:focus-visible {
-    transform: translate(-50%, -54%) rotate(var(--vo-sheet-tilt, -3deg));
-  }
-
-  .vo-desk-scrap-date {
-    display: block;
-    font-size: 0.56rem;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: var(--vo-book-gilt);
-  }
-
-  .vo-desk-scrap-title {
-    display: block;
-    margin-top: 0.3rem;
-    font-size: 0.92rem;
-    line-height: 1.24;
-    color: var(--vo-book-ink);
-  }
-
-  /* ── Il foglio in lettura ─────────────────────────────────────────────────── */
-  .vo-sheet {
-    position: relative;
-    z-index: 3;
-    width: min(100%, 40rem);
-    max-height: 100%;
-    /* La carta è lunga e scorre: non è una finestra sul testo, è un foglio che
-       continua oltre il bordo. Senza barra, come ovunque nel sito. */
-    overflow-y: auto;
-    scrollbar-width: none;
-    padding: clamp(1.4rem, 3.5vw, 2.6rem) clamp(1.2rem, 3.2vw, 2.4rem) clamp(1.6rem, 4vw, 2.6rem);
-    background: linear-gradient(172deg, #f4ecd8 0%, #ebe1c8 55%, #e3d8bb 100%);
-    color: var(--vo-book-ink);
-    font-family: Georgia, "Times New Roman", serif;
-    box-shadow:
-      0 2px 2px rgba(20, 13, 8, 0.35),
-      0 34px 64px -26px rgba(0, 0, 0, 0.9);
-    transform: rotate(-0.4deg);
-  }
-
-  .vo-sheet::-webkit-scrollbar {
-    display: none;
-  }
-
-  .vo-sheet-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    margin-bottom: 1.1rem;
-    font-size: 0.62rem;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: var(--vo-book-gilt);
-  }
-
-  .vo-sheet-back {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    font: inherit;
-    letter-spacing: inherit;
-    text-transform: inherit;
-    color: var(--vo-book-accent);
-    cursor: pointer;
-  }
-
-  .vo-sheet h1 {
-    font-family: "The Seasons Light", "The Seasons", Georgia, serif;
-    font-weight: 400;
-    font-size: clamp(1.6rem, 3.4vw, 2.5rem);
-    line-height: 1.1;
-  }
-
-  .vo-sheet-lead {
-    margin-top: 0.7rem;
-    font-style: italic;
-    font-size: clamp(0.92rem, 1.3vw, 1.06rem);
-    line-height: 1.6;
-    color: rgba(42, 33, 25, 0.8);
-  }
-
-  .vo-sheet-rule {
-    display: block;
-    width: 3.5rem;
-    height: 1px;
-    margin: 1.2rem 0 1.4rem;
-    background: var(--vo-book-gilt);
-  }
-
-  .vo-sheet-body p {
-    margin-bottom: 1.05rem;
-    font-size: clamp(0.9rem, 1.15vw, 1rem);
-    line-height: 1.78;
-    color: var(--vo-book-ink-soft);
-  }
-
-  .vo-sheet-heading {
-    margin: 1.6rem 0 0.7rem;
-    font-family: "The Seasons Light", Georgia, serif;
-    font-weight: 400;
-    font-size: 1.2rem;
-  }
-
-  /* La citazione è scritta a margine, come un'annotazione sul manoscritto. */
-  .vo-sheet-quote {
-    margin: 1.5rem 0 1.6rem;
-    padding-left: 1.1rem;
-    border-left: 2px solid rgba(151, 31, 24, 0.55);
-    font-style: italic;
-    font-size: clamp(1rem, 1.4vw, 1.15rem);
-    line-height: 1.6;
-    color: rgba(42, 33, 25, 0.92);
-  }
-
-  .vo-sheet-figure {
-    margin: 1.4rem 0;
-  }
-
-  .vo-sheet-figure img {
-    width: 100%;
-    border-radius: 1px;
-  }
-
-  .vo-sheet-figure figcaption {
-    margin-top: 0.5rem;
-    font-size: 0.76rem;
-    font-style: italic;
-    color: var(--vo-book-ink-soft);
-  }
-
-  .vo-sheet-foot {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    margin-top: 2rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--vo-book-rule);
-    font-size: 0.68rem;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--vo-book-ink-soft);
-  }
-
-  .vo-sheet-foot span:first-child {
-    font-size: 1.05rem;
-    color: rgba(151, 31, 24, 0.75);
-  }
-
-  .vo-desk-empty {
-    position: relative;
-    z-index: 3;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-    font-family: Georgia, "Times New Roman", serif;
-    color: rgba(242, 216, 148, 0.7);
-  }
-
-  .vo-desk-empty button {
-    padding: 0.5rem 1.15rem;
-    border: 1px solid var(--vo-line);
-    border-radius: 999px;
-    background: transparent;
-    font: inherit;
-    font-size: 0.7rem;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: rgba(242, 216, 148, 0.75);
-    cursor: pointer;
-  }
-
-  .vo-book-site[data-compact] .vo-desk-scrap {
-    width: clamp(130px, 46%, 190px);
-    padding: 0.6rem 0.7rem 1.1rem;
-  }
-
-  .vo-book-site[data-compact] .vo-sheet {
-    width: 100%;
-  }
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   Archivio degli appunti: due forme dello stesso elenco.
-   Su schermo largo sono fogli sparsi attorno a quello in lettura; su schermo
-   stretto il foglio occupa tutto, quindi l'elenco si riversa in coda all'articolo.
-   Una sola delle due esiste per volta, così non ci sono link doppi da tastiera.
-   ───────────────────────────────────────────────────────────────────────────── */
-@layer components {
-  .vo-sheet-more {
-    margin-top: 2.2rem;
-    padding-top: 1.2rem;
-    border-top: 1px solid var(--vo-book-rule);
-  }
-
-  .vo-sheet-more-label {
-    display: block;
-    margin-bottom: 0.7rem;
-    font-size: 0.58rem;
-    letter-spacing: 0.3em;
-    text-transform: uppercase;
-    color: var(--vo-book-gilt);
-  }
-
-  .vo-sheet-more ul {
-    display: flex;
-    flex-direction: column;
-    gap: 0.55rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .vo-sheet-more button {
-    padding: 0;
-    border: 0;
-    background: transparent;
-    font-family: "The Seasons Light", Georgia, serif;
-    font-size: 0.98rem;
-    line-height: 1.3;
-    text-align: left;
-    color: var(--vo-book-ink);
-    cursor: pointer;
-  }
-
-  .vo-sheet-more button:hover {
-    color: var(--vo-book-accent);
-  }
-
-  /* Largo: comanda il mucchio sparso. */
-  .vo-sheet-more {
-    display: none;
-  }
-
-  .vo-book-site[data-compact] .vo-sheet-more {
-    display: block;
-  }
-
-  .vo-book-site[data-compact] .vo-desk-pile {
-    display: none;
-  }
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   La camera. La prospettiva sul mondo è ciò che trasforma la traslazione in una
-   panoramica: senza, le due scene scivolerebbero di fianco come un carosello.
-   ───────────────────────────────────────────────────────────────────────────── */
-@layer components {
-  .vo-world {
     perspective: 1800px;
     perspective-origin: 50% 50%;
   }
 
   .vo-world > * {
-    /* Il perno sta al centro dello schermo, non della scena: è lo sguardo che
-       ruota, e le due scene gli passano davanti. */
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    /* Il perno sta al centro dello schermo, non della scena. */
     transform-origin: 50% 50%;
     will-change: transform, opacity;
+  }
+}
+
+
+/* ═════════════════════════════════════════════════════════════════════════════
+   Il taccuino: il blog vive fuori dal libro, con testatina e impaginazione
+   proprie. Non è carta né doghe: è una rivista scura, gold su nero come il
+   resto del tenant, ma senza la messinscena del volume. Vedi ADR-0004.
+   ═════════════════════════════════════════════════════════════════════════════ */
+@layer components {
+  .vo-blog-shell {
+    overflow: visible;
+    min-height: 100vh;
+    padding-bottom: 4rem;
+  }
+
+  .vo-blog-kicker {
+    display: block;
+    margin-bottom: 0.6rem;
+    font-size: 0.62rem;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--vo-gold);
+  }
+
+  /* ── Testatina ─────────────────────────────────────────────────────────── */
+  .vo-blog-header {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    border-bottom: 1px solid var(--vo-line);
+    background: rgba(5, 5, 5, 0.86);
+    backdrop-filter: blur(10px);
+  }
+
+  .vo-blog-header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: min(100% - 3rem, 1100px);
+    margin: 0 auto;
+    padding: 1.1rem 0;
+  }
+
+  .vo-blog-header-mark {
+    font-family: "The Seasons Light", "The Seasons", Georgia, serif;
+    font-size: 1.15rem;
+    letter-spacing: 0.04em;
+    color: var(--vo-gold-soft);
+  }
+
+  .vo-blog-header-nav {
+    display: flex;
+    align-items: center;
+    gap: 1.6rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .vo-blog-header-nav a {
+    color: var(--vo-muted);
+    transition: color 0.2s ease;
+  }
+
+  .vo-blog-header-nav a:hover,
+  .vo-blog-header-nav a[aria-current="page"] {
+    color: var(--vo-gold-soft);
+  }
+
+  .vo-blog-header-back {
+    color: var(--vo-gold) !important;
+  }
+
+  /* ── Intro dell'indice ─────────────────────────────────────────────────── */
+  .vo-blog-intro {
+    width: min(100% - 3rem, 1100px);
+    margin: clamp(2.4rem, 6vw, 4rem) auto clamp(2rem, 5vw, 3rem);
+  }
+
+  .vo-blog-intro h1 {
+    max-width: 34rem;
+    font-family: "The Seasons Light", "The Seasons", Georgia, serif;
+    font-weight: 400;
+    font-size: clamp(2.1rem, 5vw, 3.2rem);
+    line-height: 1.08;
+    color: var(--vo-gold-soft);
+  }
+
+  .vo-blog-intro p {
+    max-width: 32rem;
+    margin-top: 0.9rem;
+    font-size: 1rem;
+    line-height: 1.65;
+    color: var(--vo-muted);
+  }
+
+  /* ── Griglia articoli ──────────────────────────────────────────────────── */
+  .vo-blog-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: clamp(1.4rem, 3vw, 2.2rem);
+    width: min(100% - 3rem, 1100px);
+    margin: 0 auto;
+  }
+
+  .vo-blog-card a {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border: 1px solid var(--vo-line);
+    background: rgba(255, 255, 255, 0.02);
+    transition: border-color 0.25s ease, transform 0.25s ease;
+  }
+
+  .vo-blog-card a:hover {
+    border-color: var(--vo-gold);
+    transform: translateY(-2px);
+  }
+
+  .vo-blog-card-cover {
+    position: relative;
+    display: block;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background: var(--vo-black);
+  }
+
+  .vo-blog-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1.1rem 1.2rem 1.4rem;
+  }
+
+  .vo-blog-card-meta {
+    display: flex;
+    gap: 0.4rem;
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--vo-gold);
+  }
+
+  .vo-blog-card-body h2 {
+    font-family: "The Seasons Light", "The Seasons", Georgia, serif;
+    font-weight: 400;
+    font-size: 1.28rem;
+    line-height: 1.25;
+    color: var(--vo-gold-soft);
+  }
+
+  .vo-blog-card-body p {
+    font-size: 0.88rem;
+    line-height: 1.55;
+    color: var(--vo-muted);
+  }
+
+  .vo-blog-card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.3rem;
+  }
+
+  .vo-blog-card-tags span {
+    padding: 0.2rem 0.55rem;
+    border: 1px solid var(--vo-line);
+    border-radius: 999px;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--vo-muted);
+  }
+
+  .vo-blog-empty {
+    width: min(100% - 3rem, 1100px);
+    margin: 0 auto;
+    padding: 3rem 0;
+    color: var(--vo-muted);
+  }
+
+  .vo-blog-empty h2 {
+    margin-bottom: 0.6rem;
+    font-family: "The Seasons Light", "The Seasons", Georgia, serif;
+    font-size: 1.4rem;
+    color: var(--vo-gold-soft);
+  }
+
+  .vo-blog-empty a {
+    color: var(--vo-gold);
+    text-decoration: underline;
+  }
+
+  /* ── Articolo ──────────────────────────────────────────────────────────── */
+  .vo-blog-article {
+    width: min(100% - 3rem, 900px);
+    margin: clamp(2rem, 5vw, 3rem) auto 0;
+  }
+
+  .vo-blog-article-head {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+
+  .vo-blog-back {
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--vo-gold);
+  }
+
+  .vo-blog-article-head h1 {
+    max-width: 38rem;
+    font-family: "The Seasons Light", "The Seasons", Georgia, serif;
+    font-weight: 400;
+    font-size: clamp(1.9rem, 4.4vw, 2.8rem);
+    line-height: 1.1;
+    color: var(--vo-gold-soft);
+  }
+
+  .vo-blog-lead {
+    max-width: 34rem;
+    font-size: 1.04rem;
+    font-style: italic;
+    line-height: 1.6;
+    color: var(--vo-muted);
+  }
+
+  .vo-blog-article-cover {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    margin: 1.8rem 0;
+    overflow: hidden;
+  }
+
+  .vo-blog-article-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2.2rem;
+  }
+
+  .vo-blog-toc {
+    order: -1;
+    padding: 1rem 1.2rem;
+    border: 1px solid var(--vo-line);
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .vo-blog-toc ol {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .vo-blog-toc li[data-level="4"] {
+    padding-left: 1rem;
+  }
+
+  .vo-blog-toc a {
+    font-size: 0.86rem;
+    line-height: 1.4;
+    color: var(--vo-muted);
+  }
+
+  .vo-blog-toc a:hover {
+    color: var(--vo-gold-soft);
+  }
+
+  .vo-blog-share {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 2.4rem;
+    padding-top: 1.4rem;
+    border-top: 1px solid var(--vo-line);
+  }
+
+  .vo-blog-share a {
+    font-size: 0.76rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--vo-gold);
+  }
+
+  .vo-blog-related {
+    margin-top: 2.2rem;
+    padding-top: 1.4rem;
+    border-top: 1px solid var(--vo-line);
+  }
+
+  .vo-blog-related ul {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-top: 0.6rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  .vo-blog-related a {
+    font-family: "The Seasons Light", "The Seasons", Georgia, serif;
+    font-size: 1.02rem;
+    color: var(--vo-gold-soft);
+  }
+
+  .vo-blog-related a:hover {
+    color: var(--vo-gold);
+  }
+
+  @media (min-width: 900px) {
+    .vo-blog-article-layout {
+      grid-template-columns: 15rem minmax(0, 1fr);
+      align-items: start;
+    }
+
+    .vo-blog-toc {
+      order: 0;
+      position: sticky;
+      top: 5.5rem;
+    }
+  }
+
+  /* ── Piede ─────────────────────────────────────────────────────────────── */
+  .vo-blog-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 2.2rem;
+    width: min(100% - 3rem, 1100px);
+    margin: clamp(3rem, 7vw, 5rem) auto 0;
+    padding-top: 2rem;
+    border-top: 1px solid var(--vo-line);
+  }
+
+  .vo-blog-footer-newsletter h2 {
+    max-width: 26rem;
+    margin-bottom: 1rem;
+    font-family: "The Seasons Light", "The Seasons", Georgia, serif;
+    font-weight: 400;
+    font-size: 1.35rem;
+    color: var(--vo-gold-soft);
+  }
+
+  .vo-blog-footer-links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 1.5rem;
+    font-size: 0.76rem;
+    letter-spacing: 0.06em;
+    color: var(--vo-muted);
+  }
+
+  .vo-blog-footer-links span {
+    display: flex;
+    gap: 1.2rem;
+  }
+
+  .vo-blog-footer-links a:hover {
+    color: var(--vo-gold-soft);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Corpo dell'articolo: il documento Tiptap reso in HTML semantico. Classi
+   riusabili da qualunque tenant col modulo blog — qui solo la stilizzazione.
+   ───────────────────────────────────────────────────────────────────────────── */
+@layer components {
+  .tenant-blog-doc {
+    display: flex;
+    flex-direction: column;
+    gap: 1.3rem;
+    max-width: 42rem;
+    font-size: 1rem;
+    line-height: 1.75;
+    color: rgba(242, 216, 148, 0.88);
+  }
+
+  .tenant-blog-doc-heading {
+    margin-top: 0.6rem;
+    font-family: "The Seasons Light", "The Seasons", Georgia, serif;
+    font-weight: 400;
+    color: var(--vo-gold-soft);
+    scroll-margin-top: 6rem;
+  }
+
+  h2.tenant-blog-doc-heading {
+    font-size: 1.5rem;
+  }
+
+  h3.tenant-blog-doc-heading {
+    font-size: 1.22rem;
+  }
+
+  h4.tenant-blog-doc-heading {
+    font-size: 1.06rem;
+  }
+
+  .tenant-blog-doc-paragraph a,
+  .tenant-blog-doc-blockquote a,
+  .tenant-blog-doc-callout a {
+    color: var(--vo-gold);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .tenant-blog-doc-rule {
+    border: none;
+    border-top: 1px solid var(--vo-line);
+    margin: 0.4rem 0;
+  }
+
+  .tenant-blog-doc-list {
+    padding-left: 1.2rem;
+  }
+
+  .tenant-blog-doc-list li {
+    margin-bottom: 0.4rem;
+  }
+
+  .tenant-blog-doc-blockquote,
+  .tenant-blog-doc-pull {
+    padding-left: 1.1rem;
+    border-left: 2px solid var(--vo-cinnabar);
+    font-style: italic;
+    color: rgba(242, 216, 148, 0.78);
+  }
+
+  .tenant-blog-doc-pull cite {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 0.78rem;
+    font-style: normal;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--vo-gold);
+  }
+
+  .tenant-blog-doc-code {
+    padding: 1rem 1.2rem;
+    overflow-x: auto;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--vo-line);
+    font-size: 0.86rem;
+    line-height: 1.55;
+  }
+
+  .tenant-blog-doc-table-wrap {
+    overflow-x: auto;
+  }
+
+  .tenant-blog-doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+
+  .tenant-blog-doc-table td {
+    padding: 0.55rem 0.8rem;
+    border: 1px solid var(--vo-line);
+  }
+
+  .tenant-blog-doc-table[data-has-header] tr:first-child td {
+    color: var(--vo-gold-soft);
+    font-weight: 600;
+  }
+
+  .tenant-blog-doc-figure {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .tenant-blog-doc-figure-frame {
+    position: relative;
+    display: block;
+    aspect-ratio: 3 / 2;
+    overflow: hidden;
+  }
+
+  .tenant-blog-doc-figure-img {
+    object-fit: cover;
+  }
+
+  .tenant-blog-doc-figure figcaption {
+    font-size: 0.78rem;
+    font-style: italic;
+    color: var(--vo-muted);
+  }
+
+  .tenant-blog-doc-gallery {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+  }
+
+  .tenant-blog-doc-gallery-item {
+    position: relative;
+    display: block;
+    aspect-ratio: 1;
+    overflow: hidden;
+  }
+
+  .tenant-blog-doc-video video,
+  .tenant-blog-doc-audio audio {
+    width: 100%;
+  }
+
+  .tenant-blog-doc-audio {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    font-size: 0.82rem;
+    color: var(--vo-muted);
+  }
+
+  .tenant-blog-doc-social {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    padding: 1rem;
+    border: 1px solid var(--vo-line);
+    color: rgba(242, 216, 148, 0.85);
+  }
+
+  .tenant-blog-doc-social-thumb {
+    position: relative;
+    display: block;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+  }
+
+  .tenant-blog-doc-callout {
+    padding: 1rem 1.2rem;
+    border: 1px solid var(--vo-line);
+    border-left: 3px solid var(--vo-gold);
+    background: rgba(216, 173, 90, 0.06);
+    font-size: 0.94rem;
+  }
+
+  .tenant-blog-doc-callout strong {
+    display: block;
+    margin-bottom: 0.35rem;
+    color: var(--vo-gold-soft);
+  }
+
+  .tenant-blog-doc-callout[data-variant="warning"] {
+    border-left-color: var(--vo-cinnabar);
+  }
+
+  .tenant-blog-doc-faq {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .tenant-blog-doc-faq-item dt {
+    margin-bottom: 0.3rem;
+    font-family: "The Seasons Light", "The Seasons", Georgia, serif;
+    font-size: 1.06rem;
+    color: var(--vo-gold-soft);
+  }
+
+  .tenant-blog-doc-faq-item dd {
+    margin: 0;
+    color: rgba(242, 216, 148, 0.82);
+  }
+
+  .tenant-blog-doc-cta {
+    display: inline-flex;
+    align-self: flex-start;
+    padding: 0.6rem 1.3rem;
+    border: 1px solid var(--vo-gold);
+    border-radius: 999px;
+    font-size: 0.78rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--vo-gold-soft);
+  }
+
+  .tenant-blog-doc-cta:hover {
+    background: var(--vo-gold);
+    color: var(--vo-black);
+  }
+
+  .tenant-blog-doc-recipe {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1.4rem;
+    padding: 1.2rem;
+    border: 1px solid var(--vo-line);
+  }
+
+  .tenant-blog-doc-recipe h4 {
+    margin-bottom: 0.5rem;
+    font-family: "The Seasons Light", "The Seasons", Georgia, serif;
+    color: var(--vo-gold-soft);
+  }
+
+  .tenant-blog-doc-recipe ul,
+  .tenant-blog-doc-recipe ol {
+    padding-left: 1.1rem;
+    font-size: 0.92rem;
   }
 }

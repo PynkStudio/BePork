@@ -29,8 +29,6 @@ export const voBookMemory = {
   half: 0,
   /** true se il volume è rigirato sulla quarta di copertina. */
   back: false,
-  /** true se la camera era sulla scrivania invece che sul volume. */
-  desk: false,
   /** Preferenza audio. */
   sound: true,
 };
