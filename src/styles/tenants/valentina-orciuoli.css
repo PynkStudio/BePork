@@ -2733,6 +2733,35 @@
     transform: rotateY(180deg);
   }
 
+  /* Lo spessore della carta sul taglio. Il dorso è cucito, il taglio no: è l'unico
+     bordo che in un libro vero si vede *come bordo*, e senza di lui il foglio in
+     volo finiva sulla pagina sotto senza che nulla dicesse dove uno smette e
+     l'altra comincia. Sul verso, ruotato di 180°, il taglio è il bordo opposto. */
+  .vo-leaf-rim {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    will-change: opacity;
+  }
+
+  .vo-leaf-front .vo-leaf-rim {
+    background: linear-gradient(
+      to right,
+      transparent 0 calc(100% - 3px),
+      rgba(255, 252, 240, 0.5) calc(100% - 3px) calc(100% - 1px),
+      rgba(255, 253, 246, 0.92) calc(100% - 1px)
+    );
+  }
+
+  .vo-leaf-back .vo-leaf-rim {
+    background: linear-gradient(
+      to left,
+      transparent 0 calc(100% - 3px),
+      rgba(255, 252, 240, 0.5) calc(100% - 3px) calc(100% - 1px),
+      rgba(255, 253, 246, 0.92) calc(100% - 1px)
+    );
+  }
+
   /* Le facce in volo sono una figura, non carta da leggere: farne dei contenitori
      scorrevoli costa due scrollport per foglio e non serve a nessuno, visto che
      il foglio è `inert`. La posizione di lettura la porta il componente, che la
@@ -2765,6 +2794,42 @@
     background: linear-gradient(90deg, rgb(6 5 4 / 0) 0%, rgb(6 5 4) 100%);
   }
 
+  /* Il gemello chiaro della rampa. Una pagina che si alza verso una luce frontale
+     *prende* luce prima di perderla, e su carta molto ambientale quel lato della
+     formula di Lambert vale pochi centesimi: senza un velo dedicato veniva
+     schiacciato a zero, e per tutta la prima metà del giro il foglio era un
+     cartoncino piatto. È qui che la carta prende forma. */
+  .vo-leaf-glow {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    will-change: opacity;
+  }
+
+  /* Il velo chiaro del dorso **non parte dal dorso**: il solco della cucitura è in
+     ombra qualunque cosa faccia la pagina, e un gradiente che comincia acceso lì
+     accendeva proprio la piega — un alone chiaro incollato al centro del libro,
+     che è il posto dove un libro vero è più scuro. Sale dopo la piega e scende
+     verso il taglio. */
+  .vo-leaf-glow-near {
+    background: linear-gradient(
+      90deg,
+      rgb(255 250 233 / 0) 0%,
+      rgb(255 250 233) 22%,
+      rgb(255 250 233 / 0) 100%
+    );
+  }
+
+  /* Sul taglio invece la luce arriva fino al bordo: è lì che il foglio finisce. */
+  .vo-leaf-glow-far {
+    background: linear-gradient(
+      90deg,
+      rgb(255 250 233 / 0) 0%,
+      rgb(255 250 233 / 0.12) 44%,
+      rgb(255 250 233) 100%
+    );
+  }
+
   /* L'ombra che il foglio alzato proietta sulla pagina sotto. Sta sul piano del
      libro, non sul foglio: un `box-shadow` sulla carta ruoterebbe con lei, e
      un'ombra che si alza da terra non è un'ombra. Si accorcia col coseno
@@ -2777,11 +2842,16 @@
     width: 50%;
     height: 100%;
     transform-origin: left center;
+    /* L'ombra è quasi piena fin quasi in fondo, con la penombra negli ultimi
+       centesimi. Prima sfumava già a metà: la parte che sporge oltre il taglio
+       del foglio — l'unica che si vede davvero — cadeva sulla coda del gradiente
+       e restava trasparente, quindi l'ombra c'era ma non si vedeva mai. */
     background: linear-gradient(
       100deg,
-      rgb(24 16 9 / 0.66) 0%,
-      rgb(24 16 9 / 0.34) 44%,
-      rgb(24 16 9 / 0.08) 80%,
+      rgb(24 16 9 / 0.6) 0%,
+      rgb(24 16 9 / 0.46) 55%,
+      rgb(24 16 9 / 0.27) 80%,
+      rgb(24 16 9 / 0.09) 93%,
       rgb(24 16 9 / 0) 100%
     );
     /* Il bordo netto in cima e in fondo tradirebbe il rettangolo: la maschera lo
@@ -2791,9 +2861,8 @@
     will-change: transform, opacity;
   }
 
-  /* Piega sul dorso e riflesso radente: due veli per faccia, non due per doga. */
-  .vo-leaf-fold,
-  .vo-leaf-sheen {
+  /* La piega sul dorso. */
+  .vo-leaf-fold {
     position: absolute;
     inset: 0;
     pointer-events: none;
@@ -2807,27 +2876,6 @@
 
   .vo-leaf-fold-back {
     background: linear-gradient(to left, rgba(28, 21, 14, 0.62) 0%, rgba(28, 21, 14, 0) 16%);
-  }
-
-  /* Il riflesso radente. Non compare e scompare sul posto: è una banda stretta
-     che cammina sulla carta, ferma sul punto in cui la curva guarda la bisettrice
-     fra luce e osservatore. Larga quanto il foglio, viene traslata dal componente
-     e ritagliata dalla doga che la ospita. */
-  /* Niente `mix-blend-mode`: un livello che si fonde col fondo non può essere
-     ricomposto da solo, e mentre il foglio ruota costringeva a ridisegnare la
-     pagina sotto a ogni fotogramma. Su carta chiara la differenza fra schiarire
-     e sovrapporre un velo caldo non si vede; quella fra sessanta fotogrammi e
-     venti sì. */
-  .vo-leaf-sheen {
-    background: linear-gradient(
-      101deg,
-      transparent 34%,
-      rgba(255, 250, 232, 0.4) 44%,
-      rgba(255, 252, 240, 0.72) 50%,
-      rgba(255, 250, 232, 0.4) 56%,
-      transparent 66%
-    );
-    will-change: transform, opacity;
   }
 
   /* ── Presa sul taglio del foglio ──────────────────────────────────────────── */

@@ -311,21 +311,58 @@ sarebbe uno spostamento perpendicolare alla carta, non verso l'osservatore.
 
 **La luce si calcola, non si disegna.** Ombre, riflesso e ombra portata escono dalla
 normale della carta (Lambert più un lobo speculare largo, perché la carta è opaca), non da
-curve scritte a mano sul progresso. Due veli per faccia — uno acceso sul bordo del dorso,
-uno sul bordo esterno — con le opacità calcolate sui due *bordi*: è la rampa che dà la
-pancia senza piegare un poligono. Sul verso, che è la stessa superficie vista da dietro, i
-due bordi si scambiano.
+curve scritte a mano sul progresso. **Quattro** veli per faccia — scuro e chiaro sul bordo
+del dorso, scuro e chiaro sul bordo esterno — con le opacità calcolate sui due *bordi*: è
+la rampa che dà la pancia senza piegare un poligono. Sul verso, che è la stessa superficie
+vista da dietro, i due bordi si scambiano.
 
-Il riflesso non è un velo che compare: è una banda stretta che **cammina** sulla carta,
-ferma sul punto in cui la curvatura guarda la bisettrice fra luce e osservatore. Con la
-carta piana quel punto non esiste, ed è per questo che il termine è moltiplicato per
-l'arco — e sul verso la banda cammina al contrario.
+**Il lato chiaro della rampa esiste, e va amplificato.** *(2026-09-01)* Il velo era uno
+solo, scuro, e ciò che stava sotto lo zero veniva tagliato: campionando le opacità reali a
+metà del primo quarto risultavano **zero su tutti i bordi** — per tutta la prima metà del
+giro il foglio era senza forma, un cartoncino piatto che ruotava. Non è un difetto della
+formula ma della sua gamma: su carta molto ambientale Lambert corre fino a 1 verso il buio
+e ha sette centesimi verso la luce, e quei sette centesimi sono metà del giro, perché una
+pagina che si alza verso una luce frontale *prende* luce prima di perderla. Ora il segno si
+conserva: la parte positiva accende il velo scuro, quella negativa il velo chiaro con un
+guadagno suo. Il velo chiaro del dorso non parte dal dorso — il solco della cucitura è in
+ombra qualunque cosa faccia la pagina, e accenderlo lì metteva un alone chiaro proprio dove
+un libro è più scuro.
+
+Il riflesso non è più una banda traslata: era clampata ai bordi e ferma sotto il 5% di
+opacità, cioè non si è mai vista. È diventata il lobo speculare pesato dentro il velo
+chiaro, quindi la lucentezza *cammina* da sé passando dal bordo esterno a quello del dorso
+mentre la pagina gira. Resta moltiplicata per la curvatura, che è anche ciò che la tiene a
+zero esatto sul foglio posato: da fermo il lobo varrebbe da solo quasi la metà.
+
+**Lo sghembo, non la rotazione sul piano.** L'angolo esterno si stacca prima del resto del
+taglio. Era una `rotateZ`, che però fa ruotare *anche il bordo sul dorso* — cucito nella
+legatura, quindi l'unico bordo che non può muoversi: a un grado si vedeva il foglio
+staccarsi dal solco, e la correzione era stata ridurre l'ampiezza finché non si notava.
+Uno `skewY` lascia il dorso esattamente dov'è e alza l'angolo libero, che è come si stacca
+una pagina vera. La frusta ci si somma, così in coda l'angolo rincorre il resto.
 
 **L'ombra portata sta sul piano del libro, non sul foglio.** Un `box-shadow` sulla carta
-ruota con lei, e un'ombra che si alza da terra non è un'ombra. È un elemento a sé che si
-accorcia col coseno dell'angolo; oltre la verticale il coseno cambia segno e con esso lo
-`scaleX`, quindi l'ombra passa da sé sull'altra metà — che è dove il foglio sta andando.
-È massima ai quarti: a foglio posato non c'è distacco, di taglio non c'è superficie.
+ruota con lei, e un'ombra che si alza da terra non è un'ombra. È un elemento a sé, ancorato
+al dorso e scalato.
+
+*(2026-09-01)* Non può però scalare con il **solo** coseno dell'angolo: quella è esattamente
+la proiezione del foglio, quindi l'ombra gli restava nascosta sotto per tutto il giro — un
+elemento che nessuno ha mai visto. La luce arriva di sbieco, e l'ombra di un foglio alzato
+sporge oltre il suo taglio in proporzione all'altezza: `cos + 0,45·|sin|`, limitato alla
+pagina. È quella lama che sfila sulla pagina destra a raccontare che sopra c'è della carta
+in aria, e a foglio in piedi diventa la banda che attraversa mezza pagina. Per lo stesso
+motivo il gradiente è quasi pieno fino in fondo con la penombra negli ultimi centesimi:
+sfumando già a metà, la parte che sporge — l'unica visibile — cadeva sulla coda trasparente.
+Oltre la verticale il coseno cambia segno e con esso lo `scaleX`, quindi l'ombra passa da sé
+sull'altra metà; nel mezzo collassa nel solco, ed è giusto — lì il foglio è di taglio alla
+luce. L'opacità segue una sola gobba con il massimo a foglio in piedi, che è quando la carta
+è più alta sopra la pagina.
+
+**Il taglio del foglio è un bordo, e si vede.** *(2026-09-01)* Il dorso è cucito, il taglio
+no: è l'unico bordo che in un libro si vede *come bordo*. Senza, il foglio in volo finiva
+sulla pagina sotto senza che nulla dicesse dove uno smette e l'altra comincia. È un velo con
+due centesimi di larghezza acceso sul taglio, pesato sulla curvatura così non compare sul
+foglio posato.
 
 **La rotella scorre il giro, non lo fa scattare.** Prima era una soglia con un tempo morto:
 novanta pixel facevano partire un giro intero, e per quattro decimi di secondo la rotella
@@ -396,6 +433,18 @@ non si muove e soprattutto non tocca la barra degli indirizzi.
 **Densità.** Le pagine sono progettate per stare dentro il foglio: se una eccede resta
 scorrevole ma senza barra, perché una scrollbar dentro un libro è l'artefatto che rompe
 l'illusione più di ogni altro.
+
+**Un giro pagina fa due rumori.** *(2026-09-01)* Il fruscio quando la carta si stacca e il
+tonfo sordo quando si posa sulla pila. C'era solo il primo, e il giro finiva in silenzio
+proprio nel momento in cui un libro fa il rumore più riconoscibile. La posata è lo stesso
+rumore bianco con un'altra inviluppante: più corta, più bassa, senza attacco — è un urto,
+non uno sfregamento.
+
+**L'accenno non è un cancello.** *(2026-09-01)* Il foglio si sollevava di un decimo di
+corsa, cioè diciotto gradi, solo passandoci accanto col mouse: un libro vero non fa nulla
+finché non lo tocchi. Undici gradi bastano — la carta prende luce, il suo taglio si stacca
+dalla pagina sotto, l'ombra portata comincia a sfilare — senza che l'affordance diventi un
+movimento a sé.
 
 **Perché le doghe sono state tolte.** *(2026-09-01)* Il foglio era spezzato in sei doghe
 verticali curvate per davvero. Ogni doga deve ritagliare la propria striscia di DOM vivo,

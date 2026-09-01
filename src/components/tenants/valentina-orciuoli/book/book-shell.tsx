@@ -35,10 +35,18 @@ import {
   type VoSpread,
 } from "@/components/tenants/valentina-orciuoli/book/book-map";
 
-/** Quanto si solleva il foglio quando il puntatore è proprio sul taglio. */
-const HINT_MAX = 0.1;
+/**
+ * Quanto si solleva il foglio quando il puntatore è proprio sul taglio.
+ *
+ * Un decimo di corsa sono diciotto gradi: passandoci accanto col mouse la pagina
+ * si spalancava come un cancello, e un libro vero non fa nulla finché non lo
+ * tocchi. Undici gradi bastano ad accennare — la carta prende luce sul taglio, il
+ * suo spessore si stacca dalla pagina sotto e l'ombra portata comincia a sfilare —
+ * senza che l'affordance diventi un movimento a sé.
+ */
+const HINT_MAX = 0.062;
 /** Entro quanti pixel dal taglio il foglio comincia a sollevarsi. */
-const HINT_PROXIMITY = 150;
+const HINT_PROXIMITY = 120;
 const DRAG_COMMIT_THRESHOLD = 0.3;
 /**
  * Un colpetto veloce è un gesto compiuto anche se il pollice non arriva a metà
@@ -549,6 +557,10 @@ export function VoBookShell({
 
   const commit = useCallback(
     (target: number) => {
+      // La carta che si posa sulla pila. Il fruscio dello stacco raccontava metà
+      // del gesto: senza questo, il giro finiva in silenzio proprio nel momento
+      // in cui in un libro vero fa il rumore più riconoscibile.
+      playPageSound("land");
       // L'appendice non è una posizione del volume: l'URL ce l'ha già portata, e
       // scriverla in `spread` la farebbe rientrare nella sequenza sfogliabile.
       if (target === appendixPos) {
@@ -576,7 +588,7 @@ export function VoBookShell({
       if (queuedRef.current !== 0) return;
       publish(nextSpread);
     },
-    [appendixPos, clearGesture, fromPos, publish],
+    [appendixPos, clearGesture, fromPos, playPageSound, publish],
   );
 
   /**

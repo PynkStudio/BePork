@@ -18,9 +18,9 @@ import { useLayoutEffect, useRef, type ReactNode, type RefObject } from "react";
  * profondità — attraversavano il piano delle pagine ferme, che è ciò che faceva
  * vedere la carta in volo tagliata a metà da quella posata.
  *
- * L'arco esiste ancora, ma alimenta solo la rampa d'ombra, il riflesso radente e
- * l'ombra portata. A un giro pagina nessuno misura la pancia del foglio: quello
- * che si vede è come la luce ci scorre sopra, e quella è rimasta la stessa.
+ * L'arco esiste ancora, ma alimenta solo la rampa di luce, il riflesso e l'ombra
+ * portata. A un giro pagina nessuno misura la pancia del foglio: quello che si
+ * vede è come la luce ci scorre sopra.
  */
 
 /**
@@ -34,13 +34,22 @@ const ARC_DEG = 38;
  * lasciano andare quando si posa. È l'unico termine che dipende dalla velocità e
  * non dalla posizione, ed è quello che distingue un foglio trascinato piano — che
  * resta quasi piatto sotto il dito — da uno lanciato con un colpetto.
- *
- * Vale solo sulla rampa d'ombra e non sul riflesso: la velocità di un valore
- * scritto di pari passo col puntatore è rumorosa, e una banda di luce che sfarfalla
- * si nota molto più di un'ombra che respira.
  */
 const WHIP_DEG_PER_TURN = 4;
 const WHIP_MAX_DEG = 10;
+
+/**
+ * Lo **sghembo** del foglio: quanto l'angolo esterno anticipa il resto del taglio.
+ *
+ * Non è una `rotateZ`. Una rotazione sul piano fa ruotare *anche il bordo sul
+ * dorso*, che è cucito nella legatura e non può muoversi: a un grado si vedeva il
+ * foglio staccarsi dal solco. Uno scorrimento verticale crescente lungo il foglio
+ * lascia il dorso esattamente dov'è e solleva l'angolo libero, che è come si stacca
+ * una pagina vera — prima l'angolo, poi il resto.
+ */
+const SHEAR_DEG = 1.4;
+/** Quanto la frusta si somma allo sghembo: l'angolo in coda rincorre il resto. */
+const SHEAR_PER_WHIP_DEG = 0.055;
 
 const DEG = Math.PI / 180;
 
@@ -56,8 +65,28 @@ const LIGHT_Z = 0.8;
 /** Bisettrice fra luce e osservatore: dove la carta restituisce il riflesso. */
 const HALF_X = -0.2216;
 const HALF_Z = 0.9498;
-/** L'angolo in cui la carta guarda esattamente la bisettrice: lì sta il riflesso. */
-const SHEEN_ANGLE = -13.1;
+
+/**
+ * Quanto si amplifica il lato *chiaro* della rampa.
+ *
+ * La formula di Lambert su carta molto ambientale ha una gamma sbilanciata: verso
+ * il buio corre fino a 1, verso la luce ha appena sette centesimi. Senza guadagno,
+ * il lato chiaro non esiste — ed è metà del giro, perché una pagina che si alza
+ * verso una luce frontale *prende luce* prima di perderla. È il termine che dà
+ * forma alla carta nella prima metà, dove prima era un cartoncino piatto.
+ */
+const LIT_GAIN = 2.5;
+/** Il lampo speculare: stretto, quindi va pesato più del diffuso. */
+const SPEC_GAIN = 0.22;
+
+/**
+ * L'ombra portata **non può avere la stessa estensione del foglio**, o resta
+ * nascosta sotto di lui per tutto il giro — che è esattamente ciò che succedeva.
+ * La luce arriva di sbieco, quindi l'ombra di un foglio alzato sporge oltre il suo
+ * taglio: questo è il rapporto fra la componente orizzontale della luce e quella
+ * frontale, cioè di quanto scivola l'ombra per ogni unità di altezza.
+ */
+const SHADOW_LEAN = 0.45;
 
 function clamp(value: number, min: number, max: number) {
   return value < min ? min : value > max ? max : value;
@@ -83,8 +112,9 @@ function lambertShade(angleDeg: number, facing: number) {
  */
 const REST_SHADE = lambertShade(0, 1);
 
+/** Il segno conta: sopra lo zero la carta è più scura del riposo, sotto è più chiara. */
 function shadeAt(angleDeg: number, facing: number) {
-  return clamp(lambertShade(angleDeg, facing) - REST_SHADE, 0, 0.92);
+  return lambertShade(angleDeg, facing) - REST_SHADE;
 }
 
 /** Il lobo speculare della carta: largo e debole, perché la carta è opaca. */
@@ -101,11 +131,7 @@ function sheenAt(angleDeg: number, facing: number) {
  * mentre copre esattamente la pagina che si stava leggendo a metà: senza questo,
  * sfiorare il taglio di una pagina scorsa la faceva saltare all'inizio.
  */
-function useCarriedScroll(
-  ref: RefObject<HTMLDivElement | null>,
-  top: number,
-  carryKey: number,
-) {
+function useCarriedScroll(ref: RefObject<HTMLDivElement | null>, top: number, carryKey: number) {
   useLayoutEffect(() => {
     if (!top) return;
     const body = ref.current?.querySelector<HTMLElement>("[data-vo-scroll]");
@@ -148,8 +174,7 @@ export function VoLeaf({
 
   /**
    * L'arco virtuale: non piega più niente, ma dice di quanto la normale della
-   * carta ruota fra il dorso e il taglio, ed è da lì che nascono la rampa d'ombra
-   * e il riflesso radente.
+   * carta ruota fra il dorso e il taglio, ed è da lì che nasce tutta la luce.
    */
   const arc = useTransform(progress, (p) => -ARC_DEG * Math.sin(2 * Math.PI * p));
   const velocity = useVelocity(progress);
@@ -170,10 +195,36 @@ export function VoLeaf({
     ([c, b]: number[]) => c + b / 2,
   );
 
-  const frontNear = useTransform(nearAngle, (angle) => shadeAt(angle, 1));
-  const frontFar = useTransform(farAngle, (angle) => shadeAt(angle, 1));
-  const backNear = useTransform(nearAngle, (angle) => shadeAt(angle, -1));
-  const backFar = useTransform(farAngle, (angle) => shadeAt(angle, -1));
+  /**
+   * Quanto la carta è incurvata, da 0 a 1. Pesa il riflesso: con la carta piana
+   * non esiste una zona che guardi la bisettrice, quindi non esiste riflesso
+   * radente — ed è anche ciò che tiene il velo chiaro *esattamente* a zero sul
+   * foglio posato, dove il lobo speculare varrebbe da solo quasi la metà.
+   */
+  const curl = useTransform(arc, (a) => clamp(Math.abs(a) / 18, 0, 1));
+
+  // Due veli per bordo e per faccia: uno per il lato scuro della rampa, uno per
+  // quello chiaro. Sono le due metà della stessa funzione con segno, separate
+  // perché un'opacità non può cambiare segno.
+  const dark = (angle: number, facing: number) => clamp(shadeAt(angle, facing), 0, 0.92);
+  const glow = (angle: number, facing: number, k: number) =>
+    clamp(
+      clamp(-shadeAt(angle, facing), 0, 1) * LIT_GAIN + sheenAt(angle, facing) * SPEC_GAIN * k,
+      0,
+      0.34,
+    );
+
+  const frontDarkNear = useTransform(nearAngle, (a) => dark(a, 1));
+  const frontDarkFar = useTransform(farAngle, (a) => dark(a, 1));
+  const backDarkNear = useTransform(nearAngle, (a) => dark(a, -1));
+  const backDarkFar = useTransform(farAngle, (a) => dark(a, -1));
+
+  const near = [nearAngle, curl] as MotionValue<number>[];
+  const far = [farAngle, curl] as MotionValue<number>[];
+  const frontGlowNear = useTransform(near, ([a, k]: number[]) => glow(a, 1, k));
+  const frontGlowFar = useTransform(far, ([a, k]: number[]) => glow(a, 1, k));
+  const backGlowNear = useTransform(near, ([a, k]: number[]) => glow(a, -1, k));
+  const backGlowFar = useTransform(far, ([a, k]: number[]) => glow(a, -1, k));
 
   /**
    * La profondità del foglio rispetto al blocco pagine. Parte davanti alla pila
@@ -183,24 +234,33 @@ export function VoLeaf({
    */
   const z = useTransform(progress, [0, 1], [depth, -depth]);
 
-  // Un angolo che si stacca, non un bordo che si alza in blocco: una punta di
-  // rotazione sul piano fa sollevare più l'angolo esterno che il resto del taglio.
-  // Resta piccola e non tocca i due capi della corsa: lì il foglio è appoggiato
-  // sulla pagina sotto, e un grado di troppo si vede come un disallineamento.
-  const tilt = useTransform(progress, [0, 0.16, 0.5, 0.84, 1], [0, -1, 0, 1, 0]);
+  /** L'angolo libero anticipa il resto del taglio; in coda lo rincorre. */
+  const shear = useTransform(
+    [progress, whip] as MotionValue<number>[],
+    ([p, w]: number[]) => {
+      const lead = -SHEAR_DEG * Math.sin(2 * Math.PI * p);
+      return lead + w * SHEAR_PER_WHIP_DEG;
+    },
+  );
 
   /**
    * L'ombra portata sulla pagina sotto. Non è un `box-shadow` sul foglio: quella
-   * resta incollata alla carta e ruota con lei, mentre l'ombra di un foglio
-   * alzato sta sul piano del libro e si accorcia col coseno dell'angolo. Il
-   * coseno cambia segno oltre la verticale, e con esso lo `scaleX`: l'ombra passa
-   * da sé sull'altra metà, che è dove il foglio sta andando.
+   * resta incollata alla carta e ruota con lei, mentre l'ombra di un foglio alzato
+   * sta sul piano del libro.
+   *
+   * La sua lunghezza **non** è il semplice coseno dell'angolo. Con il solo coseno
+   * l'ombra ha esattamente la stessa estensione della proiezione del foglio, cioè
+   * gli resta nascosta sotto per tutto il giro: era un elemento che non si è mai
+   * visto. La luce arriva di sbieco, quindi l'ombra sporge oltre il taglio in
+   * proporzione a quanto il foglio è alzato — ed è quella lama che sfila sulla
+   * pagina destra a raccontare che sopra c'è della carta in aria.
    */
-  const castScale = useTransform(chord, (c) => Math.cos(c * DEG));
-  // Massima ai quarti: a foglio posato non c'è distacco, di taglio non c'è
-  // superficie. Le due gobbe sono i due momenti in cui la carta è alzata sopra
-  // la pagina, ed è lì che un'ombra si vede davvero.
-  const castOpacity = useTransform(progress, (p) => 0.5 * Math.sin(2 * Math.PI * p) ** 2);
+  const castScale = useTransform(chord, (c) => {
+    const a = c * DEG;
+    return clamp(Math.cos(a) + SHADOW_LEAN * Math.abs(Math.sin(a)), -1, 1);
+  });
+  /** Massima a foglio in piedi: è lì che la carta è più alta sopra la pagina. */
+  const castOpacity = useTransform(progress, (p) => 0.6 * Math.sin(Math.PI * p));
 
   /**
    * La piega sul dorso: massima a metà rotazione, nulla ai due capi. Deve morire
@@ -208,33 +268,6 @@ export function VoLeaf({
    * insieme al foglio invece che insieme al movimento.
    */
   const fold = useTransform(progress, [0, 0.5, 1], [0, 1, 0]);
-
-  /**
-   * Il riflesso non è un velo che compare: è una banda che *cammina* sulla carta,
-   * ferma sul punto in cui la curvatura guarda la bisettrice fra luce e occhio.
-   * Con la carta piana quella zona non esiste — nessuna curvatura, nessun riflesso
-   * radente — ed è per questo che il termine è moltiplicato per l'arco.
-   *
-   * Si appoggia all'arco puro e non alla rampa: la frusta è rumorosa quanto la
-   * velocità che la genera, e qui produrrebbe uno sfarfallio invece di un riflesso.
-   */
-  const sheenFront = useTransform(
-    [chord, arc] as MotionValue<number>[],
-    ([c, a]: number[]) => sheenAt(c, 1) * clamp(Math.abs(a) / 18, 0, 1) * 0.55,
-  );
-  const sheenBack = useTransform(
-    [chord, arc] as MotionValue<number>[],
-    ([c, a]: number[]) => sheenAt(c, -1) * clamp(Math.abs(a) / 18, 0, 1) * 0.55,
-  );
-  /** Dove cade la banda, in frazione di foglio a partire dal dorso. */
-  const sheenAt01 = useTransform([chord, arc] as MotionValue<number>[], ([c, a]: number[]) => {
-    if (Math.abs(a) < 0.5) return 0.5;
-    return clamp((SHEEN_ANGLE - (c - a / 2)) / a, 0, 1);
-  });
-  const sheenShift = useTransform(sheenAt01, (t) => `${(t - 0.5) * 100}%`);
-  // Il verso è la stessa superficie vista da dietro: ruotato di 180°, il suo
-  // dorso è a destra e la banda ci cammina sopra al contrario.
-  const sheenShiftBack = useTransform(sheenAt01, (t) => `${(0.5 - t) * 100}%`);
 
   return (
     <>
@@ -245,7 +278,7 @@ export function VoLeaf({
       />
       <motion.div
         className="vo-leaf"
-        style={{ z, rotateY: chord, rotateZ: tilt }}
+        style={{ z, rotateY: chord, skewY: shear }}
         aria-hidden="true"
         // Le facce duplicano il contenuto delle pagine statiche: senza `inert`
         // link e campi del foglio in volo resterebbero raggiungibili da tastiera.
@@ -253,25 +286,26 @@ export function VoLeaf({
       >
         <div className="vo-leaf-face vo-leaf-front" ref={frontRef}>
           {front}
-          <motion.span className="vo-leaf-lit vo-leaf-lit-near" style={{ opacity: frontNear }} />
-          <motion.span className="vo-leaf-lit vo-leaf-lit-far" style={{ opacity: frontFar }} />
-          <motion.span className="vo-leaf-fold vo-leaf-fold-front" style={{ opacity: fold }} />
+          <motion.span className="vo-leaf-lit vo-leaf-lit-near" style={{ opacity: frontDarkNear }} />
+          <motion.span className="vo-leaf-lit vo-leaf-lit-far" style={{ opacity: frontDarkFar }} />
           <motion.span
-            className="vo-leaf-sheen"
-            style={{ opacity: sheenFront, x: sheenShift }}
+            className="vo-leaf-glow vo-leaf-glow-near"
+            style={{ opacity: frontGlowNear }}
           />
+          <motion.span className="vo-leaf-glow vo-leaf-glow-far" style={{ opacity: frontGlowFar }} />
+          <motion.span className="vo-leaf-fold vo-leaf-fold-front" style={{ opacity: fold }} />
+          <motion.span className="vo-leaf-rim" style={{ opacity: curl }} />
         </div>
         {/* Il verso è la stessa superficie vista da dietro: ruotato di 180°, ha i
             due bordi scambiati, quindi la rampa di luce corre al contrario. */}
         <div className="vo-leaf-face vo-leaf-back" ref={backRef}>
           {back}
-          <motion.span className="vo-leaf-lit vo-leaf-lit-near" style={{ opacity: backFar }} />
-          <motion.span className="vo-leaf-lit vo-leaf-lit-far" style={{ opacity: backNear }} />
+          <motion.span className="vo-leaf-lit vo-leaf-lit-near" style={{ opacity: backDarkFar }} />
+          <motion.span className="vo-leaf-lit vo-leaf-lit-far" style={{ opacity: backDarkNear }} />
+          <motion.span className="vo-leaf-glow vo-leaf-glow-near" style={{ opacity: backGlowFar }} />
+          <motion.span className="vo-leaf-glow vo-leaf-glow-far" style={{ opacity: backGlowNear }} />
           <motion.span className="vo-leaf-fold vo-leaf-fold-back" style={{ opacity: fold }} />
-          <motion.span
-            className="vo-leaf-sheen"
-            style={{ opacity: sheenBack, x: sheenShiftBack }}
-          />
+          <motion.span className="vo-leaf-rim" style={{ opacity: curl }} />
         </div>
       </motion.div>
     </>

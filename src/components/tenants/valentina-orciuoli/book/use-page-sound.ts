@@ -8,17 +8,26 @@ import { useCallback, useRef } from "react";
  * zero byte di asset e si può variare a ogni giro, così due sfogliate di fila non
  * suonano identiche — che è esattamente ciò che tradisce un campione ripetuto.
  *
+ * Un giro pagina però fa **due** rumori, non uno: il fruscio quando la carta si
+ * stacca e il tonfo sordo quando si posa sulla pila. Con il solo fruscio il giro
+ * finiva in silenzio, e un libro che non fa rumore quando la pagina atterra è la
+ * cosa che più di ogni altra lo fa sentire finto.
+ *
  * Il contesto audio nasce al primo giro di pagina: è già un gesto dell'utente,
  * quindi non incappa nelle policy di autoplay.
  */
 const NOISE_SECONDS = 0.5;
 const PEAK_GAIN = 0.085;
+/** La posata è più corta, più bassa e più discreta dello stacco. */
+const LAND_GAIN = 0.055;
+
+export type VoPageSound = "turn" | "land";
 
 export function usePageSound(enabled: boolean) {
   const contextRef = useRef<AudioContext | null>(null);
   const noiseRef = useRef<AudioBuffer | null>(null);
 
-  return useCallback(() => {
+  return useCallback((kind: VoPageSound = "turn") => {
     if (!enabled) return;
 
     try {
@@ -41,9 +50,12 @@ export function usePageSound(enabled: boolean) {
       }
 
       const now = context.currentTime;
+      const landing = kind === "land";
       // Ogni giro pesca durata e altezza leggermente diverse.
-      const duration = 0.2 + Math.random() * 0.11;
-      const topFrequency = 1650 + Math.random() * 500;
+      const duration = landing ? 0.085 + Math.random() * 0.03 : 0.2 + Math.random() * 0.11;
+      // La posata è un colpo di carta contro carta: parte già bassa e ci resta.
+      const topFrequency = landing ? 420 + Math.random() * 120 : 1650 + Math.random() * 500;
+      const bottomFrequency = landing ? 190 : 360;
 
       const source = context.createBufferSource();
       source.buffer = noiseRef.current;
@@ -51,13 +63,14 @@ export function usePageSound(enabled: boolean) {
 
       const band = context.createBiquadFilter();
       band.type = "bandpass";
-      band.Q.value = 1.1;
+      band.Q.value = landing ? 0.7 : 1.1;
       band.frequency.setValueAtTime(topFrequency, now);
-      band.frequency.exponentialRampToValueAtTime(360, now + duration);
+      band.frequency.exponentialRampToValueAtTime(bottomFrequency, now + duration);
 
       const gain = context.createGain();
       gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.exponentialRampToValueAtTime(PEAK_GAIN, now + 0.035);
+      // Lo stacco monta, la posata è già al massimo quando comincia: è un urto.
+      gain.gain.exponentialRampToValueAtTime(landing ? LAND_GAIN : PEAK_GAIN, now + (landing ? 0.008 : 0.035));
       gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
 
       source.connect(band).connect(gain).connect(context.destination);
