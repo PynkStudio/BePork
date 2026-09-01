@@ -229,8 +229,14 @@ export function renderVoFace(spread: VoSpread, side: VoFaceSide, ctx: VoBookCont
           <p className="vo-dedication" data-writing={ctx.writeDedication || undefined}>
             Avvicinati e prendi posto.
             <br />
-            Le storie migliori non iniziano mai per caso.
+            Le storie migliori non iniziano mai per caso: cominciano quando qualcuno ha il
+            coraggio di sedersi, fare silenzio e ascoltare ci&ograve; che si agita sottopelle.
+            <br />
+            Se hai aperto queste pagine, sei nel posto giusto.
           </p>
+          <VoInternalLink ctx={ctx} to="libri" className="vo-face-cta">
+            La narrazione comincia adesso <ArrowRight size={15} />
+          </VoInternalLink>
           <span className="vo-dedication-sign">v.o.</span>
         </div>
       );
@@ -249,9 +255,14 @@ export function renderVoFace(spread: VoSpread, side: VoFaceSide, ctx: VoBookCont
               emozioni umane. Scrivo per trasformare cio che non riusciamo a spiegare a voce
               in viaggi indimenticabili.
             </p>
-            <VoInternalLink ctx={ctx} to="libri" className="vo-face-cta">
-              La narrazione comincia adesso <ArrowRight size={15} />
-            </VoInternalLink>
+            <div className="vo-face-ctas">
+              <VoInternalLink ctx={ctx} to="libri" className="vo-face-cta">
+                La narrazione comincia adesso <ArrowRight size={15} />
+              </VoInternalLink>
+              <VoInternalLink ctx={ctx} to="libri" className="vo-face-cta-secondary">
+                Continua a sfogliare
+              </VoInternalLink>
+            </div>
           </div>
         </div>
       );
@@ -265,7 +276,8 @@ export function renderVoFace(spread: VoSpread, side: VoFaceSide, ctx: VoBookCont
           <p className="vo-face-lead">Cosa accadrebbe se le nostre emozioni diventassero dei poteri?</p>
           <p>
             In questa saga fantastica, i dragoni non sono nemici da abbattere, ma simboli
-            viventi di ci&ograve; che proviamo.
+            viventi di ci&ograve; che proviamo. Ogni volume della trilogia racconta un&apos;emozione
+            diversa: Anxiety, Fury e, in arrivo, Il Terzo Canto.
           </p>
           <span className="vo-face-glyph vo-face-glyph-watermark" aria-hidden="true">
             龍

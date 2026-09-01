@@ -2718,43 +2718,13 @@
     pointer-events: none;
   }
 
-  .vo-leaf-depth {
-    position: absolute;
-    inset: 0;
-    transform-style: preserve-3d;
-  }
-
-  /* ── La curvatura della carta ─────────────────────────────────────────────── */
-  /* Il foglio è spezzato in doghe verticali, come la copertina. A differenza di
-     quelle però non si annidano: ogni doga ritaglia la propria striscia di DOM
-     vivo, e un `overflow` diverso da `visible` appiattisce il contesto 3D dei
-     figli — quindi la catena si srotolerebbe alla prima. Le posizioni le calcola
-     il componente, doga per doga, in coordinate assolute. */
-  .vo-leaf-staves {
-    position: absolute;
-    inset: 0;
-    transform-style: preserve-3d;
-  }
-
-  .vo-leaf-stave {
-    position: absolute;
-    top: 0;
-    left: 0;
-    /* Numero di doghe e sormonto li dichiara il componente: sono decisioni di
-       geometria, e vivono dove vive la geometria. Il sormonto chiude la cucitura
-       fra due ritagli adiacenti, che a foglio posato rigava la pagina. */
-    width: calc(100% / var(--vo-leaf-n) + var(--vo-leaf-lap));
-    height: 100%;
-    transform-origin: left center;
-    transform-style: preserve-3d;
-    will-change: transform;
-  }
-
+  /* Le due facce del foglio: due sole copie della pagina, non dodici. Il
+     `backface-visibility` fa il mestiere della carta — di un foglio si vede una
+     faccia alla volta — e il ritaglio serve solo a trattenere la banda di
+     riflesso, che cammina oltre i bordi. */
   .vo-leaf-face {
     position: absolute;
     inset: 0;
-    /* È questo il ritaglio: la striscia dentro è larga quanto tutto il foglio e
-       spostata all'indietro di quante doghe la precedono. */
     overflow: hidden;
     backface-visibility: hidden;
   }
@@ -2763,17 +2733,23 @@
     transform: rotateY(180deg);
   }
 
-  /* Larghezza e scorrimento della striscia arrivano dal componente, in pixel:
-     una percentuale si risolverebbe sulla larghezza *sormontata* della doga e il
-     contenuto scivolerebbe di un pelo in più a ogni fetta. */
-  .vo-leaf-strip {
-    position: absolute;
+  /* Le facce in volo sono una figura, non carta da leggere: farne dei contenitori
+     scorrevoli costa due scrollport per foglio e non serve a nessuno, visto che
+     il foglio è `inert`. La posizione di lettura la porta il componente, che la
+     copia dalla pagina sotto un attimo prima di staccare il foglio. */
+  .vo-leaf .vo-page-body {
+    overflow: hidden;
+    overscroll-behavior: none;
   }
 
-  /* La rampa di luce di una doga: due veli, uno acceso sul bordo vicino al dorso
+  /* La rampa di luce della carta: due veli, uno acceso sul bordo vicino al dorso
      e uno sul bordo esterno. Le loro opacità sono la luminosità calcolata sui due
-     bordi, quindi il bordo destro di una doga vale esattamente quanto il sinistro
-     della successiva e la carta resta continua nonostante sia spezzata. */
+     bordi del foglio, quindi la carta si scurisce e si schiarisce come farebbe
+     una superficie incurvata anche restando un piano solo.
+
+     Vanno promossi: sono l'unica cosa che cambia dentro il foglio a ogni
+     fotogramma, e con un livello proprio il browser ricompone due veli invece di
+     ridisegnare la pagina intera. */
   .vo-leaf-lit {
     position: absolute;
     inset: 0;
@@ -2815,15 +2791,13 @@
     will-change: transform, opacity;
   }
 
-  /* Piega e riflesso stanno *dentro* la striscia, quindi esistono in copia per
-     ogni doga. Promuoverli come prima costerebbe sedici livelli a foglio per due
-     veli che coprono una frazione di pagina: qui la promozione la porta la doga,
-     e sotto di lei il ridisegno è una striscia da quarantaquattro pixel. */
+  /* Piega sul dorso e riflesso radente: due veli per faccia, non due per doga. */
   .vo-leaf-fold,
   .vo-leaf-sheen {
     position: absolute;
     inset: 0;
     pointer-events: none;
+    will-change: opacity;
   }
 
   /* Il dorso resta il bordo di rotazione: sul verso, ruotato di 180°, è a destra. */
@@ -2839,16 +2813,21 @@
      che cammina sulla carta, ferma sul punto in cui la curva guarda la bisettrice
      fra luce e osservatore. Larga quanto il foglio, viene traslata dal componente
      e ritagliata dalla doga che la ospita. */
+  /* Niente `mix-blend-mode`: un livello che si fonde col fondo non può essere
+     ricomposto da solo, e mentre il foglio ruota costringeva a ridisegnare la
+     pagina sotto a ogni fotogramma. Su carta chiara la differenza fra schiarire
+     e sovrapporre un velo caldo non si vede; quella fra sessanta fotogrammi e
+     venti sì. */
   .vo-leaf-sheen {
     background: linear-gradient(
       101deg,
       transparent 34%,
-      rgba(255, 248, 226, 0.34) 44%,
-      rgba(255, 250, 234, 0.62) 50%,
-      rgba(255, 248, 226, 0.34) 56%,
+      rgba(255, 250, 232, 0.4) 44%,
+      rgba(255, 252, 240, 0.72) 50%,
+      rgba(255, 250, 232, 0.4) 56%,
       transparent 66%
     );
-    mix-blend-mode: screen;
+    will-change: transform, opacity;
   }
 
   /* ── Presa sul taglio del foglio ──────────────────────────────────────────── */

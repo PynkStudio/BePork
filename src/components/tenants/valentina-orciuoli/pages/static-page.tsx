@@ -197,12 +197,15 @@ export function ValentinaOrciuoliStaticPage({ page }: { page: ValentinaPageKind 
           <section className="vo-section vo-events-section vo-subpage-section">
             <div className="vo-event-list" aria-label="Blog">
               <article>
-                <span>In aggiornamento</span>
+                <span>Blog</span>
                 <h3>I primi appunti sono in arrivo</h3>
                 <p>
-                  I contenuti verranno pubblicati qui appena pronti. Nel frattempo puoi seguire
-                  Valentina sui social o contattarla{" "}
-                  <Link href={`${valentinaBasePath}/contatti`}>qui</Link>.
+                  Appunti dal mio scrittoio: pensieri, scene, simboli e tutto quello che nasce tra
+                  le righe prima di diventare libro.
+                </p>
+                <span>&nbsp;</span>
+                <p>
+                  La scrittura nasce sempre da una domanda. Qualche volta e una voce che non riesco a tacere, un simbolo che insiste, un personaggio che chiede di essere ascoltato. Il blog nasce qui, tra queste voci. Ogni post e un appunto dal mio scrittoio, un pezzo di strada, un passo in piu verso la prossima storia.
                 </p>
               </article>
             </div>

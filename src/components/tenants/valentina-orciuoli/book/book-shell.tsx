@@ -70,9 +70,16 @@ const WHEEL_RELOAD_MS = 170;
 /** La rotella non è un puntatore, ma prende in prestito lo stesso trascinamento. */
 const WHEEL_POINTER_ID = -1;
 const MAX_ANIMATED_LEAVES = 3;
-const LEAF_STAGGER_MS = 110;
-const LEAF_BASE_DEPTH = 1.2;
-const LEAF_DEPTH_STEP = 0.35;
+const LEAF_STAGGER_MS = 90;
+/**
+ * Di quanto il foglio in volo sta davanti al blocco pagine. Deve bastare a
+ * togliere ogni ambiguità di profondità con le pagine ferme — due piani a
+ * distanza nulla in una scena `preserve-3d` si contendono il posto e si vedono a
+ * chiazze — e restare abbastanza piccola da non produrre parallasse: a 2800px di
+ * fuga, tre pixel valgono meno di uno a schermo.
+ */
+const LEAF_BASE_DEPTH = 2.4;
+const LEAF_DEPTH_STEP = 0.7;
 
 type GestureMode = "hint" | "drag" | "run";
 
@@ -85,6 +92,12 @@ type Gesture = {
   leaves: number[];
   mode: GestureMode;
   /**
+   * La posizione di lettura da riportare sulla faccia del foglio che copre la
+   * pagina lasciata. Si legge quando il gesto si arma, non dopo: un attimo più
+   * tardi quella pagina è già stata sostituita.
+   */
+  carry?: { front: number; back: number };
+  /**
    * La corsa raccoglie un foglio già in aria invece di lanciarne uno da fermo.
    * Serve a distinguerla da un salto nuovo, che parte sempre da un capo: senza,
    * un foglio lasciato oltre metà corsa veniva riportato al dorso e rigirato.
@@ -92,14 +105,20 @@ type Gesture = {
   resumed?: boolean;
 };
 
-// Una pagina di carta è leggera ma incontra l'aria: rallenta lunga e si posa
-// senza rimbalzare. Molla morbida, massa alta, smorzamento quasi critico.
+// Una pagina di carta è leggera ma incontra l'aria: si posa senza rimbalzare.
+// Smorzamento appena sotto il critico, così arriva dritta e non oscilla.
+//
+// La molla di prima era sovrasmorzata e pesante: la coda per rientrare nella
+// tolleranza durava oltre un secondo, e per tutto quel tempo il foglio era
+// tecnicamente in volo — il libro sordo ai gesti successivi e la carta ferma a
+// un capello dalla pagina. Mezzo secondo scarso è il tempo di un giro pagina vero.
 const flipSpring = {
   type: "spring",
-  stiffness: 88,
-  damping: 22.5,
-  mass: 1.25,
-  restDelta: 0.0008,
+  stiffness: 150,
+  damping: 24,
+  mass: 1,
+  restDelta: 0.0015,
+  restSpeed: 0.02,
 } as const;
 const hintSpring = { type: "spring", stiffness: 150, damping: 20, mass: 0.9 } as const;
 /**
@@ -560,6 +579,30 @@ export function VoBookShell({
     [appendixPos, clearGesture, fromPos, publish],
   );
 
+  /**
+   * Dov'era arrivata la lettura sulla facciata che sta per staccarsi.
+   *
+   * Il foglio in volo non sposta la pagina: ne monta una copia nuova, e una copia
+   * nuova nasce riavvolta in cima. Chi aveva letto mezza pagina la vedeva saltare
+   * all'inizio nell'istante in cui la prendeva per girarla — e riapparire al punto
+   * giusto solo se tornava indietro. Si legge qui, mentre quella facciata è ancora
+   * in scena: un attimo dopo il suo posto è già della pagina d'arrivo.
+   */
+  const carryFor = useCallback(
+    (dir: 1 | -1) => {
+      const stage = stageRef.current;
+      if (!stage) return undefined;
+      // Andando avanti si stacca la facciata destra, tornando indietro la
+      // sinistra. In compatto la sinistra non è in vista: c'è una facciata sola.
+      const side = dir === 1 || compact ? "right" : "left";
+      const body = stage.querySelector<HTMLElement>(`.vo-page-${side} [data-vo-scroll]`);
+      const top = body?.scrollTop ?? 0;
+      if (!top) return undefined;
+      return dir === 1 ? { front: top, back: 0 } : { front: 0, back: top };
+    },
+    [compact],
+  );
+
   const goTo = useCallback(
     (target: number) => {
       if (!open) return;
@@ -571,17 +614,19 @@ export function VoBookShell({
         commit(target);
         return;
       }
+      const dir: 1 | -1 = target > from ? 1 : -1;
       tokenRef.current += 1;
       setGesture({
         token: tokenRef.current,
         from,
         to: target,
-        dir: target > from ? 1 : -1,
+        dir,
         leaves: leavesForJump(from, target),
         mode: "run",
+        carry: carryFor(dir),
       });
     },
-    [appendixPos, commit, open, positionCount, reducedMotion, setGesture],
+    [appendixPos, carryFor, commit, open, positionCount, reducedMotion, setGesture],
   );
 
   // Avvia le animazioni una volta che i fogli sono montati con lo stato di partenza.
@@ -654,14 +699,16 @@ export function VoBookShell({
       setHalf(landing.half);
       return;
     }
+    const dir: 1 | -1 = fromUrl > pos ? 1 : -1;
     tokenRef.current += 1;
     setGesture({
       token: tokenRef.current,
       from: pos,
       to: fromUrl,
-      dir: fromUrl > pos ? 1 : -1,
+      dir,
       leaves: leavesForJump(pos, fromUrl),
       mode: "run",
+      carry: carryFor(dir),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appendix, pathname]);
@@ -752,6 +799,9 @@ export function VoBookShell({
       if (target < 0 || target >= positionCount) return false;
       setGesture((current) => {
         if (current && current.dir === dir && current.from === pos && current.to === target) {
+          // Lo stesso foglio che passa da accenno a presa: la posizione di lettura
+          // l'ha già presa, ed è quella giusta — la pagina sotto nel frattempo è
+          // cambiata.
           return current.mode === mode ? current : { ...current, mode };
         }
         tokenRef.current += 1;
@@ -762,11 +812,12 @@ export function VoBookShell({
           dir,
           leaves: leavesForJump(pos, target),
           mode,
+          carry: carryFor(dir),
         };
       });
       return true;
     },
-    [pos, positionCount],
+    [carryFor, pos, positionCount],
   );
 
   /**
@@ -776,7 +827,11 @@ export function VoBookShell({
    */
   const hintAt = useCallback(
     (dir: 1 | -1, strength = 1, smooth = false) => {
-      if (!open || reducedMotion || gesture?.mode === "run" || gesture?.mode === "drag") return;
+      // Il riferimento, non lo stato: un accenno armato mentre un foglio è ancora
+      // in volo lo strapperebbe di mano alla molla che lo sta posando, e lo stato
+      // React di un gesto appena partito dice ancora che non c'è nessun gesto.
+      const held = gestureRef.current;
+      if (!open || reducedMotion || held?.mode === "run" || held?.mode === "drag") return;
       if (!armGesture(dir, "hint")) return;
       const lift = HINT_MAX * Math.min(1, Math.max(0, strength));
       const settled = dir === 1 ? lift : 1 - lift;
@@ -787,19 +842,20 @@ export function VoBookShell({
       if (smooth) hintAnimRef.current = animate(p0, settled, hintSpring);
       else p0.set(settled);
     },
-    [armGesture, gesture?.mode, open, p0, reducedMotion, stopHintAnim],
+    [armGesture, open, p0, reducedMotion, stopHintAnim],
   );
 
   const dropHint = useCallback(() => {
-    if (gesture?.mode !== "hint") return;
-    const dir = gesture.dir;
+    const held = gestureRef.current;
+    if (held?.mode !== "hint") return;
+    const dir = held.dir;
     stopHintAnim();
     const control = animate(p0, dir === 1 ? 0 : 1, hintSpring);
     hintAnimRef.current = control;
     control.then(() => {
       setGesture((current) => (current?.mode === "hint" ? null : current));
     });
-  }, [gesture, p0, stopHintAnim]);
+  }, [p0, setGesture, stopHintAnim]);
 
   /** Prende il foglio dove si trova: un accenno già sollevato non ricade sul dorso. */
   const beginDrag = useCallback(
@@ -1050,7 +1106,8 @@ export function VoBookShell({
 
       if (event.pointerType === "touch") return;
       if (!open || reducedMotion) return;
-      if (gesture?.mode === "run" || gesture?.mode === "drag") return;
+      const held = gestureRef.current;
+      if (held?.mode === "run" || held?.mode === "drag") return;
 
       const rect = stageRectRef.current ?? event.currentTarget.getBoundingClientRect();
       stageRectRef.current = rect;
@@ -1065,7 +1122,7 @@ export function VoBookShell({
       }
       hintAt(dir, 1 - near / HINT_PROXIMITY);
     },
-    [beginDrag, dropHint, gesture?.mode, hintAt, open, reducedMotion, updateDrag],
+    [beginDrag, dropHint, hintAt, open, reducedMotion, updateDrag],
   );
 
   const onStagePointerUp = useCallback(
@@ -1186,7 +1243,14 @@ export function VoBookShell({
           const backReal = forward ? last : first;
           return (
             <VoLeaf
-              key={`${gesture?.token}-${leafIndex}`}
+              // La chiave è il *posto* nella pila, non il gesto. Legandola al
+              // gesto, il foglio si rimontava da capo a ogni cambio di stadio —
+              // e il passaggio da presa a corsa è esattamente l'istante in cui si
+              // lascia andare la pagina: lì si perdeva la velocità accumulata,
+              // quindi la frusta crollava a zero e la carta faceva uno scatto
+              // proprio sul più bello. Restando lo stesso elemento, accenno,
+              // trascinamento e corsa sono un movimento solo.
+              key={order}
               progress={progressValues[order] as MotionValue<number>}
               // Il primo foglio a muoversi è quello in cima alla pila: parte più
               // vicino all'osservatore e ci resta anche dopo essere atterrato.
@@ -1197,6 +1261,11 @@ export function VoBookShell({
                   ? pageSheet(faces.back.spread, compact ? "right" : faces.back.side)
                   : fillerSheet
               }
+              // Solo il primo foglio copre una pagina che si stava leggendo: gli
+              // altri di un salto lungo arrivano da parti del volume mai aperte.
+              carryKey={gesture?.token ?? 0}
+              frontScroll={order === 0 ? gesture?.carry?.front ?? 0 : 0}
+              backScroll={order === 0 ? gesture?.carry?.back ?? 0 : 0}
             />
           );
         })}

@@ -108,6 +108,12 @@ export function VoNewsletterInsert({
           inediti, novita in anteprima e pensieri intimi che partono dal mio tavolo di
           lavoro per arrivare al tuo schermo.
         </p>
+        <p>
+          La scrittura nasce sempre da una domanda. Qualche volta e una voce che non riesco a
+          tacere, un simbolo che insiste, un personaggio che chiede di essere ascoltato. Nel
+          blog troverai i miei primi appunti: riflessioni, scene, simboli, e tutto quello che
+          nasce tra le righe prima di diventare libro.
+        </p>
         <ValentinaNewsletterForm compact sent={sent} pending={pending} error={error} onSubmit={onSubmit} />
         <span className="vo-insert-mark" aria-hidden="true">
           龍
