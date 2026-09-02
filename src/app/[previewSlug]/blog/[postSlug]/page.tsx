@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { TenantProvider } from "@/components/core/tenant-provider";
-import { VoBlogArticlePage } from "@/components/tenants/valentina-orciuoli/blog/blog-article-page";
+import { ValentinaOrciuoliBookSite } from "@/components/tenants/valentina-orciuoli/book/book-site";
+import { spreadIndexById } from "@/components/tenants/valentina-orciuoli/book/book-map";
+import { voNotesFromPosts } from "@/components/tenants/valentina-orciuoli/book/notes";
 import { getPlatformModeFromHost } from "@/lib/platform";
 import { resolveTenantFromPreviewSlug } from "@/lib/tenant-runtime";
 import { tenantThemeCssVars } from "@/lib/tenant-theme";
@@ -10,7 +12,6 @@ import { getTenantLocaleConfig } from "@/lib/tenant-locales";
 import { getBlogPosts, getPublishedBlogPost } from "@/lib/blog/data";
 import { blogPostLanguageAlternates, blogPostPath } from "@/lib/blog/slug";
 import { firstBlogDocImage } from "@/lib/blog/doc";
-import { getTenantGestioneExternalHref } from "@/lib/gestione-routing";
 import { LOCALE_HEADER } from "@/i18n/locales";
 
 async function loadArticle(previewSlug: string, postSlug: string) {
@@ -70,7 +71,7 @@ export default async function PreviewBlogArticleRoute({
   const { previewSlug, postSlug } = await params;
   const found = await loadArticle(previewSlug, postSlug);
   if (!found) notFound();
-  const { tenant, locale, localeConfig, post, redirectedFrom } = found;
+  const { tenant, locale, post, redirectedFrom } = found;
   const translation = post.translations[locale];
   if (!translation) notFound();
 
@@ -79,23 +80,22 @@ export default async function PreviewBlogArticleRoute({
   }
 
   const currentLocale = requestHeaders.get(LOCALE_HEADER) ?? locale;
-  const allPosts = await getBlogPosts(tenant.id, { publishedOnly: true, includeContent: false });
-  const related = allPosts.filter((item) => item.id !== post.id).slice(0, 3);
+  // Un link condiviso porta **sulla scrivania**, non su una pagina a sé: il
+  // taccuino è una sezione del libro, e un appunto è un foglio sul tavolo
+  // accanto. Gli appunti si leggono qui col corpo, così il testo dell'articolo
+  // sta nell'HTML — è la stessa pagina che i crawler indicizzano.
+  const notes = voNotesFromPosts(
+    await getBlogPosts(tenant.id, { publishedOnly: true }),
+    currentLocale,
+  );
   const themeVars = tenantThemeCssVars(tenant.theme);
-  const shareUrl = `https://demo.weuseorpheo.com${blogPostPath(currentLocale, translation.slug, previewSlug)}`;
 
   return (
     <TenantProvider tenant={tenant}>
       <div className="min-h-screen" data-tenant-surface={tenant.id} style={themeVars as React.CSSProperties}>
-        <VoBlogArticlePage
-          post={post}
-          translation={translation}
-          locale={currentLocale}
-          defaultLocale={localeConfig?.defaultLocale ?? "it"}
-          previewSlug={previewSlug}
-          shareUrl={shareUrl}
-          related={related}
-          gestioneHref={getTenantGestioneExternalHref(tenant.id)}
+        <ValentinaOrciuoliBookSite
+          initialSpread={spreadIndexById("blog")}
+          initialNotes={notes}
         />
       </div>
     </TenantProvider>

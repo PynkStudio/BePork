@@ -20,4 +20,5 @@ Usa il template [[adr-template]] per ogni nuova decisione. Numera i file progres
 | 0002 | [[adr-0002-valentina-book-shell]] — il sito `valentina-orciuoli` è un libro sfogliabile (parzialmente sostituita da 0005) |
 | 0003 | [[adr-0003-blog-contenuto-tiptap-multilingua]] — contenuto del blog come documento Tiptap per lingua |
 | 0004 | [[adr-0004-mcp-tenant-blog]] — server MCP per tenant per la redazione del blog |
-| 0005 | [[adr-0005-valentina-blog-fuori-dal-libro]] — il blog di valentina-orciuoli vive fuori dal libro, sullo stesso dominio |
+| 0005 | [[adr-0005-valentina-blog-fuori-dal-libro]] — il blog di valentina-orciuoli vive fuori dal libro, sullo stesso dominio *(§5 superata dalla 0006)* |
+| 0006 | [[adr-0006-valentina-taccuino-nel-libro]] — il taccuino torna una pagina del volume; dentro il libro si naviga con la cronologia, non col router |

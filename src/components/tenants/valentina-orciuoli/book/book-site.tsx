@@ -1,17 +1,35 @@
 "use client";
 
-import { animate, motion, useMotionValue } from "framer-motion";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { animate, motion, useMotionValue, useTransform } from "framer-motion";
+import { usePathname } from "next/navigation";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentProps,
+  type ReactNode,
+} from "react";
 import { getTenantGestioneExternalHref } from "@/lib/gestione-routing";
+import {
+  voNotesFromPosts,
+  type VoNote,
+} from "@/components/tenants/valentina-orciuoli/book/notes";
+import type { BlogPost } from "@/lib/blog/types";
 import {
   VoBookShell,
   WHEEL_LINE_PX,
   WHEEL_MAX_STEP,
 } from "@/components/tenants/valentina-orciuoli/book/book-shell";
 import { VoBackCover } from "@/components/tenants/valentina-orciuoli/book/back-cover";
+import {
+  voHandleLinkClick,
+  voPushUrl,
+} from "@/components/tenants/valentina-orciuoli/book/book-navigation";
 import { VoCover } from "@/components/tenants/valentina-orciuoli/book/cover";
+import { VoDesk } from "@/components/tenants/valentina-orciuoli/book/desk";
+
 import {
   renderVoAppendixFace,
   renderVoFace,
@@ -24,6 +42,8 @@ import {
 import {
   appendixByPathname,
   appendixHref,
+  articleHref as voArticleHref,
+  articleSlugFromPathname,
   backCoverHref,
   hasSpread,
   isBackCoverPathname,
@@ -42,11 +62,30 @@ import {
   VoNewsletterTab,
 } from "@/components/tenants/valentina-orciuoli/book/newsletter-insert";
 import {
-  valentinaBasePath,
   valentinaCreativeWorks,
   type ValentinaCreativeWork,
 } from "@/components/tenants/valentina-orciuoli/content";
 
+/** La panoramica fra il volume e la scrivania: lenta, come girare la testa. */
+const PAN_TRANSITION = { duration: 1.05, ease: [0.5, 0.02, 0.16, 1] } as const;
+/**
+ * Dove si posa il volume quando si guarda dall'altra parte del tavolo.
+ *
+ * Non esce di scena: resta in alto a destra, tagliato dal bordo alto, così di
+ * lui si vede il bordo inferiore con l'angolo destro — l'orecchio. È l'appiglio
+ * per tornare indietro, e soprattutto è ciò che dice che il libro *è ancora lì*:
+ * non si è cambiata pagina, si è girata la testa.
+ *
+ * I numeri stanno qui perché sono da guardare, non da dedurre: il taglio giusto
+ * si trova a occhio, e cambiarlo dev'essere una riga sola.
+ */
+const BOOK_PARKED = {
+  scale: 0.3,
+  x: "30%",
+  y: "-42%",
+  rotateY: -26,
+  rotateZ: 6,
+} as const;
 const COVER_OPEN_AT = 0.95;
 const CLOSE_TRANSITION = { duration: 0.75, ease: [0.5, 0.05, 0.2, 1] } as const;
 const TURN_TRANSITION = { duration: 0.95, ease: [0.55, 0.06, 0.24, 1] } as const;
@@ -66,21 +105,62 @@ const TOUCH_CEREMONY_GAIN = 3.1;
 /** La copertina insegue il bersaglio con una molla, non salta di scatto in scatto. */
 const CEREMONY_FOLLOW = { type: "spring", stiffness: 210, damping: 30, mass: 0.7 } as const;
 const CEREMONY_OPEN_TRANSITION = { duration: 0.85, ease: [0.42, 0.02, 0.18, 1] } as const;
-/** Durata dell'inchiostro sulla dedica, allineata a `vo-inking` nel CSS. */
-const DEDICATION_MS = 3200;
+/**
+ * Un link che *sfoglia* invece di navigare. Resta un `<a href>` vero — i crawler
+ * lo seguono, "apri in nuova scheda" funziona — ma il clic normale aggiorna solo
+ * la cronologia: il libro insegue l'URL girando le pagine, senza rimontarsi.
+ */
+function VoBookLink({
+  href,
+  className,
+  children,
+  ...rest
+}: {
+  href: string;
+  className?: string;
+  children: ReactNode;
+} & Omit<ComponentProps<"a">, "href" | "className" | "children">) {
+  return (
+    <a
+      {...rest}
+      className={className}
+      href={href}
+      onClick={(event) => {
+        voHandleLinkClick(event, href);
+      }}
+    >
+      {children}
+    </a>
+  );
+}
+
 export function ValentinaOrciuoliBookSite({
   initialSpread,
+  initialNotes,
 }: {
   initialSpread: number;
+  /** Gli appunti già letti dal server, quando la route li conosce. */
+  initialNotes?: VoNote[];
 }) {
   const pathname = usePathname();
-  const router = useRouter();
   const localePrefix = localePrefixFromPathname(pathname);
+  /** La lingua che si sta leggendo: serve a scegliere la traduzione dell'appunto. */
+  const locale = localePrefix.replace("/", "") || "it";
   const newsletter = useValentinaNewsletter();
   const gestioneHref = getTenantGestioneExternalHref("valentina-orciuoli");
 
   const showsBackCover = isBackCoverPathname(pathname);
   const appendix = appendixByPathname(pathname);
+  // Il singolo appunto non è una pagina del volume: è un foglio sulla scrivania.
+  const articleSlug = articleSlugFromPathname(pathname);
+  // Gli appunti arrivano dal server quando la route li conosce già, così stanno
+  // nell'HTML; altrove si leggono dall'API al montaggio.
+  const [posts, setPosts] = useState<VoNote[]>(initialNotes ?? []);
+  const [postsLoaded, setPostsLoaded] = useState((initialNotes?.length ?? 0) > 0);
+  const article = articleSlug
+    ? (posts.find((post) => post.slug === articleSlug) ?? null)
+    : null;
+  const onDesk = articleSlug !== null;
 
   // Da dove parte il volume in questo montaggio: se la scheda ha già visto il
   // libro si riprende il suo stato, altrimenti è un ingresso vero e lo stato lo
@@ -116,6 +196,39 @@ export function ValentinaOrciuoliBookSite({
   const openedRef = useRef(opened);
   openedRef.current = opened;
 
+  /**
+   * Il carrello. La traslazione da sola sarebbe un carosello: una panoramica
+   * vera stringe l'inquadratura su ciò che lascia e la apre su ciò che
+   * raggiunge, e gli oggetti restano illuminati — cambia l'inquadratura, non la
+   * luce. Entra già a destinazione se la scheda ci era arrivata da un link.
+   */
+  const [cameraEntry] = useState(() =>
+    voBookMemoryAvailable && voBookMemory.opened ? voBookMemory.desk : onDesk,
+  );
+  const pan = useMotionValue(cameraEntry ? 1 : 0);
+  // Il volume si allontana verso l'alto a destra e si rimpicciolisce; la
+  // scrivania entra da destra e si raddrizza. Le due cose insieme sono la testa
+  // che gira: se il libro sparisse e basta, sarebbe un cambio di schermata.
+  const bookScale = useTransform(pan, [0, 1], [1, BOOK_PARKED.scale]);
+  const bookTurn = useTransform(pan, [0, 1], [0, BOOK_PARKED.rotateY]);
+  const bookTilt = useTransform(pan, [0, 1], [0, BOOK_PARKED.rotateZ]);
+  const bookX = useTransform(pan, [0, 1], ["0%", BOOK_PARKED.x]);
+  const bookY = useTransform(pan, [0, 1], ["0%", BOOK_PARKED.y]);
+  // Resta leggibile: è un appiglio, non un fondale.
+  const bookFade = useTransform(pan, [0, 1], [1, 0.88]);
+  const deskScale = useTransform(pan, [0, 1], [0.9, 1]);
+  const deskTurn = useTransform(pan, [0, 1], [18, 0]);
+  const deskFade = useTransform(pan, [0, 0.55], [0, 1]);
+  const deskDrift = useTransform(pan, [0, 1], ["42%", "0%"]);
+
+  useEffect(() => {
+    const controls = animate(pan, onDesk ? 1 : 0, PAN_TRANSITION);
+    controls.then(() => {
+      voBookMemory.desk = onDesk;
+    });
+    return () => controls.stop();
+  }, [onDesk, pan]);
+
   const [insertOpen, setInsertOpen] = useState(false);
   // Il modo lo decide lo shell, ma il flag serve alla radice: da lì il foglio di
   // stile veste testatina, comandi e piede oltre al libro.
@@ -133,16 +246,6 @@ export function ValentinaOrciuoliBookSite({
   // cerimonia non si vedrebbe mai.
   useEffect(() => {
     if (opened) voBookMemory.opened = true;
-  }, [opened]);
-
-  // La dedica si scrive quando il volume si apre, e poi resta scritta: tornando
-  // sul frontespizio sfogliando non deve ricominciare da capo.
-  const [writeDedication, setWriteDedication] = useState(false);
-  useEffect(() => {
-    if (!opened) return;
-    setWriteDedication(true);
-    const timer = window.setTimeout(() => setWriteDedication(false), DEDICATION_MS);
-    return () => window.clearTimeout(timer);
   }, [opened]);
 
   /**
@@ -283,6 +386,26 @@ export function ValentinaOrciuoliBookSite({
     };
   }, [coverProgress, showsBackCover, turn]);
 
+  // Gli appunti si leggono una volta e vivono nello store: il contesto delle
+  // facciate deve restare stabile, o la ricerca butterebbe la cache del libro.
+  useEffect(() => {
+    let alive = true;
+    // Solo se il server non li ha già dati: chi arriva sfogliando non ha mai
+    // fatto una richiesta per la route del taccuino.
+    if ((initialNotes?.length ?? 0) > 0) return;
+    fetch("/api/tenant/valentina-orciuoli/blog/notes")
+      .then((res) => res.json())
+      .then((data) => {
+        if (!alive || !Array.isArray(data.posts)) return;
+        setPosts(voNotesFromPosts(data.posts as BlogPost[], locale));
+        setPostsLoaded(true);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [initialNotes, locale]);
+
   useEffect(() => {
     let alive = true;
     fetch("/api/tenant/valentina-orciuoli/creative-works")
@@ -308,20 +431,27 @@ export function ValentinaOrciuoliBookSite({
     [localePrefix],
   );
 
-  // Il taccuino non è più una pagina del libro (vedi ADR-0004): resta un link
-  // di navigazione che porta fuori dal volume, calcolato come tutti gli altri.
-  const blogHref = `${valentinaBasePath}${localePrefix}/blog`;
 
   // Il folio stampato: la pagina destra di uno spread porta sempre un numero dispari.
   const folioFor = useCallback((id: string) => spreadIndexById(id) * 2 + 1, []);
+
+  const articleHref = useCallback(
+    (slug: string) => voArticleHref(slug, localePrefix),
+    [localePrefix],
+  );
+  /** Aprire un appunto non gira una pagina: sposta lo sguardo sulla scrivania. */
+  const openArticle = useCallback(
+    (slug: string) => voPushUrl(articleHref(slug)),
+    [articleHref],
+  );
 
   // La navigazione interna passa sempre dall'URL: il libro insegue il pathname,
   // così link, nav e back del browser producono tutti lo stesso sfogliare.
   const goTo = useCallback(
     (id: string) => {
-      router.push(hrefFor(id), { scroll: false });
+      voPushUrl(hrefFor(id));
     },
-    [hrefFor, router],
+    [hrefFor],
   );
 
   const ctx: VoBookContext = useMemo(
@@ -337,18 +467,24 @@ export function ValentinaOrciuoliBookSite({
       goTo,
       folioFor,
       hasPage: hasSpread,
-      writeDedication,
+      posts,
+      postsLoaded,
+      articleHref,
+      openArticle,
     }),
     [
+      articleHref,
       folioFor,
       goTo,
       hrefFor,
+      openArticle,
       newsletter.handleNewsletterSubmit,
       newsletter.newsletterError,
       newsletter.newsletterPending,
       newsletter.newsletterSent,
+      posts,
+      postsLoaded,
       works,
-      writeDedication,
     ],
   );
 
@@ -375,17 +511,17 @@ export function ValentinaOrciuoliBookSite({
       const now = performance.now();
       if (now < lock) return;
       lock = now + 900;
-      router.push(resumeHrefRef.current, { scroll: false });
+      voPushUrl(resumeHrefRef.current);
     };
 
     element.addEventListener("wheel", onWheel, { passive: false });
     return () => element.removeEventListener("wheel", onWheel);
-  }, [router, showsBackCover]);
+  }, [showsBackCover]);
 
   /** Sfogliare oltre l'ultima pagina porta alla quarta: è lì che il volume finisce. */
   const goToBackCover = useCallback(() => {
-    router.push(backCoverHref(localePrefix), { scroll: false });
-  }, [localePrefix, router]);
+    voPushUrl(backCoverHref(localePrefix));
+  }, [localePrefix]);
 
   const closeBook = useCallback(() => {
     setOpened(false);
@@ -401,41 +537,28 @@ export function ValentinaOrciuoliBookSite({
       data-compact={compact || undefined}
     >
       <header className="vo-book-nav" aria-label="Sezioni del libro">
-        <Link className="vo-book-nav-mark" href={hrefFor("home")}>
+        <VoBookLink className="vo-book-nav-mark" href={hrefFor("home")}>
           v.o.
-        </Link>
+        </VoBookLink>
         <nav>
           {voSpreads
             .filter((entry) => entry.inNav)
-            .flatMap((entry) => {
-              const link = (
-                <Link
-                  key={entry.id}
-                  data-vo-nav={entry.id}
-                  href={spreadHref(entry, localePrefix)}
-                  scroll={false}
-                  aria-current={currentSpread === spreadIndexById(entry.id) ? "page" : undefined}
-                >
-                  {entry.navLabel}
-                </Link>
-              );
-              // Il taccuino non è una pagina del volume (ADR-0004): il link sta
-              // in mezzo alla nav come le altre voci, ma porta fuori dal libro.
-              if (entry.id !== "libri") return [link];
-              return [
-                link,
-                <Link key="blog" href={blogHref} scroll={false}>
-                  Blog
-                </Link>,
-              ];
-            })}
-          <Link
+            .map((entry) => (
+              <VoBookLink
+                key={entry.id}
+                data-vo-nav={entry.id}
+                href={spreadHref(entry, localePrefix)}
+                aria-current={currentSpread === spreadIndexById(entry.id) ? "page" : undefined}
+              >
+                {entry.navLabel}
+              </VoBookLink>
+            ))}
+          <VoBookLink
             href={backCoverHref(localePrefix)}
-            scroll={false}
             aria-current={showsBackCover ? "page" : undefined}
           >
             {voBackCover.navLabel}
-          </Link>
+          </VoBookLink>
         </nav>
       </header>
 
@@ -445,13 +568,24 @@ export function ValentinaOrciuoliBookSite({
         ref={stageRef}
         data-ceremony={closed || undefined}
         onClick={closed ? openBook : undefined}
-        style={{ transformPerspective: 1500 }}
+        // `inert` mentre si legge un appunto: il volume è ancora in scena, ma
+        // fuori fuoco — non deve rubare tocchi né tabulazioni.
+        inert={onDesk || undefined}
+        style={{
+          transformPerspective: 1500,
+          opacity: bookFade,
+          scale: bookScale,
+          rotateY: bookTurn,
+          rotateZ: bookTilt,
+          x: bookX,
+          y: bookY,
+        }}
       >
         <div className="vo-volume">
             <VoBookShell
               initialSpread={initialSpread}
               renderFace={renderFace}
-              open={opened && !showsBackCover}
+              open={opened && !showsBackCover && !onDesk}
               cover={<VoCover progress={coverProgress} />}
               coverProgress={coverProgress}
               turn={turn}
@@ -461,7 +595,7 @@ export function ValentinaOrciuoliBookSite({
               appendix={appendix}
               renderAppendix={renderVoAppendixFace}
               onLeaveAppendix={() =>
-                router.push(spreadHref(resumeSpread, localePrefix), { scroll: false })
+                voPushUrl(spreadHref(resumeSpread, localePrefix))
               }
               insert={
                 opened && !showsBackCover ? (
@@ -472,14 +606,13 @@ export function ValentinaOrciuoliBookSite({
               onPastLastPage={goToBackCover}
               bookmark={
                 showsBackCover ? (
-                  <Link
+                  <VoBookLink
                     className="vo-bookmark"
                     href={spreadHref(resumeSpread, localePrefix)}
-                    scroll={false}
                     aria-label={`Riprendi la lettura da ${resumeSpread.navLabel}`}
                   >
                     <span className="vo-bookmark-tail" aria-hidden="true" />
-                  </Link>
+                  </VoBookLink>
                 ) : (
                   <span className="vo-bookmark" aria-hidden="true">
                     <span className="vo-bookmark-tail" />
@@ -499,21 +632,21 @@ export function ValentinaOrciuoliBookSite({
         {opened || showsBackCover || appendix ? (
           <div className="vo-book-controls">
               {appendix ? (
-                <Link href={spreadHref(resumeSpread, localePrefix)} scroll={false}>
+                <VoBookLink href={spreadHref(resumeSpread, localePrefix)}>
                   Torna alla lettura
-                </Link>
+                </VoBookLink>
               ) : showsBackCover ? (
-                <Link href={hrefFor("home")} scroll={false}>
+                <VoBookLink href={hrefFor("home")}>
                   Rigira il libro
-                </Link>
+                </VoBookLink>
               ) : currentSpread === 0 ? (
                 <button type="button" onClick={closeBook}>
                   Chiudi il libro
                 </button>
               ) : (
-                <Link href={hrefFor("home")} scroll={false}>
+                <VoBookLink href={hrefFor("home")}>
                   Torna al frontespizio
-                </Link>
+                </VoBookLink>
               )}
               <button
                 type="button"
@@ -526,20 +659,48 @@ export function ValentinaOrciuoliBookSite({
           </div>
         ) : null}
       </motion.div>
+
+      {/* La seconda scena. Non sostituisce il volume: gli sta accanto, e la
+          camera trasla fra le due. */}
+      <motion.div
+        className="vo-desk-scene"
+        inert={!onDesk || undefined}
+        style={{
+          opacity: deskFade,
+          scale: deskScale,
+          rotateY: deskTurn,
+          x: deskDrift,
+          transformPerspective: 1500,
+        }}
+      >
+        <VoDesk notes={posts} current={article} onOpen={openArticle} />
+      </motion.div>
+
+      {/* L'appiglio per tornare indietro. È un pulsante vero, con un'etichetta
+          leggibile da chi non vede l'angolo di carta in alto a destra: la scena
+          del volume è `inert` mentre si legge, quindi non può cliccarsi da sé. */}
+      {onDesk ? (
+        <button
+          type="button"
+          className="vo-desk-back-to-book"
+          onClick={() => voPushUrl(hrefFor("blog"))}
+        >
+          Torna al libro
+        </button>
+      ) : null}
       </div>
 
       <footer className="vo-book-footer">
         <span>Valentina Orciuoli · sito ufficiale</span>
         <span className="vo-book-footer-links">
           {voAppendix.map((entry) => (
-            <Link
+            <VoBookLink
               key={entry.id}
               href={appendixHref(entry, localePrefix)}
-              scroll={false}
               aria-current={appendix?.id === entry.id ? "page" : undefined}
             >
               {entry.navLabel}
-            </Link>
+            </VoBookLink>
           ))}
           <a href={gestioneHref} target="_blank" rel="noopener noreferrer">
             Gestione

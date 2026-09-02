@@ -2977,7 +2977,15 @@
     backface-visibility: hidden;
   }
 
+  /* Le due facce del cartoncino non possono stare sullo **stesso piano**.
+     Complanari dentro un contesto `preserve-3d`, si contendono il posto: il
+     motore non ha un criterio per dire quale sta davanti, e oltre la verticale
+     capitava che scegliesse il fronte — che da dietro si vede specchiato. Da lì
+     la copertina che, aprendosi, mostrava il proprio titolo al contrario invece
+     del risguardo. Mezzo pixel per parte basta a togliere l'ambiguità e non si
+     vede: ognuna sporge verso il proprio fuori. */
   .vo-cover-front {
+    transform: translateZ(0.6px);
     background: #1c100c;
     box-shadow: 0 30px 60px -22px rgba(0, 0, 0, 0.9);
   }
@@ -3037,7 +3045,9 @@
   }
 
   .vo-cover-inside {
-    transform: rotateY(180deg);
+    /* Prima la rotazione, poi lo scarto: così sporge lungo la *propria* normale
+       e finisce dietro, che è dove sta il risguardo a libro chiuso. */
+    transform: rotateY(180deg) translateZ(0.6px);
     background: linear-gradient(140deg, #2a1512 0%, #1a0d0b 55%, #251310 100%);
   }
 
@@ -3138,9 +3148,25 @@
     color: rgba(42, 33, 25, 0.72) !important;
   }
 
-  /* L'inchiostro arriva solo quando il libro si apre: la carta era già lì. */
-  .vo-dedication[data-writing] {
-    animation: vo-inking 2.4s cubic-bezier(0.5, 0.05, 0.2, 1) 0.15s both;
+  /* Ogni riga è un blocco, così la penna va a capo dove va a capo il testo. */
+  .vo-dedication-line {
+    display: block;
+  }
+
+  /* La parola è la vera unità della scrittura: si scopre da sinistra a destra,
+     e le parole si accendono una dopo l'altra. A lettera un testo di trenta
+     parole ci mette troppo e la penna sembra lenta invece che sicura; a parola
+     il gesto resta, perché la scopertura *dentro* la parola è comunque da
+     sinistra. Lo spazio fra le parole sta fuori dal riquadro, altrimenti la riga
+     non avrebbe dove spezzarsi. */
+  .vo-dedication-word {
+    display: inline-block;
+  }
+
+  /* L'inchiostro arriva solo la prima volta che si apre il frontespizio. */
+  .vo-dedication[data-writing] .vo-dedication-word {
+    animation: vo-write 0.26s ease-out both;
+    animation-delay: calc(var(--vo-word, 0) * 42ms);
   }
 
   .vo-dedication-sign {
@@ -3150,17 +3176,27 @@
     color: var(--vo-book-accent);
   }
 
-  .vo-dedication[data-writing] + .vo-dedication-sign,
-  .vo-dedication[data-writing] ~ .vo-dedication-sign {
-    animation: vo-fade-in 0.8s ease 2.5s both;
+  /* La firma arriva quando la penna ha finito, non a tempo fisso. */
+  .vo-dedication-sign[data-writing] {
+    animation: vo-fade-in 0.6s ease both;
+    animation-delay: calc(var(--vo-word, 0) * 42ms + 0.18s);
   }
 
-  @keyframes vo-inking {
+  /* I margini negativi lasciano fuori dal ritaglio le aste e le code delle
+     lettere: con `inset(0 100% 0 0)` netto, una "g" veniva tagliata a metà. */
+  @keyframes vo-write {
     from {
-      clip-path: inset(0 100% 0 0);
+      opacity: 0;
+      clip-path: inset(-25% 100% -35% -6%);
+      filter: blur(1.3px);
+    }
+    60% {
+      opacity: 1;
     }
     to {
-      clip-path: inset(0 0 0 0);
+      opacity: 1;
+      clip-path: inset(-25% -6% -35% -6%);
+      filter: blur(0);
     }
   }
 
@@ -3333,6 +3369,65 @@
   }
 
   /* Appunti */
+  /* ── La ricerca nel taccuino ──────────────────────────────────────────────
+     Sta sulla facciata sinistra, che su un quaderno è il margine: il posto in
+     cui si annota cosa si sta cercando. Non è un campo di un modulo — è una
+     riga tirata sulla carta, con la parola scritta sopra. */
+  .vo-notebook-search {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-top: 0.5rem;
+  }
+
+  .vo-notebook-search-label {
+    font-size: 0.58rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: rgba(42, 33, 25, 0.45);
+  }
+
+  .vo-notebook-search input {
+    width: 100%;
+    padding: 0.35rem 0.1rem 0.45rem;
+    border: 0;
+    /* Una riga sola, come quella di un quaderno: niente riquadro. */
+    border-bottom: 1px solid var(--vo-book-rule);
+    border-radius: 0;
+    background: transparent;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 0.95rem;
+    font-style: italic;
+    color: var(--vo-book-ink);
+    outline: none;
+  }
+
+  .vo-notebook-search input::placeholder {
+    color: rgba(42, 33, 25, 0.34);
+  }
+
+  .vo-notebook-search input:focus {
+    border-bottom-color: var(--vo-book-accent);
+  }
+
+  /* La crocetta che Safari e Chrome infilano nei campi `search` è un pulsante di
+     sistema: dentro un libro è l'unica cosa che non è carta. */
+  .vo-notebook-search input::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .vo-notebook-count {
+    font-size: 0.72rem !important;
+    font-style: italic;
+    color: rgba(42, 33, 25, 0.5) !important;
+  }
+
+  .vo-face-empty-note {
+    font-style: italic;
+    color: rgba(42, 33, 25, 0.55) !important;
+  }
+
   .vo-face-posts ul {
     display: flex;
     flex-direction: column;
@@ -3532,6 +3627,7 @@
     }
 
     .vo-dedication,
+    .vo-dedication .vo-dedication-word,
     .vo-dedication-sign,
     .vo-cover-prompt span {
       animation: none;
@@ -4507,20 +4603,344 @@
    pagine che girano in 3D.
    ───────────────────────────────────────────────────────────────────────────── */
 @layer components {
+  /* Le due scene stanno **sovrapposte**, non affiancate.
+     Prima il mondo era largo due viewport e la camera ci traslava sopra: il
+     libro usciva per forza dal bordo sinistro, e non c'era modo di lasciarne un
+     pezzo in vista. Ora ognuna occupa lo schermo e si muove per conto proprio —
+     il volume si allontana in alto a destra e ci resta, la scrivania entra da
+     destra — che è la stessa panoramica ma con il libro ancora sul tavolo. */
   .vo-world {
+    position: relative;
     height: 100%;
     min-height: 0;
-    perspective: 1800px;
-    perspective-origin: 50% 50%;
+    /* Il pezzo di volume che resta fuori quadro va tagliato dallo schermo, non
+       disegnato sopra il piede della pagina. */
+    overflow: hidden;
   }
 
-  .vo-world > * {
-    height: 100%;
+  .vo-world > .vo-book-viewport,
+  .vo-world > .vo-desk-scene {
+    position: absolute;
+    inset: 0;
     min-width: 0;
     min-height: 0;
     /* Il perno sta al centro dello schermo, non della scena. */
     transform-origin: 50% 50%;
     will-change: transform, opacity;
+  }
+
+  /* L'orecchio del volume, in alto a destra: il modo di tornare indietro.
+     È il pulsante a essere cliccabile, non la scena — quella resta `inert`
+     mentre si legge, o si potrebbero girare le pagine dietro la scrivania. */
+  .vo-desk-back-to-book {
+    position: absolute;
+    top: clamp(0.6rem, 2.2vh, 1.4rem);
+    right: clamp(0.6rem, 2vw, 1.4rem);
+    z-index: 30;
+    padding: 0.45rem 1rem;
+    border: 1px solid var(--vo-line);
+    border-radius: 999px;
+    background: rgba(11, 9, 8, 0.72);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 0.66rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(242, 216, 148, 0.82);
+    cursor: pointer;
+    transition: color 0.25s ease, border-color 0.25s ease;
+  }
+
+  .vo-desk-back-to-book:hover,
+  .vo-desk-back-to-book:focus-visible {
+    color: var(--vo-gold-soft);
+    border-color: var(--vo-gold);
+  }
+
+  /* Da un foglio al successivo senza tornare al libro: il tavolo si naviga. */
+  .vo-sheet-steps {
+    display: flex;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-top: 2.4rem;
+    padding-top: 1.4rem;
+    border-top: 1px solid var(--vo-book-rule);
+  }
+
+  .vo-sheet-steps button {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    max-width: 46%;
+    border: 0;
+    background: transparent;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 0.86rem;
+    text-align: left;
+    color: var(--vo-book-ink);
+    cursor: pointer;
+  }
+
+  .vo-sheet-step-next {
+    text-align: right;
+  }
+
+  .vo-sheet-steps button span {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .vo-sheet-steps small {
+    font-size: 0.58rem;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: rgba(42, 33, 25, 0.45);
+  }
+
+  .vo-sheet-steps button:hover {
+    color: var(--vo-book-accent);
+  }
+
+  .vo-desk {
+    position: relative;
+    display: grid;
+    place-items: center;
+    height: 100%;
+    min-height: 0;
+    padding: clamp(0.6rem, 2vh, 1.4rem) clamp(0.8rem, 3vw, 2.5rem);
+    overflow: hidden;
+  }
+
+  /* Il piano: legno scuro sotto una luce radente da lampada. */
+  .vo-desk-surface {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(120% 80% at 32% 8%, rgba(216, 173, 90, 0.16), transparent 58%),
+      radial-gradient(90% 70% at 70% 100%, rgba(70, 40, 22, 0.5), transparent 72%),
+      linear-gradient(168deg, #2a1a10 0%, #1a1009 46%, #241608 100%);
+  }
+
+  .vo-desk-surface::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(
+      92deg,
+      rgba(0, 0, 0, 0.16) 0 2px,
+      transparent 2px 9px
+    );
+    opacity: 0.5;
+  }
+
+  /* ── Il mucchio: gli altri appunti che sbucano da sotto ───────────────────── */
+  .vo-desk-pile {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .vo-desk-scrap {
+    position: absolute;
+    top: calc(50% + var(--vo-sheet-y, 0%));
+    left: calc(50% + var(--vo-sheet-x, 0%));
+    width: clamp(150px, 22%, 260px);
+    padding: 0.8rem 0.9rem 1.6rem;
+    border: 0;
+    background: linear-gradient(170deg, #efe6cf 0%, #e2d6ba 100%);
+    box-shadow: 0 14px 30px -16px rgba(0, 0, 0, 0.85);
+    font-family: Georgia, "Times New Roman", serif;
+    text-align: left;
+    cursor: pointer;
+    pointer-events: auto;
+    transform: translate(-50%, -50%) rotate(var(--vo-sheet-tilt, -3deg));
+    transition: transform 0.35s cubic-bezier(0.34, 1.2, 0.5, 1);
+  }
+
+  .vo-desk-scrap:hover,
+  .vo-desk-scrap:focus-visible {
+    transform: translate(-50%, -54%) rotate(var(--vo-sheet-tilt, -3deg));
+  }
+
+  .vo-desk-scrap-date {
+    display: block;
+    font-size: 0.56rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--vo-book-gilt);
+  }
+
+  .vo-desk-scrap-title {
+    display: block;
+    margin-top: 0.3rem;
+    font-size: 0.92rem;
+    line-height: 1.24;
+    color: var(--vo-book-ink);
+  }
+
+  /* ── Il foglio in lettura ─────────────────────────────────────────────────── */
+  .vo-sheet {
+    position: relative;
+    z-index: 3;
+    width: min(100%, 40rem);
+    max-height: 100%;
+    /* La carta è lunga e scorre: non è una finestra sul testo, è un foglio che
+       continua oltre il bordo. Senza barra, come ovunque nel sito. */
+    overflow-y: auto;
+    scrollbar-width: none;
+    padding: clamp(1.4rem, 3.5vw, 2.6rem) clamp(1.2rem, 3.2vw, 2.4rem) clamp(1.6rem, 4vw, 2.6rem);
+    background: linear-gradient(172deg, #f4ecd8 0%, #ebe1c8 55%, #e3d8bb 100%);
+    color: var(--vo-book-ink);
+    font-family: Georgia, "Times New Roman", serif;
+    box-shadow:
+      0 2px 2px rgba(20, 13, 8, 0.35),
+      0 34px 64px -26px rgba(0, 0, 0, 0.9);
+    transform: rotate(-0.4deg);
+  }
+
+  .vo-sheet::-webkit-scrollbar {
+    display: none;
+  }
+
+  .vo-sheet-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.1rem;
+    font-size: 0.62rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--vo-book-gilt);
+  }
+
+  .vo-sheet-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    color: var(--vo-book-accent);
+    cursor: pointer;
+  }
+
+  .vo-sheet h1 {
+    font-family: "The Seasons Light", "The Seasons", Georgia, serif;
+    font-weight: 400;
+    font-size: clamp(1.6rem, 3.4vw, 2.5rem);
+    line-height: 1.1;
+  }
+
+  .vo-sheet-lead {
+    margin-top: 0.7rem;
+    font-style: italic;
+    font-size: clamp(0.92rem, 1.3vw, 1.06rem);
+    line-height: 1.6;
+    color: rgba(42, 33, 25, 0.8);
+  }
+
+  .vo-sheet-rule {
+    display: block;
+    width: 3.5rem;
+    height: 1px;
+    margin: 1.2rem 0 1.4rem;
+    background: var(--vo-book-gilt);
+  }
+
+  .vo-sheet-body p {
+    margin-bottom: 1.05rem;
+    font-size: clamp(0.9rem, 1.15vw, 1rem);
+    line-height: 1.78;
+    color: var(--vo-book-ink-soft);
+  }
+
+  .vo-sheet-heading {
+    margin: 1.6rem 0 0.7rem;
+    font-family: "The Seasons Light", Georgia, serif;
+    font-weight: 400;
+    font-size: 1.2rem;
+  }
+
+  /* La citazione è scritta a margine, come un'annotazione sul manoscritto. */
+  .vo-sheet-quote {
+    margin: 1.5rem 0 1.6rem;
+    padding-left: 1.1rem;
+    border-left: 2px solid rgba(151, 31, 24, 0.55);
+    font-style: italic;
+    font-size: clamp(1rem, 1.4vw, 1.15rem);
+    line-height: 1.6;
+    color: rgba(42, 33, 25, 0.92);
+  }
+
+  .vo-sheet-figure {
+    margin: 1.4rem 0;
+  }
+
+  .vo-sheet-figure img {
+    width: 100%;
+    border-radius: 1px;
+  }
+
+  .vo-sheet-figure figcaption {
+    margin-top: 0.5rem;
+    font-size: 0.76rem;
+    font-style: italic;
+    color: var(--vo-book-ink-soft);
+  }
+
+  .vo-sheet-foot {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--vo-book-rule);
+    font-size: 0.68rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--vo-book-ink-soft);
+  }
+
+  .vo-sheet-foot span:first-child {
+    font-size: 1.05rem;
+    color: rgba(151, 31, 24, 0.75);
+  }
+
+  .vo-desk-empty {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    font-family: Georgia, "Times New Roman", serif;
+    color: rgba(242, 216, 148, 0.7);
+  }
+
+  .vo-desk-empty button {
+    padding: 0.5rem 1.15rem;
+    border: 1px solid var(--vo-line);
+    border-radius: 999px;
+    background: transparent;
+    font: inherit;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(242, 216, 148, 0.75);
+    cursor: pointer;
+  }
+
+  .vo-book-site[data-compact] .vo-desk-scrap {
+    width: clamp(130px, 46%, 190px);
+    padding: 0.6rem 0.7rem 1.1rem;
+  }
+
+  .vo-book-site[data-compact] .vo-sheet {
+    width: 100%;
   }
 }
 

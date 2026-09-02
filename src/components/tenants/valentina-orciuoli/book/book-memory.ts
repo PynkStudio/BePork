@@ -29,8 +29,17 @@ export const voBookMemory = {
   half: 0,
   /** true se il volume è rigirato sulla quarta di copertina. */
   back: false,
+  /** true se la camera è sulla scrivania invece che sul volume. */
+  desk: false,
   /** Preferenza audio. */
   sound: true,
+  /**
+   * La dedica si scrive una volta sola per sessione di lettura. Tornare sul
+   * frontespizio sfogliando non deve far ricominciare la penna da capo: sarebbe
+   * un'animazione che si ripete, e un'animazione che si ripete smette di essere
+   * un gesto e diventa un effetto.
+   */
+  dedicationWritten: false,
 };
 
 /**

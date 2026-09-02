@@ -27,7 +27,7 @@ export type VoSpread = {
 };
 
 /** Le sezioni fisse, quelle che hanno una voce di menu. */
-export type VoStaticSpreadId = "home" | "libri" | "eventi" | "contatti";
+export type VoStaticSpreadId = "home" | "libri" | "blog" | "eventi" | "contatti";
 
 const workSpreads: VoSpread[] = valentinaCreativeWorks.map((work) => ({
   id: work.slug,
@@ -41,7 +41,12 @@ const workSpreads: VoSpread[] = valentinaCreativeWorks.map((work) => ({
 export const voSpreads: readonly VoSpread[] = [
   { id: "home", kind: "static", path: valentinaBasePath, navLabel: "Home", runningHead: "Frontespizio", inNav: true },
   { id: "libri", kind: "static", path: `${valentinaBasePath}/libri`, navLabel: "Libri", runningHead: "Le opere", inNav: true },
-  ...workSpreads,
+  /**
+   * Il taccuino. Sta *dentro* il volume — è la sezione da cui si prende un
+   * appunto — e da qui la lettura del singolo articolo esce di scena con una
+   * panoramica verso la scrivania, non con una navigazione.
+   */
+  { id: "blog", kind: "static", path: `${valentinaBasePath}/blog`, navLabel: "Blog", runningHead: "Dal taccuino", inNav: true },
   { id: "eventi", kind: "static", path: `${valentinaBasePath}/eventi`, navLabel: "Eventi", runningHead: "Calendario", inNav: true },
   { id: "contatti", kind: "static", path: `${valentinaBasePath}/contatti`, navLabel: "Contatti", runningHead: "Scrivimi", inNav: true },
 ];
@@ -114,6 +119,20 @@ export function appendixHref(entry: VoAppendix, localePrefix: string) {
   if (!localePrefix) return entry.path;
   const rest = entry.path.slice(valentinaBasePath.length);
   return `${valentinaBasePath}${localePrefix}${rest}`;
+}
+
+/** `/blog/<slug>`: non è una pagina del volume, è un foglio sulla scrivania. */
+export function articleSlugFromPathname(pathname: string | null | undefined) {
+  if (!pathname) return null;
+  const normalized = stripLocaleSegment(pathname).replace(/\/$/, "");
+  const prefix = `${valentinaBasePath}/blog/`;
+  if (!normalized.startsWith(prefix)) return null;
+  const slug = normalized.slice(prefix.length);
+  return slug && !slug.includes("/") ? slug : null;
+}
+
+export function articleHref(slug: string, localePrefix: string) {
+  return `${valentinaBasePath}${localePrefix}/blog/${slug}`;
 }
 
 export type VoFaceSide = "left" | "right";

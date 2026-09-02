@@ -1,11 +1,10 @@
 "use client";
 
 import { animate, motion, useMotionValue, useTransform, type MotionValue } from "framer-motion";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   useCallback,
   useEffect,
-  startTransition,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -16,6 +15,7 @@ import {
   type RefObject,
 } from "react";
 import { VoLeaf } from "@/components/tenants/valentina-orciuoli/book/leaf";
+import { voPushUrl } from "@/components/tenants/valentina-orciuoli/book/book-navigation";
 import { usePageSound } from "@/components/tenants/valentina-orciuoli/book/use-page-sound";
 import {
   voBookMemory,
@@ -77,6 +77,16 @@ const WHEEL_IDLE_MS = 110;
 const WHEEL_RELOAD_MS = 170;
 /** La rotella non è un puntatore, ma prende in prestito lo stesso trascinamento. */
 const WHEEL_POINTER_ID = -1;
+/**
+ * Quanto il libro resta sordo agli input subito dopo essersi aperto.
+ *
+ * La copertina si apre con una rotellata o una scorsa del pollice, e l'inerzia
+ * di quel gesto arriva *dopo* che il volume è già aperto: il primo ascoltatore
+ * ha finito il suo lavoro, il secondo lo raccoglie e gira una pagina — a volte
+ * due. Chi apriva il libro non vedeva mai il frontespizio, si ritrovava
+ * direttamente sull'indice delle opere.
+ */
+const OPEN_GRACE_MS = 750;
 const MAX_ANIMATED_LEAVES = 3;
 const LEAF_STAGGER_MS = 90;
 /**
@@ -278,7 +288,6 @@ export function VoBookShell({
   onLeaveAppendix?: () => void;
   renderAppendix: (entry: VoAppendix, side: VoFaceSide) => ReactNode;
 }) {
-  const router = useRouter();
   const pathname = usePathname();
   const reducedMotion = usePrefersReducedMotion();
   const stageRef = useRef<HTMLDivElement | null>(null);
@@ -302,6 +311,13 @@ export function VoBookShell({
     };
   }, [compact]);
   const playPageSound = usePageSound(soundEnabled && !reducedMotion);
+
+  // Il volume si è appena aperto: si prende un attimo prima di accettare gesti,
+  // altrimenti l'inerzia della scorsa che l'ha aperto gira subito una pagina.
+  useEffect(() => {
+    if (!open) return;
+    inputLockRef.current = performance.now() + OPEN_GRACE_MS;
+  }, [open]);
   const localePrefix = localePrefixFromPathname(pathname);
 
   // Se il volume era già aperto si riparte da dove eravamo, non dalla pagina
@@ -395,6 +411,12 @@ export function VoBookShell({
   /** Corsa accumulata dalla rotella nel gesto in corso, e il suo tempo di guardia. */
   const wheelRef = useRef<{ travel: number; idle: number } | null>(null);
   const wheelLockRef = useRef(0);
+  /**
+   * Fino a quando ignorare un gesto *nuovo*. Serve solo all'apertura: la coda
+   * del gesto che ha spalancato la copertina non deve valere anche come
+   * richiesta di girare la prima pagina.
+   */
+  const inputLockRef = useRef(0);
   const dragRef = useRef<{
     startX: number;
     /** Corsa in pixel che vale un giro pagina intero. */
@@ -426,13 +448,14 @@ export function VoBookShell({
   // sinistra compare solo quando la copertina ha passato la verticale.
   const blockShift = useTransform(coverProgress, [0, 0.55], [compact ? "0%" : "-25%", "0%"]);
   const volumeTurn = useTransform(turn, [0, 1], [0, 180]);
-  // La pagina sinistra compare solo quando il piatto si è posato. Oltre la
-  // verticale la copertina non scende dritta: ruotando attorno al dorso il suo
-  // bordo libero arcua verso l'osservatore, quindi in quel tratto sta *davanti*
-  // alla metà sinistra — ed è giusto così, in un libro vero il risguardo è
-  // incollato al piatto e viene giù con lui. Scoprire la dedica prima significava
-  // vedersela coprire dal cartoncino ancora in volo.
-  const leftPageOpacity = useTransform(coverProgress, [0.86, 0.99], [0, 1]);
+  // La pagina sinistra si scopre *sotto* la copertina che scende. Oltre la
+  // verticale il cartoncino sta davanti alla metà sinistra — ruotando attorno al
+  // dorso il suo bordo libero arcua verso l'osservatore — quindi la pagina può
+  // esserci già: viene svelata dal piatto che si posa, che è come si apre un
+  // libro vero. Prima compariva negli ultimi centesimi della corsa, e per tutta
+  // l'apertura dietro la copertina non c'era niente: si vedeva il volume aprirsi
+  // sul vuoto invece che sulla prima pagina.
+  const leftPageOpacity = useTransform(coverProgress, [0.55, 0.82], [0, 1]);
 
   /**
    * Le facciate già costruite, per posizione. Un gesto rimonta lo shell almeno
@@ -536,23 +559,28 @@ export function VoBookShell({
    * mette in coda — due sarebbero l'inerzia del trackpad, non una volontà.
    */
   const queuedRef = useRef(0);
+  /**
+   * La sezione chiesta dall'URL mentre un foglio era ancora in volo.
+   *
+   * Prima veniva scartata: due clic ravvicinati in nav — o un clic durante un
+   * giro — cambiavano la barra degli indirizzi e lasciavano il libro sull'altra
+   * pagina. Da fuori sembrava che il volume non sapesse dove andare, ed è il
+   * difetto che si notava di più perché lascia URL e pagina in disaccordo.
+   */
+  const pendingUrlRef = useRef<number | null>(null);
 
   /** Porta l'URL sulla sezione, se non ci è già. */
   const publish = useCallback(
     (targetSpread: number) => {
       // In compatto due posizioni consecutive appartengono allo stesso spread:
-      // l'URL cambia solo quando cambia la sezione. Ripubblicare lo stesso path
-      // non è gratis — è una navigazione RSC completa — e cadeva esattamente
-      // sull'ultimo fotogramma del giro, dove si vedeva tutta.
+      // l'URL cambia solo quando cambia la sezione.
       const href = spreadHref(voSpreads[targetSpread], localePrefix);
       if (href === pathname) return;
-      // Il foglio si è già posato: la navigazione è lavoro che può aspettare il
-      // fotogramma dopo, invece di contendere quello che sta ancora disegnando.
-      startTransition(() => {
-        router.push(href, { scroll: false });
-      });
+      // Cronologia, non router: vedi `book-navigation`. Un `router.push` qui
+      // rimontava il libro intero sull'ultimo fotogramma del giro.
+      voPushUrl(href);
     },
-    [localePrefix, pathname, router],
+    [localePrefix, pathname],
   );
 
   const commit = useCallback(
@@ -699,7 +727,12 @@ export function VoBookShell({
     // Una sezione si apre sempre dalla sua prima facciata; l'appendice ha la sua
     // posizione virtuale in fondo, così raggiungerla è comunque uno sfogliare.
     const fromUrl = appendix ? appendixPos : toPos(spreadIndexByPathname(pathname), 0);
-    if (fromUrl === pos || gesture) return;
+    if (fromUrl === pos) return;
+    // Un foglio è già in volo: la richiesta non si butta, si onora appena si posa.
+    if (gesture) {
+      pendingUrlRef.current = fromUrl;
+      return;
+    }
     // L'URL nomina la *sezione*, non la facciata. Su schermo stretto una sezione
     // ne occupa due, e se si è già dentro quella giusta non c'è niente da
     // inseguire: pretenderne la prima rimandava indietro di una pagina ogni giro
@@ -726,7 +759,18 @@ export function VoBookShell({
   }, [appendix, pathname]);
 
   useEffect(() => {
-    if (gesture || queuedRef.current === 0) return;
+    if (gesture) return;
+    // Prima l'URL: se nel frattempo è cambiato, è quello che l'utente ha chiesto.
+    const pending = pendingUrlRef.current;
+    if (pending !== null) {
+      pendingUrlRef.current = null;
+      queuedRef.current = 0;
+      if (pending !== pos) {
+        goTo(pending);
+        return;
+      }
+    }
+    if (queuedRef.current === 0) return;
     const queued = queuedRef.current;
     queuedRef.current = 0;
     const target = pos + queued;
@@ -873,6 +917,7 @@ export function VoBookShell({
   const beginDrag = useCallback(
     (dir: 1 | -1, startX: number, pointerId: number, travelSpan?: number) => {
       if (!open || reducedMotion || gestureRef.current?.mode === "run") return false;
+      if (performance.now() < inputLockRef.current) return false;
       const stage = stageRef.current;
       if (!stage) return false;
       // Un foglio già accennato si prende dov'è; uno preso da fermo parte dal suo
@@ -1007,6 +1052,7 @@ export function VoBookShell({
       let wheel = wheelRef.current;
       if (!wheel) {
         if (performance.now() < wheelLockRef.current) return;
+        if (performance.now() < inputLockRef.current) return;
         const direction: 1 | -1 = push > 0 ? 1 : -1;
         // Ai capi del volume non c'è foglio da prendere, e con un foglio già in
         // volo questo giro non è disponibile: in entrambi i casi decide `step`,

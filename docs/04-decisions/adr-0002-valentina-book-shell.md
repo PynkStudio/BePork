@@ -11,6 +11,12 @@
 > documento — cerimonia d'apertura, sfogliare, quarta di copertina, appendice legale —
 > resta invariato e valido.
 
+> **Nota (2026-09-02):** dentro il volume non si naviga più con `router.push` ma con
+> l'API nativa della cronologia — vedi [[adr-0006-valentina-taccuino-nel-libro]] §1. Il
+> libro non si rimonta più a ogni giro pagina, ed è da lì che venivano il lampo della
+> pagina precedente a fine giro, le foto che saltavano e le pagine saltate. Nello stesso
+> intervento il blog è tornato una pagina del libro.
+
 > **Nota (2026-09-01):** il foglio in volo **non è più spezzato in doghe**. La curvatura
 > geometrica della carta è stata sostituita da una curvatura *di luce* su un piano solo:
 > vedi "La carta si incurva, ma di luce" più sotto. Il costo per fotogramma e la

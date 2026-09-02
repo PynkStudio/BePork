@@ -2,7 +2,18 @@
 
 /* eslint-disable @next/next/no-img-element */
 import { ArrowRight, BookOpen, Instagram, Mail, Music2 } from "lucide-react";
-import type { CSSProperties, FormEvent, ReactNode } from "react";
+import {
+  Fragment,
+  useEffect,
+  useState,
+  type CSSProperties,
+  type FormEvent,
+  type ReactNode,
+} from "react";
+import {
+  voBookMemory,
+  voBookMemoryAvailable,
+} from "@/components/tenants/valentina-orciuoli/book/book-memory";
 import { ValentinaContactForm } from "@/components/tenants/valentina-orciuoli/contact-form";
 import {
   amazonStoreHref,
@@ -12,6 +23,12 @@ import {
   type ValentinaCreativeWork,
 } from "@/components/tenants/valentina-orciuoli/content";
 import { DynamicPolicyDocument } from "@/components/legal/dynamic-policy-document";
+import {
+  filterVoNotes,
+  setVoBlogQuery,
+  useVoBlogQuery,
+} from "@/components/tenants/valentina-orciuoli/book/blog-store";
+import type { VoNote } from "@/components/tenants/valentina-orciuoli/book/notes";
 import type {
   VoAppendix,
   VoFaceSide,
@@ -33,9 +50,194 @@ export type VoBookContext = {
   folioFor: (id: string) => number;
   /** false per le opere che esistono in gestione ma non hanno una pagina nel volume. */
   hasPage: (id: string) => boolean;
-  /** La dedica si scrive da sé una volta per apertura del libro, non a ogni ritorno. */
-  writeDedication: boolean;
+  /** Gli appunti del taccuino. Arrivano dal server, così stanno nell'HTML. */
+  posts: VoNote[];
+  /** false finché la prima lettura non è tornata: distingue "vuoto" da "non ancora". */
+  postsLoaded: boolean;
+  /** Indirizzo pubblico di un appunto: resta un `<a href>` vero per i crawler. */
+  articleHref: (slug: string) => string;
+  /** Porta la scena sulla scrivania, con quell'appunto in cima al mucchio. */
+  openArticle: (slug: string) => void;
 };
+
+function formatPostDate(value: string | null) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" });
+}
+
+/**
+ * La facciata sinistra del taccuino: la ricerca.
+ *
+ * Sta a sinistra perché è il margine — il posto in cui, su un quaderno vero, si
+ * annota cosa si sta cercando — e perché la pagina destra deve restare libera
+ * per gli appunti. Il testo cercato vive nello store e non qui: due copie della
+ * stessa facciata convivono durante un giro pagina, e devono dire la stessa cosa.
+ */
+function VoBlogSearchFace({ ctx }: { ctx: VoBookContext }) {
+  const query = useVoBlogQuery();
+  const { posts, postsLoaded: loaded } = ctx;
+  const results = filterVoNotes(posts, query);
+
+  return (
+    <div className="vo-face vo-face-intro vo-face-notebook">
+      <span className="vo-face-kicker">I taccuini e le lettere</span>
+      <h2>Dal taccuino</h2>
+      <p className="vo-face-lead">
+        Gli appunti presi a margine della scrittura: i simboli, le domande rimaste
+        aperte, il mestiere di raccontare.
+      </p>
+
+      <label className="vo-notebook-search">
+        <span className="vo-notebook-search-label">Cerca fra gli appunti</span>
+        <input
+          type="search"
+          value={query}
+          placeholder="una parola, un simbolo, un nome"
+          onChange={(event) => setVoBlogQuery(event.target.value)}
+          // La rotella dentro il campo è del campo, non del libro.
+          onWheel={(event) => event.stopPropagation()}
+        />
+      </label>
+
+      <p className="vo-notebook-count" aria-live="polite">
+        {!loaded
+          ? "Sto cercando gli appunti\u2026"
+          : query.trim()
+            ? results.length === 0
+              ? "Nessun appunto per questa parola."
+              : `${results.length} ${results.length === 1 ? "appunto trovato" : "appunti trovati"}.`
+            : `${posts.length} ${posts.length === 1 ? "appunto" : "appunti"} nel taccuino.`}
+      </p>
+    </div>
+  );
+}
+
+/**
+ * La facciata destra: i più recenti, e i risultati appena si cerca qualcosa.
+ * Prendere un appunto non gira una pagina — esce dal volume con una panoramica
+ * verso la scrivania, che è dove gli appunti stanno davvero.
+ */
+function VoBlogListFace({ ctx }: { ctx: VoBookContext }) {
+  const query = useVoBlogQuery();
+  const { posts, postsLoaded: loaded } = ctx;
+  const searching = query.trim().length > 0;
+  const results = filterVoNotes(posts, query);
+
+  if (!loaded) {
+    return (
+      <div className="vo-face vo-face-posts">
+        <p className="vo-face-empty-note">Sto sfogliando il taccuino&hellip;</p>
+      </div>
+    );
+  }
+
+  if (results.length === 0) {
+    return (
+      <div className="vo-face vo-face-posts">
+        <span className="vo-face-kicker">{searching ? "Ricerca" : "Recenti"}</span>
+        <p className="vo-face-empty-note">
+          {searching
+            ? "Nessun appunto risponde a questa parola. Prova con un\u2019altra."
+            : "I primi appunti sono ancora sulla scrivania."}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="vo-face vo-face-posts">
+      <span className="vo-face-kicker">{searching ? "Risultati" : "Gli ultimi appunti"}</span>
+      <ul>
+        {results.map((post) => (
+          <li key={post.id}>
+            <a
+              href={ctx.articleHref(post.slug)}
+              onClick={(event) => {
+                if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
+                event.preventDefault();
+                ctx.openArticle(post.slug);
+              }}
+            >
+              {formatPostDate(post.publishedAt) ? (
+                <time dateTime={post.publishedAt ?? undefined}>
+                  {formatPostDate(post.publishedAt)}
+                </time>
+              ) : null}
+              <h3>{post.title}</h3>
+              {post.excerpt ? <p>{post.excerpt}</p> : null}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** Il testo della dedica, riga per riga: è la penna a deciderne il ritmo. */
+const VO_DEDICATION = [
+  "Avvicinati e prendi posto.",
+  "Le storie migliori non iniziano mai per caso: cominciano quando qualcuno ha il coraggio di sedersi, fare silenzio e ascoltare ciò che si agita sottopelle.",
+  "Se hai aperto queste pagine, sei nel posto giusto.",
+];
+
+/**
+ * La dedica si scrive a mano.
+ *
+ * Non è una dissolvenza: ogni parola viene scoperta da sinistra a destra, una
+ * dopo l'altra, come se una penna la stesse posando sulla carta. Parola e non
+ * lettera — a lettera un testo di trenta parole ci mette troppo, e la penna
+ * finirebbe per sembrare lenta invece che sicura — ma la scopertura *dentro* la
+ * parola resta da sinistra, che è ciò che dà il gesto.
+ *
+ * Si scrive **una volta per sessione di lettura**. Il flag si consuma in un
+ * effetto e non durante il render: scritto durante il render se lo mangerebbe il
+ * doppio montaggio di StrictMode, e la dedica non si scriverebbe mai.
+ */
+function VoDedication() {
+  const [writing, setWriting] = useState(false);
+
+  useEffect(() => {
+    if (!voBookMemoryAvailable || voBookMemory.dedicationWritten) return;
+    voBookMemory.dedicationWritten = true;
+    setWriting(true);
+  }, []);
+
+  let index = 0;
+  const lines = VO_DEDICATION.map((line) => line.split(" ").map((word) => ({ word, at: index++ })));
+  const total = index;
+
+  return (
+    <>
+      <p className="vo-dedication" data-writing={writing || undefined}>
+        {lines.map((words, lineIndex) => (
+          <span className="vo-dedication-line" key={lineIndex}>
+            {words.map(({ word, at }) => (
+              // Lo spazio sta *fuori* dalla parola: è l'unico punto in cui la
+              // riga può andare a capo, e dentro un `inline-block` non varrebbe.
+              <Fragment key={at}>
+                <span
+                  className="vo-dedication-word"
+                  style={{ "--vo-word": at } as CSSProperties}
+                >
+                  {word}
+                </span>{" "}
+              </Fragment>
+            ))}
+          </span>
+        ))}
+      </p>
+      <span
+        className="vo-dedication-sign"
+        data-writing={writing || undefined}
+        style={{ "--vo-word": total } as CSSProperties}
+      >
+        v.o.
+      </span>
+    </>
+  );
+}
 
 /** Link che resta un vero `<a href>` per crawler e "apri in nuova scheda", ma dentro il libro sfoglia. */
 function VoInternalLink({
@@ -226,18 +428,10 @@ export function renderVoFace(spread: VoSpread, side: VoFaceSide, ctx: VoBookCont
           <span className="vo-face-glyph" aria-hidden="true">
             龍
           </span>
-          <p className="vo-dedication" data-writing={ctx.writeDedication || undefined}>
-            Avvicinati e prendi posto.
-            <br />
-            Le storie migliori non iniziano mai per caso: cominciano quando qualcuno ha il
-            coraggio di sedersi, fare silenzio e ascoltare ci&ograve; che si agita sottopelle.
-            <br />
-            Se hai aperto queste pagine, sei nel posto giusto.
-          </p>
+          <VoDedication />
           <VoInternalLink ctx={ctx} to="libri" className="vo-face-cta">
             La narrazione comincia adesso <ArrowRight size={15} />
           </VoInternalLink>
-          <span className="vo-dedication-sign">v.o.</span>
         </div>
       );
     case "home-right":
@@ -266,6 +460,12 @@ export function renderVoFace(spread: VoSpread, side: VoFaceSide, ctx: VoBookCont
           </div>
         </div>
       );
+
+    // ── Il taccuino ──────────────────────────────────────────────────────────
+    case "blog-left":
+      return <VoBlogSearchFace ctx={ctx} />;
+    case "blog-right":
+      return <VoBlogListFace ctx={ctx} />;
 
     // ── Indice delle opere ───────────────────────────────────────────────────
     case "libri-left":

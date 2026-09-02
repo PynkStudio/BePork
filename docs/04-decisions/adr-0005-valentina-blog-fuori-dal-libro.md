@@ -1,8 +1,14 @@
 # ADR-0005: Il blog di valentina-orciuoli vive fuori dal libro, sullo stesso dominio
 
-- **Stato:** accettata
+- **Stato:** accettata — **la §5 è superata da [[adr-0006-valentina-taccuino-nel-libro]]**
 - **Data:** 2026-09-01
 - **Autore:** Massimo Pernozzoli (con Claude)
+
+> **Nota (2026-09-02):** la §5 di questo ADR — "il libro non ha più una pagina per il blog"
+> — è stata ribaltata da [[adr-0006-valentina-taccuino-nel-libro]]: il taccuino è di nuovo
+> una doppia pagina del volume e la scrivania è tornata. Tutto il resto (blog sul dominio
+> principale, renderer Tiptap, route gated sul feature flag, canonical e `hreflang`) resta
+> valido.
 
 ## Contesto
 
