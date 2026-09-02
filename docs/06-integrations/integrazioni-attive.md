@@ -18,6 +18,7 @@ Per documentare in dettaglio una singola integrazione usa [[integration-template
 | **Google Places** | Dati luoghi | `GOOGLE_PLACES_API_KEY` |
 | **Documenso** | Firma contratti | `webhooks/documenso`, `DOCUMENSO_*` (cloud + self-hosted, per-vertical) |
 | **Resend** | Email transazionali | `email/send`, `webhooks/email/inbound`, `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET` |
+| **@pynkstudio/mailapp** | Pacchetto posta (UI + query + rotte Next) | dipendenza tarball GitHub `PynkStudio/pynkstudio-mailapp`, `src/lib/mailapp-runtime.ts`, `src/lib/mailapp-brands.ts`. Nessuna env propria: usa quelle di Resend |
 | **Web Push (VAPID)** | Notifiche push | `src/lib/push/`, `push/subscribe`, `push/vapid-public-key`, `WEB_PUSH_PRIVATE_KEY`, `NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY` |
 | **OpenAI** | Funzioni IA (menu, WhatsApp lead) | `ai/*`, `OPENAI_API_KEY`, `OPENAI_*_MODEL` |
 | **OpenWA** | Worker WhatsApp | `scripts/openwa/`, script `whatsapp:worker`, `Dockerfile.openwa` |
@@ -59,6 +60,23 @@ Alternativa a QZ per il modulo `printStations` (`tenant_printers.connection = 's
 - **Stato:** allineato alla doc autenticata Cloud Printer V2 ([§3 API integration development](https://docs.sunmi.com/en-US/cdixeghjk491/xffdeghjk524)). ⚠️ Ancora **non testato su device reale**: da confermare col primo push che la stampante sia bound al channel/shop (errore `10071704 "not belong to this channel"`) e la resa del template ESC/POS su carta 80mm.
 - Modalità alternativa non implementata: **"Device to Cloud" / callback** (doc [§4](https://docs.sunmi.com/en-US/cdixeghjk491/xfffeghjk535)) — la stampante scarica da endpoint partner `printTicket/getPrintTicketOrderId|getPrintTicketInfo|updatePrintTicketStatus`, firma **MD5** `MD5(keyvalue + app_key)`, con l'URL base in *Order Request Address*. Da valutare solo se serve non far transitare i dati da SUNMI.
 - **Costo/licenza da confermare:** la stampa **silenziosa** in produzione (senza popup di conferma) richiede un certificato di firma QZ commerciale. In dev/unsigned QZ chiede conferma all'utente una volta per origine (`setCertificatePromise`/`setSignaturePromise` oggi non firmati). Nessuna env server dedicata: il ponte è interamente lato browser↔localhost.
+
+## @pynkstudio/mailapp — brand nell'app, non nel pacchetto
+
+Il pacchetto della posta è una dipendenza esterna, installata da un **tag** del repo `PynkStudio/pynkstudio-mailapp` (vedi `package.json`). Il tag va allineato al codice: se una pagina usa un'API introdotta da una versione più recente di quella pinnata, il build passa in locale (dove il pacchetto può essere installato a mano) e **fallisce su Vercel**, che installa quello che dice `package.json`.
+
+Dalla **0.5.0** il pacchetto non conosce nessun brand. L'elenco delle identità di posta vive qui:
+
+- `src/lib/mailapp-brands.ts` — `MAIL_BRANDS` (id, label, domini, indirizzi, tema), più fallback, casella condivisa e ruoli. **È l'unico posto da toccare per aggiungere un brand**: non serve più una migrazione per allargare il vincolo su `brand`.
+- `src/lib/mailapp-runtime.ts` — `configureMailappRuntime({ brands, … })`: passa i brand al runtime server e delega all'app la risoluzione del mittente, l'invio e i template di marketing (dalla 0.5.0 il pacchetto non li contiene più).
+- Le pagine passano `brands={MAIL_BRANDS}` a `<MailApp>`: `admin-pynkstudio/mailapp`, `admin/inbox`, `gestione/[tenantSlug]/mail`.
+
+**Schema database.** Il pacchetto porta le proprie migration in `migrations/`, ma descrivono anche il *mailbox runtime* (`profiles`, `user_roles`, `admin_email_aliases`, ricerca full-text), un percorso che questo progetto **non usa**: qui si passa dalle rotte Next e dall'identità `siteadmin`. Applicate su manuary.it il 2026-09-02, ricopiate in `supabase/migrations/`:
+
+- `20260902_mailapp_brand_free_text.sql` — il CHECK su `brand` diventa `length(brand) > 0`.
+- `20260902_mailapp_webhook_idempotency.sql` — `inbound_emails.resend_email_id` e `email_tracking_events.provider_event_id` con indici unici parziali. Servono al webhook 0.5.0, che fa `upsert(onConflict)` su quelle chiavi: senza, ogni ritentativo di Svix duplicava mail e notifica push.
+
+**Non applicate** (e non applicabili così come sono, perché lo schema qui è diverso): `20260903_mailbox_runtime_schema.sql` e `20260905_mail_fulltext_search.sql` del pacchetto. Riguardano il mailbox runtime: la prima ridefinisce `push_subscriptions` con una forma incompatibile con quella di questo progetto e dipende da `profiles`/`user_roles`, la seconda genera una colonna su `sent_emails.text_body`, che qui non esiste. **Da verificare** se e quando serviranno: oggi nessun codice in uso le richiede.
 
 ## Web Push (VAPID) — modello target riusabile
 

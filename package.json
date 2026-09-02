@@ -12,7 +12,7 @@
     "blog:migrate": "dotenv -e .env.local -- tsx scripts/migrate-blog-blocks-to-tiptap.ts"
   },
   "dependencies": {
-    "@pynkstudio/mailapp": "https://github.com/PynkStudio/pynkstudio-mailapp/archive/refs/tags/v0.3.1.tar.gz",
+    "@pynkstudio/mailapp": "https://github.com/PynkStudio/pynkstudio-mailapp/archive/refs/tags/v0.5.0.tar.gz",
     "@pynkstudio/newsletterapp": "https://github.com/PynkStudio/pynkstudio-newsletterapp/archive/refs/tags/v0.2.0.tar.gz",
     "@react-pdf/renderer": "^4.5.1",
     "@supabase/ssr": "^0.10.3",

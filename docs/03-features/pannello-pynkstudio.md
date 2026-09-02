@@ -122,7 +122,7 @@ Il suo pensionamento è una voce a sé della bacheca, non ancora affrontata.
 
 ## 5. Limiti noti
 
-**Posta per prodotto — sola lettura.** `@pynkstudio/mailapp` è una dipendenza esterna (tarball GitHub, `v0.3.1`). Il componente `MailApp` tiene il filtro brand in stato interno (`useState("all")`) e **non lo accetta come prop**: non è forzabile su un prodotto dall'esterno. Le sezioni `*/inbox` dei portali mostrano quindi un elenco già ristretto al brand tramite `getInboundEmails({ brand })`, e rimandano alla casella aggregata per leggere, rispondere e archiviare. Per una posta di prodotto pienamente operativa serve una prop `initialBrand` nel pacchetto a monte.
+**Posta per prodotto — sola lettura.** `@pynkstudio/mailapp` è una dipendenza esterna (tarball GitHub, `v0.5.0`). Dalla 0.5.0 l'elenco dei brand arriva dall'app (`brands={MAIL_BRANDS}`, vedi [[integrazioni-attive]]), ma il **filtro** brand resta in stato interno (`useState("all")`) e **non è accettato come prop**: non è forzabile su un prodotto dall'esterno. Le sezioni `*/inbox` dei portali mostrano quindi un elenco già ristretto al brand tramite `getInboundEmails({ brand })`, e rimandano alla casella aggregata per leggere, rispondere e archiviare. Per una posta di prodotto pienamente operativa serve una prop `initialBrand` nel pacchetto a monte.
 
 **Palette BePork nel pannello Pynk.** I componenti condivisi usano ancora le classi `pork-ink` / `pork-cream` / `pork-red`, cioè i token del tenant BePork, anche quando sono renderizzati dentro `admin.pynkstudio.eu`, che ha i propri token `--pa-*`. È una violazione della regola di isolamento visivo del `CLAUDE.md` ed è il grosso del redesign ancora da fare.
 
@@ -180,7 +180,7 @@ Il suo pensionamento è una voce a sé della bacheca, non ancora affrontata.
 
 | # | Lavoro | Stato | Note |
 |---|---|---|---|
-| 5.1 | Prop `initialBrand` in `@pynkstudio/mailapp` | ⬜ da iniziare | Richiede una release del pacchetto esterno (repo `PynkStudio/pynkstudio-mailapp`), fuori da questa repo |
+| 5.1 | Prop `initialBrand` in `@pynkstudio/mailapp` | ⬜ da iniziare | Richiede una release del pacchetto esterno (repo `PynkStudio/pynkstudio-mailapp`), fuori da questa repo. La 0.5.0 ha aggiunto `brands` (l'elenco), **non** un brand iniziale del filtro |
 | 5.2 | Sostituire la vista sola lettura con il client completo | ⬜ da iniziare | Dipende da 5.1 |
 
 ---
