@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import "@/lib/mailapp-runtime";
 import { MailApp } from "@pynkstudio/mailapp/react";
+import { MAIL_BRANDS } from "@/lib/mailapp-brands";
 import { getInboundEmails, getInboxUnreadCounts, getInboxUnreadCountForUser } from "@pynkstudio/mailapp/email";
 import { getSentDeliveryIssueCount, getSentEmails } from "@pynkstudio/mailapp/email";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -58,6 +59,7 @@ export default async function AdminInboxPage() {
   return (
     <div>
       <MailApp
+        brands={MAIL_BRANDS}
         initialInbox={inbox}
         initialSent={sent}
         unreadTotal={counts.unread_total}

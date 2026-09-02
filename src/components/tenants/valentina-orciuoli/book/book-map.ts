@@ -41,6 +41,7 @@ const workSpreads: VoSpread[] = valentinaCreativeWorks.map((work) => ({
 export const voSpreads: readonly VoSpread[] = [
   { id: "home", kind: "static", path: valentinaBasePath, navLabel: "Home", runningHead: "Frontespizio", inNav: true },
   { id: "libri", kind: "static", path: `${valentinaBasePath}/libri`, navLabel: "Libri", runningHead: "Le opere", inNav: true },
+  ...workSpreads,
   /**
    * Il taccuino. Sta *dentro* il volume — è la sezione da cui si prende un
    * appunto — e da qui la lettura del singolo articolo esce di scena con una

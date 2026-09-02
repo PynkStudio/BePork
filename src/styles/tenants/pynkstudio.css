@@ -2020,37 +2020,37 @@
   .gestione-admin[data-gestione-tenant="pynkstudio"] .ga-input,
   .gestione-admin[data-gestione-tenant="pynkstudio"] .ga-select,
   .gestione-admin[data-gestione-tenant="pynkstudio"] .ga-textarea { color-scheme: dark; }
-  .gestione-admin[data-gestione-tenant="pynkstudio"] .menuary-admin-card {
+  .gestione-admin[data-gestione-tenant="pynkstudio"] :is(.menuary-admin-card, .ma-card) {
     background: var(--ma-paper);
     border-color: var(--ma-line);
     color: var(--ma-ink);
     box-shadow: 0 18px 48px -32px rgba(0, 0, 0, 0.72);
   }
-  .gestione-admin[data-gestione-tenant="pynkstudio"] .menuary-admin-action-btn {
+  .gestione-admin[data-gestione-tenant="pynkstudio"] :is(.menuary-admin-action-btn, .ma-action-btn) {
     background: var(--ma-accent);
     color: #FFFFFF;
   }
-  .gestione-admin[data-gestione-tenant="pynkstudio"] .menuary-admin-action-btn:hover:not(:disabled) {
+  .gestione-admin[data-gestione-tenant="pynkstudio"] :is(.menuary-admin-action-btn, .ma-action-btn):hover:not(:disabled) {
     background: var(--ma-accent-dark);
   }
-  .gestione-admin[data-gestione-tenant="pynkstudio"] .menuary-admin-card .menuary-admin-nav-link {
+  .gestione-admin[data-gestione-tenant="pynkstudio"] :is(.menuary-admin-card, .ma-card) :is(.menuary-admin-nav-link, .ma-nav-link) {
     color: var(--ma-muted);
   }
-  .gestione-admin[data-gestione-tenant="pynkstudio"] .menuary-admin-card .menuary-admin-nav-link:hover {
+  .gestione-admin[data-gestione-tenant="pynkstudio"] :is(.menuary-admin-card, .ma-card) :is(.menuary-admin-nav-link, .ma-nav-link):hover {
     background: var(--ma-surface);
     color: var(--ma-ink);
   }
-  .gestione-admin[data-gestione-tenant="pynkstudio"] .menuary-admin-input {
+  .gestione-admin[data-gestione-tenant="pynkstudio"] :is(.menuary-admin-input, .ma-input) {
     border-color: var(--ma-line);
     background: var(--ma-surface);
     color: var(--ma-ink);
     color-scheme: dark;
   }
-  .gestione-admin[data-gestione-tenant="pynkstudio"] .menuary-admin-input::placeholder,
+  .gestione-admin[data-gestione-tenant="pynkstudio"] :is(.menuary-admin-input, .ma-input)::placeholder,
   .gestione-admin[data-gestione-tenant="pynkstudio"] .compose-rich-editor:empty::before {
     color: var(--ma-muted);
   }
-  .gestione-admin[data-gestione-tenant="pynkstudio"] .menuary-admin-input:focus {
+  .gestione-admin[data-gestione-tenant="pynkstudio"] :is(.menuary-admin-input, .ma-input):focus {
     border-color: var(--ma-accent);
     background: var(--ma-paper);
     box-shadow: 0 0 0 3px rgba(233, 75, 151, 0.20);
@@ -2679,14 +2679,14 @@
   }
 
   /* Reuse menuary-admin-card classes inside pynk-admin for inbox */
-  html[data-platform="admin-pynkstudio"] .menuary-admin-card {
+  html[data-platform="admin-pynkstudio"] :is(.menuary-admin-card, .ma-card) {
     background: #ffffff;
     border-color: var(--pa-line);
     box-shadow:
       0 1px 0 hsl(330 10% 85% / 0.3),
       0 8px 24px -16px hsl(330 15% 12% / 0.08);
   }
-  html[data-platform="admin-pynkstudio"] .menuary-admin-nav-link {
+  html[data-platform="admin-pynkstudio"] :is(.menuary-admin-nav-link, .ma-nav-link) {
     padding: 6px 8px;
     border-radius: 8px;
     font-size: 0.8125rem;
@@ -2694,15 +2694,15 @@
     color: var(--pa-muted);
     background: transparent;
   }
-  html[data-platform="admin-pynkstudio"] .menuary-admin-nav-link:hover {
+  html[data-platform="admin-pynkstudio"] :is(.menuary-admin-nav-link, .ma-nav-link):hover {
     background: hsl(330 15% 93% / 0.6);
     color: var(--pa-ink);
   }
-  html[data-platform="admin-pynkstudio"] .menuary-admin-action-btn {
+  html[data-platform="admin-pynkstudio"] :is(.menuary-admin-action-btn, .ma-action-btn) {
     background: var(--pa-accent);
     color: #ffffff;
   }
-  html[data-platform="admin-pynkstudio"] .menuary-admin-action-btn:hover:not(:disabled) {
+  html[data-platform="admin-pynkstudio"] :is(.menuary-admin-action-btn, .ma-action-btn):hover:not(:disabled) {
     background: var(--pa-accent-dark);
   }
   html[data-platform="admin-pynkstudio"] .menuary-admin-page-title {

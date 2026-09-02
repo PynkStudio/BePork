@@ -34,7 +34,7 @@
     color: var(--menuary-gold);
   }
 
-  .menuary-admin-nav-link {
+  :is(.menuary-admin-nav-link, .ma-nav-link) {
     display: flex;
     align-items: center;
     gap: 0.75rem;
@@ -46,12 +46,12 @@
     transition: background-color 200ms ease, color 200ms ease;
   }
 
-  .menuary-admin-nav-link:hover {
+  :is(.menuary-admin-nav-link, .ma-nav-link):hover {
     background: rgba(255, 250, 242, 0.06);
     color: var(--menuary-paper);
   }
 
-  .menuary-admin-nav-link[data-active="true"] {
+  :is(.menuary-admin-nav-link, .ma-nav-link)[data-active="true"] {
     background: var(--menuary-copper);
     color: #fffaf2;
   }
@@ -1986,7 +1986,7 @@
     font-size: 0.875rem;
   }
 
-  .menuary-admin-card {
+  :is(.menuary-admin-card, .ma-card) {
     background: #fffaf2;
     border: 1px solid var(--menuary-line);
     border-radius: 16px;
@@ -1995,7 +1995,7 @@
       0 8px 24px -16px rgba(24, 35, 31, 0.18);
   }
 
-  .menuary-admin-action-btn {
+  :is(.menuary-admin-action-btn, .ma-action-btn) {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -2011,20 +2011,20 @@
     transition: background 160ms ease, transform 160ms ease, box-shadow 160ms ease;
     cursor: pointer;
   }
-  .menuary-admin-action-btn:hover:not(:disabled) {
+  :is(.menuary-admin-action-btn, .ma-action-btn):hover:not(:disabled) {
     background: var(--menuary-copper-dark);
   }
-  .menuary-admin-action-btn:active:not(:disabled) {
+  :is(.menuary-admin-action-btn, .ma-action-btn):active:not(:disabled) {
     transform: translateY(1px);
   }
-  .menuary-admin-action-btn:disabled {
+  :is(.menuary-admin-action-btn, .ma-action-btn):disabled {
     opacity: 0.5;
     cursor: not-allowed;
   }
 
-  /* Tasti compatti della toolbar inbox: ereditano il nome .menuary-admin-nav-link
+  /* Tasti compatti della toolbar inbox: ereditano il nome .ma-nav-link
      (definito per la sidebar scura) ma vivono su fondo chiaro. */
-  .menuary-admin-card .menuary-admin-nav-link {
+  :is(.menuary-admin-card, .ma-card) :is(.menuary-admin-nav-link, .ma-nav-link) {
     padding: 6px 8px;
     border-radius: 8px;
     font-size: 0.8125rem;
@@ -2033,11 +2033,11 @@
     background: transparent;
     transition: background-color 160ms ease, color 160ms ease;
   }
-  .menuary-admin-card .menuary-admin-nav-link:hover {
+  :is(.menuary-admin-card, .ma-card) :is(.menuary-admin-nav-link, .ma-nav-link):hover {
     background: rgba(24, 35, 31, 0.06);
     color: var(--menuary-ink);
   }
-  .menuary-admin-card .menuary-admin-nav-link:disabled {
+  :is(.menuary-admin-card, .ma-card) :is(.menuary-admin-nav-link, .ma-nav-link):disabled {
     opacity: 0.45;
     cursor: not-allowed;
   }
@@ -2052,7 +2052,7 @@
     text-transform: uppercase;
   }
 
-  .menuary-admin-input {
+  :is(.menuary-admin-input, .ma-input) {
     width: 100%;
     padding: 10px 12px;
     border-radius: 10px;
@@ -2063,13 +2063,13 @@
     outline: none;
     transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
   }
-  .menuary-admin-input::placeholder { color: rgba(24, 35, 31, 0.32); }
-  .menuary-admin-input:focus {
+  :is(.menuary-admin-input, .ma-input)::placeholder { color: rgba(24, 35, 31, 0.32); }
+  :is(.menuary-admin-input, .ma-input):focus {
     border-color: var(--menuary-copper);
     box-shadow: 0 0 0 3px rgba(169, 95, 69, 0.18);
     background: #ffffff;
   }
-  .menuary-admin-input:disabled {
+  :is(.menuary-admin-input, .ma-input):disabled {
     background: rgba(24, 35, 31, 0.04);
     cursor: not-allowed;
   }
