@@ -10,32 +10,32 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { CbLabel } from "@/components/tenants/casabizzi/cb-acts";
+import { CbLabel } from "@/components/tenants/casabramanti/cb-acts";
 import {
   CbBag,
   CbColophon,
   CbHeader,
   CbSlabbbyGate,
-} from "@/components/tenants/casabizzi/cb-shell";
-import { CbShot } from "@/components/tenants/casabizzi/cb-shot";
+} from "@/components/tenants/casabramanti/cb-shell";
+import { CbShot } from "@/components/tenants/casabramanti/cb-shot";
 import {
-  casabizziCatalog,
-  findCasabizziPiece,
-  formatCasabizziPrice,
-} from "@/lib/casabizzi-catalog";
-import { useCasabizziCopy, useCasabizziLanguage } from "@/lib/casabizzi-i18n";
+  casabramantiCatalog,
+  findCasabramantiPiece,
+  formatCasabramantiPrice,
+} from "@/lib/casabramanti-catalog";
+import { useCasabramantiCopy, useCasabramantiLanguage } from "@/lib/casabramanti-i18n";
 import { useTenantLocalizedHref } from "@/lib/use-tenant-localized-href";
-import { useCbBagStore } from "@/store/casabizzi-bag-store";
+import { useCbBagStore } from "@/store/casabramanti-bag-store";
 
-export function CasaBizziPiecePage({ pieceId }: { pieceId: string }) {
-  const copy = useCasabizziCopy();
-  const language = useCasabizziLanguage();
+export function CasaBramantiPiecePage({ pieceId }: { pieceId: string }) {
+  const copy = useCasabramantiCopy();
+  const language = useCasabramantiLanguage();
   const tenantHref = useTenantLocalizedHref();
   const add = useCbBagStore((state) => state.add);
 
-  const piece = useMemo(() => findCasabizziPiece(pieceId), [pieceId]);
+  const piece = useMemo(() => findCasabramantiPiece(pieceId), [pieceId]);
   const index = useMemo(
-    () => casabizziCatalog.findIndex((entry) => entry.id === pieceId),
+    () => casabramantiCatalog.findIndex((entry) => entry.id === pieceId),
     [pieceId],
   );
 
@@ -45,8 +45,8 @@ export function CasaBizziPiecePage({ pieceId }: { pieceId: string }) {
   if (!piece) return null;
 
   const variant = piece.variants.find((entry) => entry.id === variantId) ?? piece.variants[0];
-  const previous = casabizziCatalog[index - 1];
-  const next = casabizziCatalog[index + 1];
+  const previous = casabramantiCatalog[index - 1];
+  const next = casabramantiCatalog[index + 1];
   /*
      URL che Slabbby salva e poi va a leggere per estrarre i dati del prodotto.
      Deve essere quello pubblico e uguale su server e client: con
@@ -121,7 +121,7 @@ export function CasaBizziPiecePage({ pieceId }: { pieceId: string }) {
             </div>
 
             <div className="cb-object-foot" style={{ marginBottom: "1.25rem" }}>
-              <span className="cb-price">{formatCasabizziPrice(piece.price, language)}</span>
+              <span className="cb-price">{formatCasabramantiPrice(piece.price, language)}</span>
               <span className="cb-eyebrow">{copy.cart.shippingFree}</span>
             </div>
 
@@ -149,7 +149,7 @@ export function CasaBizziPiecePage({ pieceId }: { pieceId: string }) {
               widget: dichiarandolo, il widget monta QUI il proprio bottone e
               smette di cercarsi un posto da solo. Un bottone solo, con la
               logica di salvataggio vera; lo stile arriva dai token
-              --slabbby-* scritti in casabizzi.css.
+              --slabbby-* scritti in casabramanti.css.
             */}
             <div
               className="cb-slabbby-slot"

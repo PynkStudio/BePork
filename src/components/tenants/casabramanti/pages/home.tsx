@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * CASA BIZZI — la collezione.
+ * CASA BRAMANTI — la collezione.
  *
  * Grammatica: galleria. Un frontespizio tipografico, poi una schermata per
  * oggetto con la sua didascalia breve, poi l'indice stampato e la targa
@@ -18,22 +18,22 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import {
-  casabizziCatalog,
-  casabizziTape,
-  formatCasabizziPrice,
-  CASABIZZI_COLLECTION,
-} from "@/lib/casabizzi-catalog";
-import { useCasabizziCopy, useCasabizziLanguage } from "@/lib/casabizzi-i18n";
+  casabramantiCatalog,
+  casabramantiTape,
+  formatCasabramantiPrice,
+  CASABRAMANTI_COLLECTION,
+} from "@/lib/casabramanti-catalog";
+import { useCasabramantiCopy, useCasabramantiLanguage } from "@/lib/casabramanti-i18n";
 import { getTenantContent } from "@/lib/tenant-content";
 import { useTenantLocalizedHref } from "@/lib/use-tenant-localized-href";
-import { CbPlate, type CbPlateKind } from "@/components/tenants/casabizzi/cb-acts";
-import { CbMetro, type CbMetroHandle } from "@/components/tenants/casabizzi/cb-metro";
+import { CbPlate, type CbPlateKind } from "@/components/tenants/casabramanti/cb-acts";
+import { CbMetro, type CbMetroHandle } from "@/components/tenants/casabramanti/cb-metro";
 import {
   CbBag,
   CbColophon,
   CbFrontispiece,
   CbHeader,
-} from "@/components/tenants/casabizzi/cb-shell";
+} from "@/components/tenants/casabramanti/cb-shell";
 
 /**
  * Lo spartito: tre composizioni che si alternano, mai la stessa due volte di
@@ -62,20 +62,20 @@ const clamp = (value: number, min: number, max: number) =>
 const viewportHeight = () =>
   document.documentElement.clientHeight || window.innerHeight || 800;
 
-export function CasaBizziHomePage() {
-  const copy = useCasabizziCopy();
-  const language = useCasabizziLanguage();
+export function CasaBramantiHomePage() {
+  const copy = useCasabramantiCopy();
+  const language = useCasabramantiLanguage();
   const tenantHref = useTenantLocalizedHref();
-  const content = getTenantContent("casabizzi");
+  const content = getTenantContent("casabramanti");
 
   const rootRef = useRef<HTMLDivElement>(null);
   const metroRef = useRef<CbMetroHandle>(null);
 
-  const tape = useMemo(() => casabizziTape(), []);
-  const lastIndex = casabizziCatalog.length - 1;
+  const tape = useMemo(() => casabramantiTape(), []);
+  const lastIndex = casabramantiCatalog.length - 1;
 
   const jumpTo = useCallback((pieceIndex: number) => {
-    const piece = casabizziCatalog[pieceIndex];
+    const piece = casabramantiCatalog[pieceIndex];
     if (!piece) return;
     document.getElementById(`cb-${piece.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
@@ -182,7 +182,7 @@ export function CasaBizziHomePage() {
 
   return (
     <div className="cb-root" ref={rootRef}>
-      <a className="cb-skip" href={`#cb-${casabizziCatalog[0].id}`}>
+      <a className="cb-skip" href={`#cb-${casabramantiCatalog[0].id}`}>
         {copy.nav.skipToCollection}
       </a>
 
@@ -190,9 +190,9 @@ export function CasaBizziHomePage() {
       <CbHeader />
       <CbFrontispiece />
 
-      {casabizziCatalog.map((piece, index) => {
+      {casabramantiCatalog.map((piece, index) => {
         const plate = SCORE[index] ?? { kind: "centre" as CbPlateKind };
-        const previous = index > 0 ? casabizziCatalog[index - 1] : null;
+        const previous = index > 0 ? casabramantiCatalog[index - 1] : null;
         const from =
           previous && previous.groundHex !== piece.groundHex ? previous.groundHex : undefined;
         return (
@@ -219,13 +219,13 @@ export function CasaBizziHomePage() {
             <p className="cb-note">{copy.home.indexHint}</p>
           </div>
           <ol className="cb-contents-list">
-            {casabizziCatalog.map((piece) => (
+            {casabramantiCatalog.map((piece) => (
               <li key={piece.id}>
                 <Link className="cb-contents-row" href={tenantHref(`/${piece.id}`)}>
                   <span className="cb-contents-num">{piece.number}</span>
                   <span className="cb-contents-title">{piece.name[language]}</span>
                   <span className="cb-contents-price">
-                    {formatCasabizziPrice(piece.price, language)}
+                    {formatCasabramantiPrice(piece.price, language)}
                   </span>
                 </Link>
               </li>
@@ -239,7 +239,7 @@ export function CasaBizziHomePage() {
         <div className="cb-wrap">
           <div className="cb-inquiry-grid">
             <div>
-              <p className="cb-eyebrow">{CASABIZZI_COLLECTION[language]}</p>
+              <p className="cb-eyebrow">{CASABRAMANTI_COLLECTION[language]}</p>
               <h2 id="cb-inquiry-h" className="cb-inquiry-title">
                 {copy.home.inquiryHeading}
               </h2>

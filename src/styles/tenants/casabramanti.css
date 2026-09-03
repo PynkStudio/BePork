@@ -1,5 +1,5 @@
 /* =============================================================================
-   CASA BIZZI — maison milanese, tenant demo del verticale services (Bizery).
+   CASA BRAMANTI — maison milanese, tenant demo del verticale services (Bizery).
 
    Registro: cartellino di museo. Fondo pagina osso e cemento, gli stessi due
    fondi su cui sono stati fotografati i capi, così i capi galleggiano sulla
@@ -10,7 +10,7 @@
    ========================================================================== */
 
 @layer components {
-  [data-tenant-surface="casabizzi"] {
+  [data-tenant-surface="casabramanti"] {
     /* Fondi reali dei packshot */
     --cb-bone: #ecece4;
     --cb-linen: #f4f0e6;
@@ -33,8 +33,8 @@
     /* Fondo corrente della sezione */
     --cb-ground: var(--cb-bone);
 
-    --cb-font-display: var(--font-casabizzi-display), Didot, "Bodoni MT", Georgia, serif;
-    --cb-font-body: var(--font-casabizzi-body), "Helvetica Neue", Arial, sans-serif;
+    --cb-font-display: var(--font-casabramanti-display), Didot, "Bodoni MT", Georgia, serif;
+    --cb-font-body: var(--font-casabramanti-body), "Helvetica Neue", Arial, sans-serif;
 
     /* Scala 4px */
     --cb-1: 0.25rem;
@@ -56,14 +56,14 @@
   }
 
   /* ── Fondi per sezione ─────────────────────────────────────────────────── */
-  [data-tenant-surface="casabizzi"] [data-cb-ground="bone"] {
+  [data-tenant-surface="casabramanti"] [data-cb-ground="bone"] {
     --cb-ground: var(--cb-bone);
   }
-  [data-tenant-surface="casabizzi"] [data-cb-ground="linen"] {
+  [data-tenant-surface="casabramanti"] [data-cb-ground="linen"] {
     --cb-ground: var(--cb-linen);
   }
   /* Sul cemento gli inchiostri secondari vanno scuriti o cadono sotto 4.5:1 */
-  [data-tenant-surface="casabizzi"] [data-cb-ground="concrete"] {
+  [data-tenant-surface="casabramanti"] [data-cb-ground="concrete"] {
     --cb-ground: var(--cb-concrete);
     --cb-ink-soft: #46443c;
     --cb-ink-faint: #46443c;
@@ -1651,7 +1651,7 @@
 
   /* ── Fasce strette ─────────────────────────────────────────────────────── */
   @media (max-width: 61.9375rem) {
-    [data-tenant-surface="casabizzi"] {
+    [data-tenant-surface="casabramanti"] {
       --cb-metro-w: 0px;
       --cb-topbar-h: 3.75rem;
     }
@@ -1786,11 +1786,11 @@
   }
 
   /* =========================================================================
-     Pannello gestione — identità Casa Bizzi.
+     Pannello gestione — identità Casa Bramanti.
      Coperti tutti i moduli della piattaforma, anche quelli spenti nei
      feature flag iniziali, così si possono accendere senza toccare il CSS.
      ====================================================================== */
-  .gestione-admin[data-gestione-tenant="casabizzi"] {
+  .gestione-admin[data-gestione-tenant="casabramanti"] {
     --ga-bg: #ecece4;
     --ga-surface: #f6f4ec;
     --ga-surface-2: #f4f0e6;
@@ -1813,113 +1813,113 @@
     --ga-status-halo: rgb(110 27 38 / 0.16);
     --ga-radius: 2px;
     --ga-radius-lg: 3px;
-    --ga-font-display: var(--font-casabizzi-display), Didot, "Bodoni MT", Georgia, serif;
-    --ga-font-body: var(--font-casabizzi-body), "Helvetica Neue", Arial, sans-serif;
+    --ga-font-display: var(--font-casabramanti-display), Didot, "Bodoni MT", Georgia, serif;
+    --ga-font-body: var(--font-casabramanti-body), "Helvetica Neue", Arial, sans-serif;
   }
 
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-header {
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-header {
     background: rgb(236 236 228 / 0.88);
     backdrop-filter: blur(12px);
   }
 
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-input,
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-select,
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-textarea {
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-input,
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-select,
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-textarea {
     color-scheme: light;
     border-radius: 2px;
   }
 
   /* Marchio e titoli: la didone della maison anche in gestione */
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-brand-name,
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-heading,
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-card-title,
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-kpi-value,
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-modules-title {
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-brand-name,
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-heading,
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-card-title,
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-kpi-value,
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-modules-title {
     font-family: var(--ga-font-display);
     letter-spacing: -0.01em;
   }
 
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-brand-tag,
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-eyebrow,
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-kpi-label,
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-label-text {
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-brand-tag,
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-eyebrow,
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-kpi-label,
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-label-text {
     letter-spacing: 0.16em;
     text-transform: uppercase;
     font-size: 0.6875rem;
   }
 
   /* Numeri sempre tabulari: listino, ordini, magazzino, analytics, cassa */
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-kpi-value,
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-chart-bar-value,
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-table td,
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-current-token,
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-kiosk-code {
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-kpi-value,
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-chart-bar-value,
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-table td,
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-current-token,
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-kiosk-code {
     font-variant-numeric: tabular-nums;
   }
 
   /* Bottoni: quadrati, come le targhe della collezione */
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-btn,
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-button,
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-btn-primary,
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-btn-ghost,
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-icon-button,
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-pill,
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-pill-link {
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-btn,
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-button,
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-btn-primary,
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-btn-ghost,
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-icon-button,
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-pill,
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-pill-link {
     border-radius: 2px;
     letter-spacing: 0.06em;
   }
 
   /* Card, moduli, canali, kiosk, handling: superfici piatte con filetto */
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-card,
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-module,
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-kpi,
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-channel-row,
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-kiosk-config,
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-handling,
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-coming,
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-danger-zone,
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-empty,
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-confirm-modal-panel,
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-handling-popover,
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-confirm-time-popover,
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-location-dialog {
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-card,
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-module,
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-kpi,
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-channel-row,
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-kiosk-config,
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-handling,
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-coming,
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-danger-zone,
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-empty,
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-confirm-modal-panel,
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-handling-popover,
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-confirm-time-popover,
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-location-dialog {
     border-radius: 3px;
     box-shadow: none;
   }
 
   /* Navigazione: il modulo attivo si segna con un filetto bordeaux */
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-nav-link[data-active="true"],
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-nav-link[aria-current="page"] {
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-nav-link[data-active="true"],
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-nav-link[aria-current="page"] {
     box-shadow: inset 2px 0 0 var(--ga-accent);
     background: var(--ga-accent-soft);
   }
 
   /* Stati: vuoto, errore, successo, moduli in arrivo */
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-empty {
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-empty {
     border: 1px dashed var(--ga-border);
     background: var(--ga-surface-3);
     color: var(--ga-ink-muted);
   }
 
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-form-error {
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-form-error {
     color: var(--ga-accent);
   }
 
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-coming-badge,
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-module-status {
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-coming-badge,
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-module-status {
     letter-spacing: 0.14em;
     text-transform: uppercase;
     font-size: 0.625rem;
   }
 
   /* Grafici analytics: barre in bordeaux su fondo osso */
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-chart-bar-fill,
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-channel-bar-fill {
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-chart-bar-fill,
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-channel-bar-fill {
     background: var(--ga-accent);
   }
 
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-chart-bar-track,
-  .gestione-admin[data-gestione-tenant="casabizzi"] .ga-channel-bar {
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-chart-bar-track,
+  .gestione-admin[data-gestione-tenant="casabramanti"] .ga-channel-bar {
     background: var(--ga-surface-3);
   }
 }

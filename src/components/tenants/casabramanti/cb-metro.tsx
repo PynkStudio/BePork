@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * IL METRO DA SARTO — la firma di Casa Bizzi.
+ * IL METRO DA SARTO — la firma di Casa Bramanti.
  *
  * Un metro fisso sul bordo sinistro per tutta la pagina. Non è una barra di
  * avanzamento travestita: ogni oggetto occupa il tratto di nastro che
@@ -26,8 +26,8 @@ import {
   useRef,
   useState,
 } from "react";
-import { casabizziTape, type CbTapeStop } from "@/lib/casabizzi-catalog";
-import { useCasabizziCopy, useCasabizziLanguage } from "@/lib/casabizzi-i18n";
+import { casabramantiTape, type CbTapeStop } from "@/lib/casabramanti-catalog";
+import { useCasabramantiCopy, useCasabramantiLanguage } from "@/lib/casabramanti-i18n";
 
 const PX_PER_CM = 7;
 /** Il nastro viene disegnato a finestre di 400 cm, ricentrate ogni 100 cm. */
@@ -43,9 +43,9 @@ type Props = {
 };
 
 export const CbMetro = forwardRef<CbMetroHandle, Props>(function CbMetro({ onJump }, ref) {
-  const copy = useCasabizziCopy();
-  const language = useCasabizziLanguage();
-  const { stops, total } = useMemo(() => casabizziTape(), []);
+  const copy = useCasabramantiCopy();
+  const language = useCasabramantiLanguage();
+  const { stops, total } = useMemo(() => casabramantiTape(), []);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const stripRef = useRef<HTMLDivElement>(null);

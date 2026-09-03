@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { TenantProvider } from "@/components/core/tenant-provider";
 import { LibritechCheckoutPage } from "@/components/tenants/libritech/pages/checkout";
-import { CasaBizziCheckoutPage } from "@/components/tenants/casabizzi/pages/checkout";
+import { CasaBramantiCheckoutPage } from "@/components/tenants/casabramanti/pages/checkout";
 import { getPlatformModeFromHost } from "@/lib/platform";
 import { resolveTenantFromPreviewSlug } from "@/lib/tenant-runtime";
 import { tenantThemeCssVars } from "@/lib/tenant-theme";
@@ -22,7 +22,7 @@ export default async function CheckoutRoute({
 
   if (!tenant || tenant.previewSlug !== previewSlug) notFound();
   if (!tenant.features.shop) notFound();
-  if (tenant.id !== "libritech" && tenant.id !== "casabizzi") notFound();
+  if (tenant.id !== "libritech" && tenant.id !== "casabramanti") notFound();
 
   const themeVars = tenantThemeCssVars(tenant.theme);
 
@@ -33,7 +33,7 @@ export default async function CheckoutRoute({
         data-tenant-surface={tenant.id}
         style={themeVars as React.CSSProperties}
       >
-        {tenant.id === "casabizzi" ? <CasaBizziCheckoutPage /> : <LibritechCheckoutPage />}
+        {tenant.id === "casabramanti" ? <CasaBramantiCheckoutPage /> : <LibritechCheckoutPage />}
       </div>
     </TenantProvider>
   );

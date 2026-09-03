@@ -13,15 +13,15 @@ import {
   CbBag,
   CbColophon,
   CbHeader,
-} from "@/components/tenants/casabizzi/cb-shell";
-import { CASABIZZI_COLLECTION, formatCasabizziPrice } from "@/lib/casabizzi-catalog";
-import { useCasabizziCopy, useCasabizziLanguage } from "@/lib/casabizzi-i18n";
+} from "@/components/tenants/casabramanti/cb-shell";
+import { CASABRAMANTI_COLLECTION, formatCasabramantiPrice } from "@/lib/casabramanti-catalog";
+import { useCasabramantiCopy, useCasabramantiLanguage } from "@/lib/casabramanti-i18n";
 import { useTenantLocalizedHref } from "@/lib/use-tenant-localized-href";
-import { cbBagCount, cbBagTotal, useCbBagStore } from "@/store/casabizzi-bag-store";
+import { cbBagCount, cbBagTotal, useCbBagStore } from "@/store/casabramanti-bag-store";
 
-export function CasaBizziCheckoutPage() {
-  const copy = useCasabizziCopy();
-  const language = useCasabizziLanguage();
+export function CasaBramantiCheckoutPage() {
+  const copy = useCasabramantiCopy();
+  const language = useCasabramantiLanguage();
   const tenantHref = useTenantLocalizedHref();
   const lines = useCbBagStore((state) => state.lines);
   const clear = useCbBagStore((state) => state.clear);
@@ -66,7 +66,7 @@ export function CasaBizziCheckoutPage() {
         ) : (
           <>
             {/* Il marchio è già in testata: qui l'h1 è la pagina, non la casa. */}
-            <p className="cb-eyebrow">{CASABIZZI_COLLECTION[language]}</p>
+            <p className="cb-eyebrow">{CASABRAMANTI_COLLECTION[language]}</p>
             <h1 style={{ fontSize: "clamp(2.2rem, 5vw, 3.4rem)", margin: "1rem 0 0.75rem" }}>
               {copy.checkout.title}
             </h1>
@@ -137,7 +137,7 @@ export function CasaBizziCheckoutPage() {
                         <br />
                         <span style={{ color: "var(--cb-ink-faint)" }}>
                           {line.variantName} · {line.size} ·{" "}
-                          {formatCasabizziPrice(line.price * line.qty, language)}
+                          {formatCasabramantiPrice(line.price * line.qty, language)}
                         </span>
                       </dd>
                     </div>
@@ -148,7 +148,7 @@ export function CasaBizziCheckoutPage() {
                     {copy.cart.subtotal} · {count}{" "}
                     {count === 1 ? copy.cart.itemsOne : copy.cart.itemsMany}
                   </span>
-                  <span className="cb-price">{formatCasabizziPrice(total, language)}</span>
+                  <span className="cb-price">{formatCasabramantiPrice(total, language)}</span>
                 </div>
               </aside>
             </div>

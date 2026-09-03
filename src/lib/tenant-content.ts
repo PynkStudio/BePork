@@ -1755,25 +1755,25 @@ const cascinaErranteContent: TenantContent = {
 
 import { findTenantById } from "./tenant-registry";
 
-const casabizziContent: TenantContent = {
-  logoSrc: "/casabizzi/wordmark.svg",
-  logoAlt: "Casa Bizzi",
-  showcaseLogoSrc: "/casabizzi/capi/giacca-verde.webp",
-  showcaseLogoAlt: "Casa Bizzi, giacca strutturata Aethel in verde foresta",
+const casabramantiContent: TenantContent = {
+  logoSrc: "/casabramanti/wordmark.svg",
+  logoAlt: "Casa Bramanti",
+  showcaseLogoSrc: "/casabramanti/capi/giacca-verde.webp",
+  showcaseLogoAlt: "Casa Bramanti, giacca strutturata Aethel in verde foresta",
   description:
-    "Casa Bizzi, maison milanese fondata da Michele Bizzi. Otto oggetti in ventidue varianti: sartoria, maglieria e seta, con le misure dichiarate capo per capo.",
-  url: "https://demo.bizery.it/casabizzi",
+    "Casa Bramanti, maison milanese fondata da Elia Bramanti. Otto oggetti in ventidue varianti: sartoria, maglieria e seta, con le misure dichiarate capo per capo.",
+  url: "https://demo.bizery.it/casabramanti",
   social: {
-    instagram: "https://www.instagram.com/casabizzi/",
-    facebook: "https://www.facebook.com/casabizzi",
-    instagramLabel: "Instagram Casa Bizzi",
-    facebookLabel: "Facebook Casa Bizzi",
+    instagram: "https://www.instagram.com/casabramanti/",
+    facebook: "https://www.facebook.com/casabramanti",
+    instagramLabel: "Instagram Casa Bramanti",
+    facebookLabel: "Facebook Casa Bramanti",
   },
   contact: {
     phone: "+39 02 8901 2260",
-    email: "showroom@casabizzi.it",
+    email: "showroom@casabramanti.it",
     whatsappDigits: "390289012260",
-    whatsappMessage: "Buongiorno Casa Bizzi, vorrei fissare un appuntamento in showroom.",
+    whatsappMessage: "Buongiorno Casa Bramanti, vorrei fissare un appuntamento in showroom.",
   },
   address: {
     street: "Via Solferino, 18",
@@ -1791,7 +1791,7 @@ const casabizziContent: TenantContent = {
     titleLead: "Otto oggetti,",
     titleAccent: "ventidue varianti.",
     body: "La collezione Autunno Inverno 26 esposta come un catalogo: numero di inventario, tessuto, origine e misure dichiarate capo per capo.",
-    backdrop: "/casabizzi/capi/trench-sabbia.webp",
+    backdrop: "/casabramanti/capi/trench-sabbia.webp",
     ctaLabel: "Vedi la collezione",
   },
   soulsIntro: {
@@ -1807,7 +1807,7 @@ const casabizziContent: TenantContent = {
       title: "Sartoria a mezza tela",
       desc: "Lana di Biella, fodera in cupro, bottoni in corno. La giacca doppiopetto e il girocollo in cashmere puro.",
       href: "#collezione",
-      image: "/casabizzi/capi/giacca-cammello.webp",
+      image: "/casabramanti/capi/giacca-cammello.webp",
     },
     {
       id: "loom",
@@ -1815,7 +1815,7 @@ const casabizziContent: TenantContent = {
       title: "Cotone e denim grezzo",
       desc: "Popeline biologico toscano e denim giapponese da 14 once, con la cimosa lasciata a vista.",
       href: "#collezione",
-      image: "/casabizzi/capi/camicia-azzurro.webp",
+      image: "/casabramanti/capi/camicia-azzurro.webp",
     },
     {
       id: "kroma",
@@ -1823,7 +1823,7 @@ const casabizziContent: TenantContent = {
       title: "Maglia e seta stampata",
       desc: "L'abito esce dal telaio in un pezzo solo. Il foulard porta un disegno a linea continua stampato a Como.",
       href: "#collezione",
-      image: "/casabizzi/capi/foulard-senape.webp",
+      image: "/casabramanti/capi/foulard-senape.webp",
     },
   ],
   dishesIntro: {
@@ -1836,7 +1836,7 @@ const casabizziContent: TenantContent = {
       name: "Giacca strutturata Aethel",
       desc: "Doppiopetto in lana vergine da 340 grammi, revers a lancia, spalla naturale.",
       price: "€1.480",
-      image: "/casabizzi/capi/giacca-nero.webp",
+      image: "/casabramanti/capi/giacca-nero.webp",
       variant: "red",
       href: "#collezione",
     },
@@ -1844,7 +1844,7 @@ const casabizziContent: TenantContent = {
       name: "Girocollo in cashmere Aethel",
       desc: "Cashmere puro filato 2/28, finezza 12, cuciture ribattute a mano.",
       price: "€590",
-      image: "/casabizzi/capi/maglia-merlot.webp",
+      image: "/casabramanti/capi/maglia-merlot.webp",
       variant: "mustard",
       href: "#collezione",
     },
@@ -1852,7 +1852,7 @@ const casabizziContent: TenantContent = {
       name: "Foulard in twill Kroma",
       desc: "Novanta per novanta, twill di seta 14 momme, orlo rullato a mano.",
       price: "€290",
-      image: "/casabizzi/capi/foulard-monocromo.webp",
+      image: "/casabramanti/capi/foulard-monocromo.webp",
       variant: "green",
       href: "#collezione",
     },
@@ -1862,11 +1862,11 @@ const casabizziContent: TenantContent = {
     titleLead: "Milano,",
     titleAccent: "via Solferino.",
     body: "Da martedì a sabato, dalle 10 alle 19. Ogni capo si prova prima di ordinarlo, la presa misure è il primo mercoledì del mese.",
-    mapTitle: "Mappa showroom Casa Bizzi",
+    mapTitle: "Mappa showroom Casa Bramanti",
   },
   footer: {
     tagline: "Otto oggetti, ventidue varianti.",
-    body: "Casa Bizzi, maison fondata da Michele Bizzi. Sito dimostrativo su piattaforma Bizery.",
+    body: "Casa Bramanti, maison fondata da Elia Bramanti. Sito dimostrativo su piattaforma Bizery.",
   },
   delivery: {
     title: "Spedizione e reso",
@@ -1876,7 +1876,7 @@ const casabizziContent: TenantContent = {
 };
 
 export function getTenantContent(tenantId: string): TenantContent {
-  if (tenantId === "casabizzi") return casabizziContent;
+  if (tenantId === "casabramanti") return casabramantiContent;
   if (tenantId === "cascina-errante") return cascinaErranteContent;
   if (tenantId === "faak") return faakContent;
   if (tenantId === "libritech") return libritechContent;

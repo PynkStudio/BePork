@@ -17,7 +17,7 @@ import { LibritechHomePage } from "@/components/tenants/libritech/pages/home";
 import { ValentinaOrciuoliBookSite } from "@/components/tenants/valentina-orciuoli/book/book-site";
 import { StudioAranzullaHomePage } from "@/components/tenants/studioaranzulla/pages/home";
 import { PynkStudioHomePage } from "@/components/tenants/pynkstudio/pages/home";
-import { CasaBizziHomePage } from "@/components/tenants/casabizzi/pages/home";
+import { CasaBramantiHomePage } from "@/components/tenants/casabramanti/pages/home";
 import { JuniorFoodHomePage } from "@/components/tenants/junior-food/pages/home";
 import { KimosHomePage } from "@/components/tenants/kimos/pages/home";
 import { CascinaErranteHomePage } from "@/components/tenants/cascina-errante/pages/home";
@@ -28,7 +28,7 @@ import { getPlatformModeFromHost } from "@/lib/platform";
 import { resolveTenantFromPreviewSlug } from "@/lib/tenant-runtime";
 import { tenantThemeCssVars } from "@/lib/tenant-theme";
 import { getTenantContent } from "@/lib/tenant-content";
-import { CASABIZZI_SEO, type CasaBizziLocale } from "@/lib/casabizzi-catalog";
+import { CASABRAMANTI_SEO, type CasaBramantiLocale } from "@/lib/casabramanti-catalog";
 import { buildTenantIconSet } from "@/lib/favicon";
 import { LOCALE_HEADER } from "@/i18n/locales";
 import { getTenantLocaleConfig } from "@/lib/tenant-locales";
@@ -61,12 +61,12 @@ export async function generateMetadata({
         : "https://demo.menuary.it";
   const localizedPath = localeConfig && locale ? `/${previewSlug}/${locale}` : `/${previewSlug}`;
   const isServices = tenant.vertical === "services";
-  // Casa Bizzi pubblica due lingue dal primo rilascio: titolo e descrizione
+  // Casa Bramanti pubblica due lingue dal primo rilascio: titolo e descrizione
   // devono seguire la lingua della route, non restare in italiano.
-  const casabizziSeo =
-    CASABIZZI_SEO[(locale as CasaBizziLocale) in CASABIZZI_SEO ? (locale as CasaBizziLocale) : "it"];
+  const casabramantiSeo =
+    CASABRAMANTI_SEO[(locale as CasaBramantiLocale) in CASABRAMANTI_SEO ? (locale as CasaBramantiLocale) : "it"];
   const description =
-    tenant.id === "casabizzi" ? casabizziSeo.description : content.description;
+    tenant.id === "casabramanti" ? casabramantiSeo.description : content.description;
   const title =
     tenant.id === "officinakam"
       ? "Officina KAM - Meccanica di precisione"
@@ -78,8 +78,8 @@ export async function generateMetadata({
           ? "Studio Legale Aranzulla - Avv. Lara Aranzulla"
         : tenant.id === "pynkstudio"
           ? "PYNK STUDIO — Software, web e app su misura"
-        : tenant.id === "casabizzi"
-          ? casabizziSeo.title
+        : tenant.id === "casabramanti"
+          ? casabramantiSeo.title
           : isServices
         ? `${tenant.name} - servizi, appuntamenti e listino prezzi`
         : tenant.id === "faak"
@@ -205,8 +205,8 @@ export default async function PreviewTenantHome({
             <StudioAranzullaHomePage />
           ) : tenant.id === "pynkstudio" ? (
             <PynkStudioHomePage />
-          ) : tenant.id === "casabizzi" ? (
-            <CasaBizziHomePage />
+          ) : tenant.id === "casabramanti" ? (
+            <CasaBramantiHomePage />
           ) : (
             <>
               <ServicesHero />

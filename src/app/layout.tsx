@@ -104,21 +104,21 @@ const cascinaBody = Inter({
   display: "swap",
 });
 
-// Casa Bizzi: didone italiana per il marchio e le targhe, grottesco per le
+// Casa Bramanti: didone italiana per il marchio e le targhe, grottesco per le
 // etichette d'inventario. Il Bodoni è la lettera con cui Milano stampa la moda,
 // non un serif scelto perché "sembra di lusso".
-const casabizziDisplay = Bodoni_Moda({
+const casabramantiDisplay = Bodoni_Moda({
   subsets: ["latin"],
   weight: ["400", "500", "600"],
   style: ["normal", "italic"],
-  variable: "--font-casabizzi-display",
+  variable: "--font-casabramanti-display",
   display: "swap",
 });
 
-const casabizziBody = Archivo({
+const casabramantiBody = Archivo({
   subsets: ["latin"],
   weight: ["400", "500", "600"],
-  variable: "--font-casabizzi-body",
+  variable: "--font-casabramanti-body",
   display: "swap",
 });
 
@@ -721,7 +721,7 @@ export default async function RootLayout({
   return (
     <html
       lang={lang}
-      className={`${display.variable} ${impact.variable} ${body.variable} ${menuaryDisplay.variable} ${menuaryBody.variable} ${cascinaHeading.variable} ${cascinaBody.variable} ${casabizziDisplay.variable} ${casabizziBody.variable}`}
+      className={`${display.variable} ${impact.variable} ${body.variable} ${menuaryDisplay.variable} ${menuaryBody.variable} ${cascinaHeading.variable} ${cascinaBody.variable} ${casabramantiDisplay.variable} ${casabramantiBody.variable}`}
       style={themeVars as React.CSSProperties}
       data-tenant={tenant.id}
       data-platform={mode}

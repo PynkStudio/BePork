@@ -1,5 +1,5 @@
 /**
- * Borsa di Casa Bizzi.
+ * Borsa di Casa Bramanti.
  *
  * Store proprio del tenant e non `shop-cart-store`: quello indicizza le righe
  * per solo id prodotto, mentre qui la stessa giacca in verde taglia M e in
@@ -98,6 +98,6 @@ export const useCbBagStore = create<CbBagState>()(
         set({ open });
       },
     }),
-    { name: "casabizzi-bag-v1" },
+    { name: "casabramanti-bag-v1" },
   ),
 );

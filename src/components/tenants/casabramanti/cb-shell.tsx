@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Cromatura di Casa Bizzi.
+ * Cromatura di Casa Bramanti.
  *
  * La testata è sottile e non compete con niente: il marchio alla scala della
  * composizione vive nel frontespizio, che si prende una schermata intera.
@@ -16,39 +16,39 @@ import { createPortal } from "react-dom";
 import { SlabbbyScriptGate } from "@/components/core/slabbby-script-gate";
 import { bodyScrollLock, bodyScrollUnlock } from "@/lib/body-scroll-lock";
 import {
-  CASABIZZI_COLLECTION,
-  casabizziCatalog,
-  formatCasabizziPrice,
-} from "@/lib/casabizzi-catalog";
+  CASABRAMANTI_COLLECTION,
+  casabramantiCatalog,
+  formatCasabramantiPrice,
+} from "@/lib/casabramanti-catalog";
 import {
-  CASABIZZI_PREVIEW_SLUG,
-  casabizziI18n,
-  useCasabizziCopy,
-  useCasabizziLanguage,
-  type CasaBizziLanguage,
-} from "@/lib/casabizzi-i18n";
+  CASABRAMANTI_PREVIEW_SLUG,
+  casabramantiI18n,
+  useCasabramantiCopy,
+  useCasabramantiLanguage,
+  type CasaBramantiLanguage,
+} from "@/lib/casabramanti-i18n";
 import { replaceTenantLocaleInPath } from "@/lib/tenant-localized-path";
 import { useTenantLocalizedHref } from "@/lib/use-tenant-localized-href";
-import { cbBagCount, cbBagTotal, useCbBagStore } from "@/store/casabizzi-bag-store";
+import { cbBagCount, cbBagTotal, useCbBagStore } from "@/store/casabramanti-bag-store";
 
 export function CbLangSwitch() {
-  const language = useCasabizziLanguage();
-  const copy = useCasabizziCopy();
+  const language = useCasabramantiLanguage();
+  const copy = useCasabramantiCopy();
   const pathname = usePathname() ?? "/";
   const router = useRouter();
 
-  function switchTo(next: CasaBizziLanguage) {
+  function switchTo(next: CasaBramantiLanguage) {
     if (next === language) return;
-    casabizziI18n.setLanguage(next);
-    const previewSlug = pathname.startsWith(`/${CASABIZZI_PREVIEW_SLUG}`)
-      ? CASABIZZI_PREVIEW_SLUG
+    casabramantiI18n.setLanguage(next);
+    const previewSlug = pathname.startsWith(`/${CASABRAMANTI_PREVIEW_SLUG}`)
+      ? CASABRAMANTI_PREVIEW_SLUG
       : undefined;
     router.push(replaceTenantLocaleInPath({ locale: next, pathname, previewSlug }));
   }
 
   return (
     <div className="cb-lang" role="group" aria-label={copy.langSwitchLabel}>
-      {(casabizziI18n.languages as CasaBizziLanguage[]).map((code) => (
+      {(casabramantiI18n.languages as CasaBramantiLanguage[]).map((code) => (
         <button
           key={code}
           type="button"
@@ -90,7 +90,7 @@ function CbSlabbbyManual() {
 }
 
 export function CbHeader() {
-  const copy = useCasabizziCopy();
+  const copy = useCasabramantiCopy();
   const tenantHref = useTenantLocalizedHref();
   const lines = useCbBagStore((state) => state.lines);
   const setBagOpen = useCbBagStore((state) => state.setOpen);
@@ -110,7 +110,7 @@ export function CbHeader() {
       <CbSlabbbyManual />
       <header className="cb-topbar" data-cb-stuck={stuck ? "true" : "false"}>
         <p className="cb-topbar-mark">
-          <Link href={tenantHref("/")}>Casa&nbsp;Bizzi</Link>
+          <Link href={tenantHref("/")}>Casa&nbsp;Bramanti</Link>
         </p>
         <nav className="cb-topbar-nav" aria-label={copy.nav.indexAria}>
           <button
@@ -144,8 +144,8 @@ export function CbHeader() {
  * borsa: un antenato trasformato romperebbe position: fixed.
  */
 function CbIndexSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const copy = useCasabizziCopy();
-  const language = useCasabizziLanguage();
+  const copy = useCasabramantiCopy();
+  const language = useCasabramantiLanguage();
   const tenantHref = useTenantLocalizedHref();
   const [mounted, setMounted] = useState(false);
 
@@ -167,11 +167,11 @@ function CbIndexSheet({ open, onClose }: { open: boolean; onClose: () => void })
   if (!open || !mounted) return null;
 
   return createPortal(
-    <div data-tenant-surface="casabizzi" className="cb-root" style={{ display: "contents" }}>
+    <div data-tenant-surface="casabramanti" className="cb-root" style={{ display: "contents" }}>
       <div className="cb-sheet" role="dialog" aria-modal="true" aria-label={copy.nav.indexAria}>
         <div className="cb-sheet-head">
           <p className="cb-eyebrow">
-            {copy.nav.index} · {CASABIZZI_COLLECTION[language]}
+            {copy.nav.index} · {CASABRAMANTI_COLLECTION[language]}
           </p>
           <button
             type="button"
@@ -184,13 +184,13 @@ function CbIndexSheet({ open, onClose }: { open: boolean; onClose: () => void })
         </div>
 
         <ol className="cb-sheet-list">
-          {casabizziCatalog.map((piece) => (
+          {casabramantiCatalog.map((piece) => (
             <li key={piece.id}>
               <Link className="cb-sheet-row" href={tenantHref(`/${piece.id}`)} onClick={onClose}>
                 <span className="cb-sheet-num">{piece.number}</span>
                 <span className="cb-sheet-name">{piece.name[language]}</span>
                 <span className="cb-sheet-kind">{piece.kind[language]}</span>
-                <span className="cb-sheet-price">{formatCasabizziPrice(piece.price, language)}</span>
+                <span className="cb-sheet-price">{formatCasabramantiPrice(piece.price, language)}</span>
               </Link>
             </li>
           ))}
@@ -210,19 +210,19 @@ function CbIndexSheet({ open, onClose }: { open: boolean; onClose: () => void })
  * bottone: si dichiarano fatti, incluso che cosa sia il nastro a sinistra.
  */
 export function CbFrontispiece() {
-  const copy = useCasabizziCopy();
-  const language = useCasabizziLanguage();
+  const copy = useCasabramantiCopy();
+  const language = useCasabramantiLanguage();
 
   return (
     <section className="cb-open" data-cb-ground="bone" aria-labelledby="cb-mark">
       <div className="cb-open-top">
         <span>{copy.home.plate.city}</span>
-        <span>{CASABIZZI_COLLECTION[language]}</span>
+        <span>{CASABRAMANTI_COLLECTION[language]}</span>
       </div>
 
       <div className="cb-open-body">
         <h1 className="cb-open-mark" id="cb-mark">
-          Casa&nbsp;Bizzi
+          Casa&nbsp;Bramanti
         </h1>
         <p className="cb-open-house">{copy.home.opening.house}</p>
       </div>
@@ -237,8 +237,8 @@ export function CbFrontispiece() {
 }
 
 export function CbBag() {
-  const copy = useCasabizziCopy();
-  const language = useCasabizziLanguage();
+  const copy = useCasabramantiCopy();
+  const language = useCasabramantiLanguage();
   const tenantHref = useTenantLocalizedHref();
   const lines = useCbBagStore((state) => state.lines);
   const open = useCbBagStore((state) => state.open);
@@ -274,7 +274,7 @@ export function CbBag() {
      token --cb-* continuano a ereditare dal data-tenant-surface.
   */
   return createPortal(
-    <div data-tenant-surface="casabizzi" className="cb-root" style={{ display: "contents" }}>
+    <div data-tenant-surface="casabramanti" className="cb-root" style={{ display: "contents" }}>
       <button
         type="button"
         className="cb-bag-scrim"
@@ -306,7 +306,7 @@ export function CbBag() {
                   <div>
                     <p className="cb-bag-name">{line.name}</p>
                     <p className="cb-bag-meta">
-                      {line.variantName} · {line.size} · {formatCasabizziPrice(line.price, language)}
+                      {line.variantName} · {line.size} · {formatCasabramantiPrice(line.price, language)}
                     </p>
                     <div className="cb-qty">
                       <button
@@ -344,7 +344,7 @@ export function CbBag() {
                   {copy.cart.subtotal} · {count}{" "}
                   {count === 1 ? copy.cart.itemsOne : copy.cart.itemsMany}
                 </span>
-                <span className="cb-price">{formatCasabizziPrice(total, language)}</span>
+                <span className="cb-price">{formatCasabramantiPrice(total, language)}</span>
               </div>
               <Link href={tenantHref("/checkout")} className="cb-btn" onClick={() => setOpen(false)}>
                 {copy.cart.checkout}
@@ -362,7 +362,7 @@ export function CbBag() {
 }
 
 export function CbColophon() {
-  const copy = useCasabizziCopy();
+  const copy = useCasabramantiCopy();
   const tenantHref = useTenantLocalizedHref();
 
   return (

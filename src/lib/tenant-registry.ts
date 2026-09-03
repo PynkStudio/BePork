@@ -380,8 +380,8 @@ export const ORPHEO_MODULE_FLAGS: TenantFeatureFlags = {
   fanbaseCommunity: true,
 };
 
-/** Casa Bizzi: maison di moda demo su verticale services (shop + Slabbby). */
-export const CASABIZZI_MODULE_FLAGS: TenantFeatureFlags = {
+/** Casa Bramanti: maison di moda demo su verticale services (shop + Slabbby). */
+export const CASABRAMANTI_MODULE_FLAGS: TenantFeatureFlags = {
   website: true,
   onlineMenu: true,        // "Collezione"
   takeaway: false,
@@ -726,12 +726,12 @@ export const TENANTS: TenantProfile[] = [
   },
 
   {
-    id: "casabizzi",
-    name: "Casa Bizzi",
-    label: "Demo · Casa Bizzi",
+    id: "casabramanti",
+    name: "Casa Bramanti",
+    label: "Demo · Casa Bramanti",
     vertical: "services",
-    domains: [],                    // solo preview slug → demo.bizery.it/casabizzi
-    previewSlug: "casabizzi",
+    domains: [],                    // solo preview slug → demo.bizery.it/casabramanti
+    previewSlug: "casabramanti",
     enabled: true,
     status: "trial",
     theme: {
@@ -749,7 +749,7 @@ export const TENANTS: TenantProfile[] = [
       green: "#1D322D",      // verde foresta della giacca 01
       pink: "#8B3A28",       // terracotta dell'abito 03
     },
-    features: CASABIZZI_MODULE_FLAGS,
+    features: CASABRAMANTI_MODULE_FLAGS,
   },
 
   // ── Verticale creative (Orpheo — weuseorpheo.com) ─────────────────────────

@@ -10,8 +10,8 @@ import { getPlatformModeFromHost } from "@/lib/platform";
 import { resolveTenantFromPreviewSlug } from "@/lib/tenant-runtime";
 import { tenantThemeCssVars } from "@/lib/tenant-theme";
 import { libritechCatalog } from "@/lib/libritech-catalog";
-import { CasaBizziPiecePage } from "@/components/tenants/casabizzi/pages/piece";
-import { findCasabizziPiece } from "@/lib/casabizzi-catalog";
+import { CasaBramantiPiecePage } from "@/components/tenants/casabramanti/pages/piece";
+import { findCasabramantiPiece } from "@/lib/casabramanti-catalog";
 
 const valentinaPages = new Set<string>(valentinaOwnedSegments);
 
@@ -60,8 +60,8 @@ export default async function BookDetailRoute({
     );
   }
 
-  if (tenant.id === "casabizzi") {
-    if (!tenant.features.shop || !findCasabizziPiece(bookId)) notFound();
+  if (tenant.id === "casabramanti") {
+    if (!tenant.features.shop || !findCasabramantiPiece(bookId)) notFound();
     return (
       <TenantProvider tenant={tenant}>
         <div
@@ -69,7 +69,7 @@ export default async function BookDetailRoute({
           data-tenant-surface={tenant.id}
           style={themeVars as React.CSSProperties}
         >
-          <CasaBizziPiecePage pieceId={bookId} />
+          <CasaBramantiPiecePage pieceId={bookId} />
         </div>
       </TenantProvider>
     );

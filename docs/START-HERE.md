@@ -59,7 +59,7 @@ Non compilate perché **non deducibili con certezza** dalla repo (nessun contenu
 
 ## Documenti di feature rilevanti
 
-- [[casa-bizzi]] — tenant demo moda del verticale services: grammatica della home,
+- [[casa-bramanti]] — tenant demo moda del verticale services: grammatica della home,
   il metro da sarto, i vincoli di `position: fixed` sotto `PageTransitionShell`,
   e i limiti verificati del widget Slabbby.
 - [[blog-editoriale]] — progetto blog multilingua (bacheca di avanzamento).

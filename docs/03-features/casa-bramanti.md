@@ -1,12 +1,12 @@
-# Casa Bizzi — tenant demo moda (verticale services)
+# Casa Bramanti — tenant demo moda (verticale services)
 
-> Fonte: `src/lib/casabizzi-catalog.ts`, `src/lib/casabizzi-i18n.ts`,
-> `src/components/tenants/casabizzi/`, `src/styles/tenants/casabizzi.css`.
+> Fonte: `src/lib/casabramanti-catalog.ts`, `src/lib/casabramanti-i18n.ts`,
+> `src/components/tenants/casabramanti/`, `src/styles/tenants/casabramanti.css`.
 > **Dedotto dal codice** allo stato attuale della repo.
 
 ## Cos'è
 
-Maison di moda milanese fittizia, fondata dallo stilista **Michele Bizzi**. È il
+Maison di moda milanese fittizia, fondata dallo stilista **Elia Bramanti**. È il
 tenant demo con cui si mostra il modulo `shop` del verticale services e
 l'integrazione **Slabbby** su un catalogo credibile: otto oggetti in ventidue
 varianti, con misure, tessuti e origine dichiarati capo per capo.
@@ -15,8 +15,8 @@ Non ha dominio proprio. Vive solo sullo slug di preview:
 
 | Ambiente | URL |
 |---|---|
-| Preview Bizery | `https://demo.bizery.it/casabizzi` (redirect a `/casabizzi/it`) |
-| Sviluppo locale | `http://demo.bizery.localhost:<porta>/casabizzi` |
+| Preview Bizery | `https://demo.bizery.it/casabramanti` (redirect a `/casabramanti/it`) |
+| Sviluppo locale | `http://demo.bizery.localhost:<porta>/casabramanti` |
 
 Le preview restano `noindex`: `generateMetadata` in `src/app/[previewSlug]/page.tsx`
 imposta `robots: { index: false, follow: false }` per tutti i tenant di preview.
@@ -25,15 +25,15 @@ imposta `robots: { index: false, follow: false }` per tutti i tenant di preview.
 
 | Cosa | Dove |
 |---|---|
-| Profilo e feature flag | `CASABIZZI_MODULE_FLAGS` + entry in `TENANTS[]`, `src/lib/tenant-registry.ts` |
-| Contenuti (contatti, indirizzo, social, SEO) | `casabizziContent`, `src/lib/tenant-content.ts` |
-| Lingue | `casabizzi: { defaultLocale: "it", locales: ["it", "en"] }`, `src/lib/tenant-locales.ts` |
-| Copy IT/EN | `src/lib/casabizzi-i18n.ts` (`createTenantI18n`) |
-| Catalogo | `src/lib/casabizzi-catalog.ts` |
-| Stile e tema gestione | `src/styles/tenants/casabizzi.css` |
-| Immagini | `public/casabizzi/capi/` (webp, 22 varianti + 22 miniature) |
-| Favicon | `public/favicons/casabizzi/icon.svg` |
-| Font | `Bodoni_Moda` + `Archivo` in `src/app/layout.tsx` (`--font-casabizzi-display`, `--font-casabizzi-body`) |
+| Profilo e feature flag | `CASABRAMANTI_MODULE_FLAGS` + entry in `TENANTS[]`, `src/lib/tenant-registry.ts` |
+| Contenuti (contatti, indirizzo, social, SEO) | `casabramantiContent`, `src/lib/tenant-content.ts` |
+| Lingue | `casabramanti: { defaultLocale: "it", locales: ["it", "en"] }`, `src/lib/tenant-locales.ts` |
+| Copy IT/EN | `src/lib/casabramanti-i18n.ts` (`createTenantI18n`) |
+| Catalogo | `src/lib/casabramanti-catalog.ts` |
+| Stile e tema gestione | `src/styles/tenants/casabramanti.css` |
+| Immagini | `public/casabramanti/capi/` (webp, 22 varianti + 22 miniature) |
+| Favicon | `public/favicons/casabramanti/icon.svg` |
+| Font | `Bodoni_Moda` + `Archivo` in `src/app/layout.tsx` (`--font-casabramanti-display`, `--font-casabramanti-body`) |
 
 Moduli attivi: `website`, `onlineMenu` (letto come "collezione"), `reservations`
 (appuntamento in showroom), `productAvailability`, `crm`, `analytics`,
@@ -42,15 +42,15 @@ Moduli attivi: `website`, `onlineMenu` (letto come "collezione"), `reservations`
 
 ## Route
 
-Tutte passano dal middleware che antepone la lingua (`/casabizzi` → `/casabizzi/it`).
+Tutte passano dal middleware che antepone la lingua (`/casabramanti` → `/casabramanti/it`).
 
 | Route pubblica | File | Componente |
 |---|---|---|
-| `/casabizzi/{lang}` | `src/app/[previewSlug]/page.tsx` | `CasaBizziHomePage` |
-| `/casabizzi/{lang}/{pieceId}` | `src/app/[previewSlug]/[bookId]/page.tsx` | `CasaBizziPiecePage` |
-| `/casabizzi/{lang}/checkout` | `src/app/[previewSlug]/checkout/page.tsx` | `CasaBizziCheckoutPage` |
+| `/casabramanti/{lang}` | `src/app/[previewSlug]/page.tsx` | `CasaBramantiHomePage` |
+| `/casabramanti/{lang}/{pieceId}` | `src/app/[previewSlug]/[bookId]/page.tsx` | `CasaBramantiPiecePage` |
+| `/casabramanti/{lang}/checkout` | `src/app/[previewSlug]/checkout/page.tsx` | `CasaBramantiCheckoutPage` |
 
-Gli `{pieceId}` validi sono gli `id` in `casabizziCatalog`; qualsiasi altro segmento
+Gli `{pieceId}` validi sono gli `id` in `casabramantiCatalog`; qualsiasi altro segmento
 cade in `notFound()`.
 
 ## Come è fatta la home
@@ -108,7 +108,7 @@ Dove vive ciascun fatto, in modo che non ricompaia altrove:
 
 | Fatto | Sta qui | Non deve stare |
 |---|---|---|
-| Milano | riga sopra il marchio, nel frontespizio | nella riga della casa ("Maison fondata da Michele Bizzi", non "milanese") |
+| Milano | riga sopra il marchio, nel frontespizio | nella riga della casa ("Maison fondata da Elia Bramanti", non "milanese") |
 | Indirizzo | riga `Showroom su appuntamento` del frontespizio, riga `Luogo` della chiusura | nel foglio indice, nel colophon |
 | Metratura della collezione (2028 cm) | nota del nastro nel frontespizio, piede del metro | nella tabella dell'appuntamento, nel colophon |
 | Email dello showroom | il rimando `Scrivi allo showroom` | come riga `Contatto` accanto |
@@ -162,7 +162,7 @@ Gli inchiostri secondari si scuriscono sul fondo cemento, altrimenti cadono sott
 
 ## Carrello
 
-`src/store/casabizzi-bag-store.ts`, **non** `shop-cart-store`. Due ragioni:
+`src/store/casabramanti-bag-store.ts`, **non** `shop-cart-store`. Due ragioni:
 
 1. Le righe hanno variante e taglia: la stessa giacca in verde M e in nero L sono
    due righe distinte, e `shop-cart-store` indicizza per solo id prodotto.
@@ -171,7 +171,7 @@ Gli inchiostri secondari si scuriscono sul fondo cemento, altrimenti cadono sott
 
 ## Slabbby
 
-Casa Bizzi monta il bottone Slabbby **ufficiale** nel punto che sceglie lei,
+Casa Bramanti monta il bottone Slabbby **ufficiale** nel punto che sceglie lei,
 invece di disegnarne uno proprio. È il modo manuale del widget:
 
 - `pages/piece.tsx` rende un segnaposto `<div data-slabbby>` sotto il tasto
@@ -182,7 +182,7 @@ invece di disegnarne uno proprio. È il modo manuale del widget:
   sulle pagine **senza** segnaposto: senza quella riga l'estensione Chrome, che
   inietta il widget ovunque, tornerebbe a piazzare il bottone accanto al marchio;
 - lo stile arriva dai token `--slabbby-*` scritti su `.cb-slabbby-slot` in
-  `casabizzi.css`. Niente `!important`: le custom property attraversano lo
+  `casabramanti.css`. Niente `!important`: le custom property attraversano lo
   shadow root chiuso del widget per ereditarietà.
 
 Il click apre il flusso vero del widget (login se serve, poi scelta della lista e
@@ -202,6 +202,15 @@ Il vecchio `SlabbbyWishlistButton` non è più usato qui (resta a LibriTech).
   `payments: true` e il flusso Connect del tenant.
 - Il pannello **gestione** ha il tema completo in CSS (tutti i moduli, anche quelli
   spenti) ma non è stato aperto sul campo per questo tenant.
+
+## Storia del nome
+
+Fino al 2026-09-03 il tenant si chiamava **Casa Bizzi** (slug `casabizzi`, stilista
+"Michele Bizzi"). È stato rinominato per togliere ogni riferimento al cognome Bizzi.
+Sono cambiati nome, slug, cartelle (`src/components/tenants/casabramanti/`,
+`public/casabramanti/`, `public/favicons/casabramanti/`), identificatori e copy; sono
+rimasti invariati il monogramma **CB** della favicon, il prefisso `cb-` di componenti
+e CSS, la palette e il catalogo.
 
 ## Collegamenti
 

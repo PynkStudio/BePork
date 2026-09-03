@@ -1,6 +1,6 @@
 "use client";
 
-import type { CbPiece, CbVariant } from "@/lib/casabizzi-catalog";
+import type { CbPiece, CbVariant } from "@/lib/casabramanti-catalog";
 
 const SIZE = {
   portrait: { full: [896, 1200], thumb: [523, 700] },

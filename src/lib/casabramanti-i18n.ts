@@ -1,19 +1,19 @@
 /**
- * casabizzi-i18n.ts
+ * casabramanti-i18n.ts
  *
- * Copy del sito CASA BIZZI in italiano e inglese. Il registro è quello del
+ * Copy del sito CASA BRAMANTI in italiano e inglese. Il registro è quello del
  * cartellino di museo: si dichiara un fatto, non si persuade. Nessuna riga
  * qui dentro deve poter finire in una brochure.
  */
 
 import { createTenantI18n } from "@/lib/tenant-i18n";
 
-export type CasaBizziLanguage = "it" | "en";
+export type CasaBramantiLanguage = "it" | "en";
 
-export const CASABIZZI_TENANT_ID = "casabizzi";
-export const CASABIZZI_PREVIEW_SLUG = "casabizzi";
+export const CASABRAMANTI_TENANT_ID = "casabramanti";
+export const CASABRAMANTI_PREVIEW_SLUG = "casabramanti";
 
-export type CasaBizziCopy = {
+export type CasaBramantiCopy = {
   langName: string;
   langShort: string;
   langSwitchLabel: string;
@@ -146,7 +146,7 @@ export type CasaBizziCopy = {
   };
 };
 
-const it: CasaBizziCopy = {
+const it: CasaBramantiCopy = {
   langName: "Italiano",
   langShort: "IT",
   langSwitchLabel: "Lingua",
@@ -190,7 +190,7 @@ const it: CasaBizziCopy = {
 
   home: {
     plate: {
-      house: "Casa Bizzi",
+      house: "Casa Bramanti",
       city: "Milano",
       collection: "Collezione",
       pieces: "oggetti",
@@ -199,7 +199,7 @@ const it: CasaBizziCopy = {
     },
     opening: {
       /* "Milanese" no: Milano è già scritto nella riga sopra il marchio. */
-      house: "Maison fondata da Michele Bizzi",
+      house: "Maison fondata da Elia Bramanti",
       tape:
         "A sinistra corre un metro da sarto. Srotola i centimetri di ogni oggetto: la collezione ne misura 2028.",
     },
@@ -276,7 +276,7 @@ const it: CasaBizziCopy = {
   },
 
   footer: {
-    house: "Casa Bizzi, Milano",
+    house: "Casa Bramanti, Milano",
     address: "Via Solferino 18, 20121 Milano",
     rights: "Tutti i diritti riservati",
     demoNote: "Sito dimostrativo su piattaforma Bizery",
@@ -284,7 +284,7 @@ const it: CasaBizziCopy = {
   },
 };
 
-const en: CasaBizziCopy = {
+const en: CasaBramantiCopy = {
   langName: "English",
   langShort: "EN",
   langSwitchLabel: "Language",
@@ -328,7 +328,7 @@ const en: CasaBizziCopy = {
 
   home: {
     plate: {
-      house: "Casa Bizzi",
+      house: "Casa Bramanti",
       city: "Milan",
       collection: "Collection",
       pieces: "objects",
@@ -337,7 +337,7 @@ const en: CasaBizziCopy = {
     },
     opening: {
       /* No "Milanese": Milan is already set in the line above the wordmark. */
-      house: "Maison founded by Michele Bizzi",
+      house: "Maison founded by Elia Bramanti",
       tape:
         "A tailor's tape runs down the left. It unrolls the centimetres of each object: the collection measures 2028 of them.",
     },
@@ -414,7 +414,7 @@ const en: CasaBizziCopy = {
   },
 
   footer: {
-    house: "Casa Bizzi, Milan",
+    house: "Casa Bramanti, Milan",
     address: "Via Solferino 18, 20121 Milan",
     rights: "All rights reserved",
     demoNote: "Demonstration site on the Bizery platform",
@@ -422,11 +422,11 @@ const en: CasaBizziCopy = {
   },
 };
 
-export const casabizziI18n = createTenantI18n<CasaBizziLanguage, CasaBizziCopy>({
-  tenantId: CASABIZZI_TENANT_ID,
-  previewSlug: CASABIZZI_PREVIEW_SLUG,
+export const casabramantiI18n = createTenantI18n<CasaBramantiLanguage, CasaBramantiCopy>({
+  tenantId: CASABRAMANTI_TENANT_ID,
+  previewSlug: CASABRAMANTI_PREVIEW_SLUG,
   defaultLanguage: "it",
   translations: { it, en },
 });
 
-export const { useCopy: useCasabizziCopy, useLanguage: useCasabizziLanguage } = casabizziI18n;
+export const { useCopy: useCasabramantiCopy, useLanguage: useCasabramantiLanguage } = casabramantiI18n;

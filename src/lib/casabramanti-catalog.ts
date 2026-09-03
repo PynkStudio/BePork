@@ -1,7 +1,7 @@
 /**
- * casabizzi-catalog.ts
+ * casabramanti-catalog.ts
  *
- * Catalogo della maison CASA BIZZI (tenant demo Bizery, verticale services).
+ * Catalogo della maison CASA BRAMANTI (tenant demo Bizery, verticale services).
  * Gli otto oggetti della collezione, con lo schema di etichetta identico per
  * tutti: numero, linea, tessuto, dettagli, origine, misure. Lo schema fisso è
  * ciò che rende la home una collezione e non una griglia di prodotti.
@@ -11,9 +11,9 @@
  * degli spilli sul nastro.
  */
 
-export type CasaBizziLocale = "it" | "en";
+export type CasaBramantiLocale = "it" | "en";
 
-export type CbText = Record<CasaBizziLocale, string>;
+export type CbText = Record<CasaBramantiLocale, string>;
 
 export type CbGround = "bone" | "linen" | "concrete";
 
@@ -64,16 +64,16 @@ export type CbPiece = {
 };
 
 const img = (slug: string, colour: string) => ({
-  image: `/casabizzi/capi/${slug}-${colour}.webp`,
-  thumb: `/casabizzi/capi/${slug}-${colour}-sm.webp`,
+  image: `/casabramanti/capi/${slug}-${colour}.webp`,
+  thumb: `/casabramanti/capi/${slug}-${colour}-sm.webp`,
 });
 
-export const CASABIZZI_COLLECTION: CbText = {
+export const CASABRAMANTI_COLLECTION: CbText = {
   it: "Autunno Inverno 26",
   en: "Autumn Winter 26",
 };
 
-export const casabizziCatalog: CbPiece[] = [
+export const casabramantiCatalog: CbPiece[] = [
   {
     id: "giacca-aethel",
     number: "01",
@@ -371,29 +371,29 @@ export const casabizziCatalog: CbPiece[] = [
 ];
 
 /**
- * Titolo e descrizione per lingua. Vivono qui e non in casabizzi-i18n.ts
+ * Titolo e descrizione per lingua. Vivono qui e non in casabramanti-i18n.ts
  * perché quel modulo è client ("use client" a monte) e questi valori servono
  * a generateMetadata, che gira sul server.
  */
-export const CASABIZZI_SEO: Record<CasaBizziLocale, { title: string; description: string }> = {
+export const CASABRAMANTI_SEO: Record<CasaBramantiLocale, { title: string; description: string }> = {
   it: {
-    title: "Casa Bizzi - Maison milanese di Michele Bizzi",
+    title: "Casa Bramanti - Maison milanese di Elia Bramanti",
     description:
-      "Casa Bizzi, maison milanese fondata da Michele Bizzi. Otto oggetti in ventidue varianti: sartoria, maglieria e seta, con le misure dichiarate capo per capo.",
+      "Casa Bramanti, maison milanese fondata da Elia Bramanti. Otto oggetti in ventidue varianti: sartoria, maglieria e seta, con le misure dichiarate capo per capo.",
   },
   en: {
-    title: "Casa Bizzi - Milanese maison by Michele Bizzi",
+    title: "Casa Bramanti - Milanese maison by Elia Bramanti",
     description:
-      "Casa Bizzi, a Milanese maison founded by Michele Bizzi. Eight objects in twenty two variants: tailoring, knitwear and silk, with the measurements declared piece by piece.",
+      "Casa Bramanti, a Milanese maison founded by Elia Bramanti. Eight objects in twenty two variants: tailoring, knitwear and silk, with the measurements declared piece by piece.",
   },
 };
 
-export function findCasabizziPiece(id: string): CbPiece | undefined {
-  return casabizziCatalog.find((piece) => piece.id === id);
+export function findCasabramantiPiece(id: string): CbPiece | undefined {
+  return casabramantiCatalog.find((piece) => piece.id === id);
 }
 
-export function casabizziVariantCount(): number {
-  return casabizziCatalog.reduce((total, piece) => total + piece.variants.length, 0);
+export function casabramantiVariantCount(): number {
+  return casabramantiCatalog.reduce((total, piece) => total + piece.variants.length, 0);
 }
 
 /**
@@ -414,9 +414,9 @@ export type CbTapeStop = {
   pins: Array<{ measure: CbMeasure; at: number }>;
 };
 
-export function casabizziTape(): { stops: CbTapeStop[]; total: number } {
+export function casabramantiTape(): { stops: CbTapeStop[]; total: number } {
   let cursor = 0;
-  const stops = casabizziCatalog.map((piece) => {
+  const stops = casabramantiCatalog.map((piece) => {
     const start = cursor;
     let inner = 0;
     const pins = piece.measures.map((measure) => {
@@ -429,11 +429,11 @@ export function casabizziTape(): { stops: CbTapeStop[]; total: number } {
   return { stops, total: cursor };
 }
 
-export function casabizziTapeLength(): number {
-  return casabizziTape().total;
+export function casabramantiTapeLength(): number {
+  return casabramantiTape().total;
 }
 
-export function formatCasabizziPrice(value: number, locale: CasaBizziLocale): string {
+export function formatCasabramantiPrice(value: number, locale: CasaBramantiLocale): string {
   return new Intl.NumberFormat(locale === "en" ? "en-GB" : "it-IT", {
     style: "currency",
     currency: "EUR",

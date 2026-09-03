@@ -17,14 +17,14 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import {
-  formatCasabizziPrice,
-  type CasaBizziLocale,
+  formatCasabramantiPrice,
+  type CasaBramantiLocale,
   type CbPiece,
-} from "@/lib/casabizzi-catalog";
-import type { CasaBizziCopy } from "@/lib/casabizzi-i18n";
-import { CbShot } from "@/components/tenants/casabizzi/cb-shot";
+} from "@/lib/casabramanti-catalog";
+import type { CasaBramantiCopy } from "@/lib/casabramanti-i18n";
+import { CbShot } from "@/components/tenants/casabramanti/cb-shot";
 
-type Copy = CasaBizziCopy;
+type Copy = CasaBramantiCopy;
 
 /** Le tre composizioni. L'ordine è deciso dallo spartito in pages/home.tsx. */
 export type CbPlateKind = "centre" | "side" | "suite";
@@ -32,7 +32,7 @@ export type CbPlateKind = "centre" | "side" | "suite";
 export type CbPlateProps = {
   piece: CbPiece;
   index: number;
-  language: CasaBizziLocale;
+  language: CasaBramantiLocale;
   copy: Copy;
   href: string;
   kind: CbPlateKind;
@@ -57,7 +57,7 @@ export function CbLabel({
   foot = true,
 }: {
   piece: CbPiece;
-  language: CasaBizziLocale;
+  language: CasaBramantiLocale;
   copy: Copy;
   href: string;
   headingId: string;
@@ -101,7 +101,7 @@ export function CbLabel({
       </dl>
       {foot ? (
         <div className="cb-object-foot">
-          <span className="cb-price">{formatCasabizziPrice(piece.price, language)}</span>
+          <span className="cb-price">{formatCasabramantiPrice(piece.price, language)}</span>
           <Link className="cb-link" href={href}>
             {copy.home.viewObject}
           </Link>
@@ -119,7 +119,7 @@ function CbCaption({
   href,
 }: {
   piece: CbPiece;
-  language: CasaBizziLocale;
+  language: CasaBramantiLocale;
   copy: Copy;
   href: string;
 }) {
@@ -141,7 +141,7 @@ function CbCaption({
         {piece.fabric[language]} · {piece.origin[language]}
       </p>
       <p className="cb-cap-foot" style={{ ["--cb-i" as string]: 5 }}>
-        <span className="cb-price">{formatCasabizziPrice(piece.price, language)}</span>
+        <span className="cb-price">{formatCasabramantiPrice(piece.price, language)}</span>
         <Link className="cb-link" href={href}>
           {copy.home.viewObject}
         </Link>

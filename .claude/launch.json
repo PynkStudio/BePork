@@ -32,7 +32,7 @@
       "port": 3101
     },
     {
-      "name": "casabizzi-preview",
+      "name": "casabramanti-preview",
       "runtimeExecutable": "npm",
       "runtimeArgs": [
         "run",

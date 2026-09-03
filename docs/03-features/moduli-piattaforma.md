@@ -88,7 +88,7 @@ servono `!important` né selettori dentro lo shadow DOM.
 > Le modifiche al widget arrivano ai siti **solo dopo il deploy di slabbby.com**:
 > `/widget.js` è servito con cache 1 ora browser e 24 ore CDN.
 
-Tenant con il modulo attivo: `libritech`, `casabizzi`.
+Tenant con il modulo attivo: `libritech`, `casabramanti`.
 
 ## Note modulo `mail`
 
