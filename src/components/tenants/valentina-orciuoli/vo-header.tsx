@@ -1,28 +1,22 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { valentinaBasePath } from "./content";
+import { voHref, voRoute } from "./routes";
 
-type NavItem = { label: string; href: string };
+type NavItem = { label: string; path: string };
 
+/** Path relativi: il prefisso (preview o dominio custom) e la lingua li mette `voHref`. */
 const navItems: NavItem[] = [
-  { label: "Home", href: valentinaBasePath },
-  { label: "Libri", href: `${valentinaBasePath}/libri` },
-  { label: "Chi sono", href: `${valentinaBasePath}/autrice` },
-  { label: "Blog", href: `${valentinaBasePath}/blog` },
-  { label: "Eventi", href: `${valentinaBasePath}/eventi` },
-  { label: "Contatti", href: `${valentinaBasePath}/contatti` },
+  { label: "Home", path: "" },
+  { label: "Libri", path: "/libri" },
+  { label: "Chi sono", path: "/autrice" },
+  { label: "Blog", path: "/blog" },
+  { label: "Eventi", path: "/eventi" },
+  { label: "Contatti", path: "/contatti" },
 ];
 
-/** Le pagine tenant vivono sempre sotto un prefisso lingua (es. /it): va tolto prima del confronto con navItems. */
-function stripLocaleSegment(pathname: string) {
-  if (!pathname.startsWith(valentinaBasePath)) return pathname;
-  const rest = pathname.slice(valentinaBasePath.length).replace(/^\/[a-z]{2}(?=\/|$)/i, "");
-  return `${valentinaBasePath}${rest}` || valentinaBasePath;
-}
-
 export function ValentinaOrciuoliHeader() {
-  const pathname = stripLocaleSegment(usePathname() ?? "");
+  const route = voRoute(usePathname() ?? "");
 
   return (
     <div className="vo-site-header">
@@ -32,7 +26,11 @@ export function ValentinaOrciuoliHeader() {
         </div>
         <nav className="vo-nav" aria-label="Menu principale">
           {navItems.map((item) => (
-            <a key={item.href} href={item.href} aria-current={pathname === item.href ? "page" : undefined}>
+            <a
+              key={item.path}
+              href={voHref(item.path, route)}
+              aria-current={route.path === item.path ? "page" : undefined}
+            >
               {item.label}
             </a>
           ))}

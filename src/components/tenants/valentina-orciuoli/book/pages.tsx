@@ -56,6 +56,8 @@ export type VoBookContext = {
   postsLoaded: boolean;
   /** Indirizzo pubblico di un appunto: resta un `<a href>` vero per i crawler. */
   articleHref: (slug: string) => string;
+  /** Riporta all'host corrente un href interno scritto in gestione (CTA delle opere). */
+  internalHref: (href: string) => string;
   /** Porta la scena sulla scrivania, con quell'appunto in cima al mucchio. */
   openArticle: (slug: string) => void;
 };
@@ -198,10 +200,26 @@ const VO_DEDICATION = [
 function VoDedication() {
   const [writing, setWriting] = useState(false);
 
+  // La penna aspetta che il volume sia aperto. Da quando la prima pagina è il
+  // dietro del piatto, questa facciata esiste fin dall'inizio ma sta a faccia in
+  // giù: scrivere subito significherebbe che la dedica arriva già scritta a metà
+  // — la carta si gira e il gesto è passato senza che nessuno l'abbia visto.
   useEffect(() => {
     if (!voBookMemoryAvailable || voBookMemory.dedicationWritten) return;
-    voBookMemory.dedicationWritten = true;
-    setWriting(true);
+    const claim = () => {
+      if (voBookMemory.dedicationWritten) return true;
+      voBookMemory.dedicationWritten = true;
+      setWriting(true);
+      return true;
+    };
+    if (voBookMemory.opened) {
+      claim();
+      return;
+    }
+    const timer = window.setInterval(() => {
+      if (voBookMemory.opened && claim()) window.clearInterval(timer);
+    }, 120);
+    return () => window.clearInterval(timer);
   }, []);
 
   let index = 0;
@@ -316,7 +334,12 @@ function photoHand(slug: string, ordinal: number) {
 }
 
 /** La scheda di un'opera: copertina a sinistra, testo e acquisto a destra. */
-function renderWorkFace(work: ValentinaCreativeWork, side: VoFaceSide, ordinal: number) {
+function renderWorkFace(
+  work: ValentinaCreativeWork,
+  side: VoFaceSide,
+  ordinal: number,
+  ctx: VoBookContext,
+) {
   if (side === "left") {
     const hand = photoHand(work.slug, ordinal);
     return (
@@ -355,7 +378,7 @@ function renderWorkFace(work: ValentinaCreativeWork, side: VoFaceSide, ordinal: 
         <div className="vo-face-ctas">
           <a
             className="vo-face-cta"
-            href={work.ctaHref}
+            href={ctx.internalHref(work.ctaHref)}
             target={work.ctaHref.startsWith("http") ? "_blank" : undefined}
             rel={work.ctaHref.startsWith("http") ? "noopener noreferrer" : undefined}
           >
@@ -364,7 +387,7 @@ function renderWorkFace(work: ValentinaCreativeWork, side: VoFaceSide, ordinal: 
           {work.secondaryCtaHref ? (
             <a
               className="vo-face-cta vo-face-cta-secondary"
-              href={work.secondaryCtaHref}
+              href={ctx.internalHref(work.secondaryCtaHref)}
               target={work.secondaryCtaHref.startsWith("http") ? "_blank" : undefined}
               rel={work.secondaryCtaHref.startsWith("http") ? "noopener noreferrer" : undefined}
             >
@@ -416,7 +439,7 @@ export function renderVoFace(spread: VoSpread, side: VoFaceSide, ctx: VoBookCont
     // Il contenuto vivo arriva dalla gestione; la struttura delle pagine no.
     const index = ctx.works.findIndex((entry) => entry.slug === spread.id);
     const work = index === -1 ? undefined : ctx.works[index];
-    return work ? renderWorkFace(work, side, index) : null;
+    return work ? renderWorkFace(work, side, index, ctx) : null;
   }
 
   const key = `${spread.id as VoStaticSpreadId}-${side}`;
@@ -504,7 +527,7 @@ export function renderVoFace(spread: VoSpread, side: VoFaceSide, ctx: VoBookCont
                   // Nessuna pagina nel volume: si manda dove il libro si compra.
                   <li key={work.id}>
                     <a
-                      href={work.ctaHref}
+                      href={ctx.internalHref(work.ctaHref)}
                       target={work.ctaHref.startsWith("http") ? "_blank" : undefined}
                       rel={work.ctaHref.startsWith("http") ? "noopener noreferrer" : undefined}
                     >

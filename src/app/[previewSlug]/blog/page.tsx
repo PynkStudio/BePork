@@ -4,8 +4,7 @@ import { notFound } from "next/navigation";
 import { TenantProvider } from "@/components/core/tenant-provider";
 import { ValentinaOrciuoliBookSite } from "@/components/tenants/valentina-orciuoli/book/book-site";
 import { spreadIndexById } from "@/components/tenants/valentina-orciuoli/book/book-map";
-import { getPlatformModeFromHost } from "@/lib/platform";
-import { resolveTenantFromPreviewSlug } from "@/lib/tenant-runtime";
+import { resolvePreviewSurface, resolveTenantFromPreviewSlug } from "@/lib/tenant-runtime";
 import { tenantThemeCssVars } from "@/lib/tenant-theme";
 import { getTenantLocaleConfig } from "@/lib/tenant-locales";
 import { LOCALE_HEADER } from "@/i18n/locales";
@@ -19,27 +18,30 @@ export async function generateMetadata({
   params: Promise<{ previewSlug: string }>;
 }): Promise<Metadata> {
   const { previewSlug } = await params;
+  const surface = resolvePreviewSurface((await headers()).get("host"), previewSlug);
   const tenant = resolveTenantFromPreviewSlug(previewSlug);
-  if (!tenant || tenant.previewSlug !== previewSlug || !tenant.features.blog) {
+  if (surface.kind === "denied" || !tenant || tenant.previewSlug !== previewSlug || !tenant.features.blog) {
     return { robots: { index: false, follow: false } };
   }
+  const isPublicSite = surface.kind === "tenant-domain";
   const localeConfig = getTenantLocaleConfig(tenant.id);
-  const origin = "https://demo.weuseorpheo.com";
+  const origin = isPublicSite ? surface.origin : "https://demo.weuseorpheo.com";
+  const canonicalSlug = isPublicSite ? undefined : previewSlug;
   const title = "Taccuino — Valentina Orciuoli";
   const description = "Appunti a margine della scrittura, riflessioni sui simboli e sul mestiere di raccontare.";
   return {
     metadataBase: new URL(origin),
     title: { absolute: title },
     description,
-    robots: { index: false, follow: false, nocache: true },
+    robots: isPublicSite ? { index: true, follow: true } : { index: false, follow: false, nocache: true },
     ...(localeConfig
       ? {
           alternates: {
-            canonical: `${origin}/${previewSlug}/${localeConfig.defaultLocale}/blog`,
+            canonical: `${origin}${canonicalSlug ? `/${canonicalSlug}` : ""}/${localeConfig.defaultLocale}/blog`,
             languages: tenantLanguageAlternates({
               origin,
               pathname: "/blog",
-              previewSlug,
+              previewSlug: canonicalSlug,
               locales: localeConfig.locales,
               defaultLocale: localeConfig.defaultLocale,
             }),
@@ -56,11 +58,9 @@ export default async function PreviewBlogIndexRoute({
 }) {
   const requestHeaders = await headers();
   const host = requestHeaders.get("host");
-  const mode = getPlatformModeFromHost(host);
-  const isLocalPreviewDev = host?.includes("localhost") || host?.includes("127.0.0.1");
-  if (mode !== "preview" && mode !== "preview-bizery" && mode !== "preview-orpheo" && !isLocalPreviewDev) notFound();
-
   const { previewSlug } = await params;
+  if (resolvePreviewSurface(host, previewSlug).kind === "denied") notFound();
+
   const tenant = resolveTenantFromPreviewSlug(previewSlug);
   if (!tenant || tenant.previewSlug !== previewSlug || !tenant.features.blog) notFound();
 

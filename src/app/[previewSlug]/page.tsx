@@ -25,7 +25,7 @@ import { OrpheoShell } from "@/components/orpheo/orpheo-shell";
 import { Footer } from "@/components/tenant-shell/footer";
 import { DocaAbout } from "@/components/tenants/doca/doca-about";
 import { getPlatformModeFromHost } from "@/lib/platform";
-import { resolveTenantFromPreviewSlug } from "@/lib/tenant-runtime";
+import { resolvePreviewSurface, resolveTenantFromPreviewSlug } from "@/lib/tenant-runtime";
 import { tenantThemeCssVars } from "@/lib/tenant-theme";
 import { getTenantContent } from "@/lib/tenant-content";
 import { CASABRAMANTI_SEO, type CasaBramantiLocale } from "@/lib/casabramanti-catalog";
@@ -43,6 +43,7 @@ export async function generateMetadata({
   const host = requestHeaders.get("host");
   const mode = getPlatformModeFromHost(host);
   const { previewSlug } = await params;
+  const surface = resolvePreviewSurface(host, previewSlug);
   const tenant = resolveTenantFromPreviewSlug(previewSlug);
   if (!tenant || tenant.previewSlug !== previewSlug) {
     return {
@@ -53,13 +54,23 @@ export async function generateMetadata({
   const content = getTenantContent(tenant.id);
   const localeConfig = getTenantLocaleConfig(tenant.id);
   const locale = requestHeaders.get(LOCALE_HEADER) ?? localeConfig?.defaultLocale;
-  const metadataOrigin =
-    mode === "preview-orpheo"
+  // Sul dominio del tenant queste stesse route sono il sito pubblico: origine
+  // reale, URL senza preview slug e pagina indicizzabile.
+  const isPublicSite = surface.kind === "tenant-domain";
+  const metadataOrigin = isPublicSite
+    ? surface.origin
+    : mode === "preview-orpheo"
       ? "https://demo.weuseorpheo.com"
       : mode === "preview-bizery"
         ? "https://demo.bizery.it"
         : "https://demo.menuary.it";
-  const localizedPath = localeConfig && locale ? `/${previewSlug}/${locale}` : `/${previewSlug}`;
+  const canonicalSlug = isPublicSite ? undefined : previewSlug;
+  const localizedPath =
+    localeConfig && locale
+      ? `${canonicalSlug ? `/${canonicalSlug}` : ""}/${locale}`
+      : canonicalSlug
+        ? `/${canonicalSlug}`
+        : "/";
   const isServices = tenant.vertical === "services";
   // Casa Bramanti pubblica due lingue dal primo rilascio: titolo e descrizione
   // devono seguire la lingua della route, non restare in italiano.
@@ -100,11 +111,7 @@ export async function generateMetadata({
     metadataBase: new URL(metadataOrigin),
     title: { absolute: title },
     description,
-    robots: {
-      index: false,
-      follow: false,
-      nocache: true,
-    },
+    robots: isPublicSite ? { index: true, follow: true } : { index: false, follow: false, nocache: true },
     openGraph: {
       title,
       description,
@@ -127,8 +134,8 @@ export async function generateMetadata({
             canonical: `${metadataOrigin}${localizedPath}`,
             languages: tenantLanguageAlternates({
               origin: metadataOrigin,
-              pathname: `/${previewSlug}`,
-              previewSlug,
+              pathname: "/",
+              previewSlug: canonicalSlug,
               locales: localeConfig.locales,
               defaultLocale: localeConfig.defaultLocale,
             }),
@@ -144,13 +151,9 @@ export default async function PreviewTenantHome({
   params: Promise<{ previewSlug: string }>;
 }) {
   const host = (await headers()).get("host");
-  const mode = getPlatformModeFromHost(host);
-  const isLocalPreviewDev =
-    host?.includes("localhost") || host?.includes("127.0.0.1");
-
-  if (mode !== "preview" && mode !== "preview-bizery" && mode !== "preview-orpheo" && !isLocalPreviewDev) notFound();
-
   const { previewSlug } = await params;
+  if (resolvePreviewSurface(host, previewSlug).kind === "denied") notFound();
+
   const tenant = resolveTenantFromPreviewSlug(previewSlug);
   if (!tenant || tenant.previewSlug !== previewSlug) notFound();
 

@@ -5,6 +5,7 @@ import {
   findTenantByPreviewSlug,
 } from "./tenant-registry";
 import type { TenantProfile } from "./tenant";
+import { getPlatformModeFromHost, normalizeHost } from "./platform";
 
 export function resolveTenantFromHost(host: string | null | undefined): TenantProfile | undefined {
   if (!host) return undefined;
@@ -80,4 +81,39 @@ export function resolveLocationSlug(
     resolveLocationSlugFromHost(host, tenantDomains) ??
     resolveLocationSlugFromSearchParams(searchParams)
   );
+}
+
+export type PreviewSurface =
+  /** demo.*: vetrina di lavoro, `noindex`, canonical sull'origine della demo. */
+  | { kind: "preview" }
+  /** Dominio del tenant: qui le stesse route sono il sito pubblico e vanno indicizzate. */
+  | { kind: "tenant-domain"; origin: string }
+  /** Host che non deve servire queste route. */
+  | { kind: "denied" };
+
+/**
+ * Chi sta chiedendo una route `[previewSlug]`.
+ *
+ * Quell'albero serve due indirizzi: la preview, e — per i tenant il cui sito è
+ * impaginato lì (valentina-orciuoli) — il dominio pubblico, dove il middleware
+ * riscrive l'URL nudo dentro l'albero senza toccare la barra degli indirizzi.
+ * Le due superfici rendono le stesse pagine ma hanno SEO opposta, quindi la
+ * distinzione va fatta una volta sola e in un posto solo.
+ */
+export function resolvePreviewSurface(
+  host: string | null | undefined,
+  previewSlug: string,
+): PreviewSurface {
+  const normalized = normalizeHost(host);
+  const mode = getPlatformModeFromHost(host);
+  if (mode === "preview" || mode === "preview-bizery" || mode === "preview-orpheo") {
+    return { kind: "preview" };
+  }
+  // In locale ogni tenant si apre per slug sull'host di sviluppo: resta una preview.
+  if (normalized === "localhost" || normalized === "127.0.0.1") return { kind: "preview" };
+  if (resolveTenantFromHost(host)?.previewSlug === previewSlug) {
+    const scheme = normalized.endsWith(".localhost") ? "http" : "https";
+    return { kind: "tenant-domain", origin: `${scheme}://${host}` };
+  }
+  return { kind: "denied" };
 }

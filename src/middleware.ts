@@ -8,7 +8,12 @@ import {
   isSiteadminRole,
   type SiteadminRole,
 } from "@/lib/admin-permissions";
-import { PLATFORM_MODE_HEADER, getPlatformModeFromHost, type PlatformMode } from "@/lib/platform";
+import {
+  PLATFORM_MODE_HEADER,
+  getPlatformModeFromHost,
+  normalizeHost,
+  type PlatformMode,
+} from "@/lib/platform";
 import { findTenantById, findTenantByPreviewSlug } from "@/lib/tenant-registry";
 import {
   resolveLocationSlugFromHost,
@@ -50,6 +55,7 @@ import {
 } from "@/lib/marketing-slugs";
 import { isRouteModuleAllowed } from "@/lib/tenant-route-modules";
 import { valentinaOwnedSegments } from "@/components/tenants/valentina-orciuoli/content";
+import { valentinaPreviewBasePath } from "@/components/tenants/valentina-orciuoli/routes";
 
 const LOCALE_SET = new Set<string>(SUPPORTED_LOCALES);
 const TENANT_LOCALE_REWRITE_HEADER = "x-tenant-locale-rewrite";
@@ -626,7 +632,22 @@ function handleCustomTenantLocale(
     );
   }
   const rest = parts.slice(1).join("/");
-  return tenantLocaleRewrite(request, tenantId, routeLocale, rest ? `/${rest}` : "/", mode);
+  // Il sito-libro di valentina-orciuoli è impaginato dalle route [previewSlug],
+  // non dai segmenti globali dell'app dir: sul dominio custom l'URL resta nudo
+  // (`/it/libri`) ma la richiesta va servita da quell'albero, altrimenti le sue
+  // pagine finiscono sui template di un altro verticale (/contatti food, /blog
+  // PynkStudio) o su un 404. È lo stesso dirottamento che fa `handlePreviewTenantLocale`.
+  const isValentinaOwnPage =
+    tenantId === "valentina-orciuoli" &&
+    (rest === "" || valentinaOwnedSegments.includes(rest.split("/")[0]));
+  const rewrittenPathname = isValentinaOwnPage
+    ? `${valentinaPreviewBasePath}${rest ? `/${rest}` : ""}`
+    : rest
+      ? `/${rest}`
+      : "/";
+  // Nessun `x-preview-tenant-id`: qui il tenant si risolve dall'host, e quel
+  // header è il segnale che marca una pagina come anteprima (quindi `noindex`).
+  return tenantLocaleRewrite(request, tenantId, routeLocale, rewrittenPathname, mode);
 }
 
 async function getSessionUser(
@@ -740,6 +761,11 @@ function moduleSegmentAfterPreviewSlug(pathname: string, locales?: readonly stri
  * Segmento URL del "modulo" richiesto su dominio custom del tenant, saltando
  * l'eventuale prefisso di lingua del tenant.
  */
+function isLocalDevHost(host: string | null | undefined): boolean {
+  const normalized = normalizeHost(host);
+  return normalized === "localhost" || normalized === "127.0.0.1";
+}
+
 function moduleSegmentForTenantHost(pathname: string, locales?: readonly string[]): string {
   const parts = pathname.split("/").filter(Boolean);
   if (locales && parts[0] && (locales as string[]).includes(parts[0])) return parts[1] ?? "";
@@ -782,6 +808,19 @@ export async function middleware(request: NextRequest) {
   if (demoPreviewSlug) {
     const disabledDemo = await getDisabledDemoAccess(demoPreviewSlug, mode);
     if (disabledDemo) return disabledDemoResponse(request, demoPreviewSlug, disabledDemo);
+  }
+
+  // Sul dominio custom il sito vive alla radice: la forma con il proprio preview
+  // slug (`valentinaorciuoli.it/valentina-orciuoli/...`) è un doppione, e senza
+  // questo consolidamento risponderebbe 200 accanto all'indirizzo canonico.
+  // In locale l'host è il tenant demo ma le preview si aprono comunque per slug:
+  // lì la forma con lo slug è l'unica che esiste, e non va consolidata.
+  if (mode === "tenant" && pathPreviewTenant && !isLocalDevHost(host)) {
+    const hostTenant = resolveTenantFromHost(host);
+    if (hostTenant?.id === pathPreviewTenant.id) {
+      const bare = pathname.slice(`/${pathPreviewTenant.previewSlug}`.length) || "/";
+      return NextResponse.redirect(new URL(`${bare}${request.nextUrl.search}`, request.url), 301);
+    }
   }
 
   if (pathPreviewTenant) {

@@ -47,7 +47,6 @@ import {
   backCoverHref,
   hasSpread,
   isBackCoverPathname,
-  localePrefixFromPathname,
   spreadHref,
   spreadIndexById,
   spreadIndexByPathname,
@@ -56,6 +55,10 @@ import {
   voSpreads,
   type VoSpread,
 } from "@/components/tenants/valentina-orciuoli/book/book-map";
+import {
+  voLocalizeInternalHref,
+  voRoute,
+} from "@/components/tenants/valentina-orciuoli/routes";
 import { useValentinaNewsletter } from "@/components/tenants/valentina-orciuoli/newsletter";
 import {
   VoNewsletterInsert,
@@ -143,9 +146,13 @@ export function ValentinaOrciuoliBookSite({
   initialNotes?: VoNote[];
 }) {
   const pathname = usePathname();
-  const localePrefix = localePrefixFromPathname(pathname);
+  // Prefisso host (preview vs dominio custom) e lingua: entrambi si leggono
+  // dall'URL corrente, così ogni href generato qui resta sull'indirizzo giusto.
+  // Memoizzato: `ctx` e mezza dozzina di callback lo hanno fra le dipendenze, e
+  // un oggetto nuovo a ogni render le invaliderebbe tutte a ogni fotogramma.
+  const route = useMemo(() => voRoute(pathname), [pathname]);
   /** La lingua che si sta leggendo: serve a scegliere la traduzione dell'appunto. */
-  const locale = localePrefix.replace("/", "") || "it";
+  const locale = route.localePrefix.replace("/", "") || "it";
   const newsletter = useValentinaNewsletter();
   const gestioneHref = getTenantGestioneExternalHref("valentina-orciuoli");
 
@@ -427,8 +434,8 @@ export function ValentinaOrciuoliBookSite({
     (voBookMemoryAvailable ? voSpreads[voBookMemory.spread] : undefined) ?? voSpreads[0];
 
   const hrefFor = useCallback(
-    (id: string) => spreadHref(voSpreads[spreadIndexById(id)], localePrefix),
-    [localePrefix],
+    (id: string) => spreadHref(voSpreads[spreadIndexById(id)], route),
+    [route],
   );
 
 
@@ -436,8 +443,13 @@ export function ValentinaOrciuoliBookSite({
   const folioFor = useCallback((id: string) => spreadIndexById(id) * 2 + 1, []);
 
   const articleHref = useCallback(
-    (slug: string) => voArticleHref(slug, localePrefix),
-    [localePrefix],
+    (slug: string) => voArticleHref(slug, route),
+    [route],
+  );
+  /** Gli href scritti in gestione (CTA delle opere, linktree) vanno riportati all'host corrente. */
+  const internalHref = useCallback(
+    (href: string) => voLocalizeInternalHref(href, route),
+    [route],
   );
   /** Aprire un appunto non gira una pagina: sposta lo sguardo sulla scrivania. */
   const openArticle = useCallback(
@@ -470,11 +482,13 @@ export function ValentinaOrciuoliBookSite({
       posts,
       postsLoaded,
       articleHref,
+      internalHref,
       openArticle,
     }),
     [
       articleHref,
       folioFor,
+      internalHref,
       goTo,
       hrefFor,
       openArticle,
@@ -498,7 +512,7 @@ export function ValentinaOrciuoliBookSite({
   // Il ref segue la pagina da riprendere: il gestore della rotella vive in un
   // effetto con dipendenze stabili e non deve richiudersi su un valore vecchio.
   const resumeHrefRef = useRef("");
-  resumeHrefRef.current = spreadHref(resumeSpread, localePrefix);
+  resumeHrefRef.current = spreadHref(resumeSpread, route);
   useEffect(() => {
     if (!showsBackCover) return;
     const element = stageRef.current;
@@ -520,8 +534,8 @@ export function ValentinaOrciuoliBookSite({
 
   /** Sfogliare oltre l'ultima pagina porta alla quarta: è lì che il volume finisce. */
   const goToBackCover = useCallback(() => {
-    voPushUrl(backCoverHref(localePrefix));
-  }, [localePrefix]);
+    voPushUrl(backCoverHref(route));
+  }, [route]);
 
   const closeBook = useCallback(() => {
     setOpened(false);
@@ -547,14 +561,14 @@ export function ValentinaOrciuoliBookSite({
               <VoBookLink
                 key={entry.id}
                 data-vo-nav={entry.id}
-                href={spreadHref(entry, localePrefix)}
+                href={spreadHref(entry, route)}
                 aria-current={currentSpread === spreadIndexById(entry.id) ? "page" : undefined}
               >
                 {entry.navLabel}
               </VoBookLink>
             ))}
           <VoBookLink
-            href={backCoverHref(localePrefix)}
+            href={backCoverHref(route)}
             aria-current={showsBackCover ? "page" : undefined}
           >
             {voBackCover.navLabel}
@@ -595,7 +609,7 @@ export function ValentinaOrciuoliBookSite({
               appendix={appendix}
               renderAppendix={renderVoAppendixFace}
               onLeaveAppendix={() =>
-                voPushUrl(spreadHref(resumeSpread, localePrefix))
+                voPushUrl(spreadHref(resumeSpread, route))
               }
               insert={
                 opened && !showsBackCover ? (
@@ -608,7 +622,7 @@ export function ValentinaOrciuoliBookSite({
                 showsBackCover ? (
                   <VoBookLink
                     className="vo-bookmark"
-                    href={spreadHref(resumeSpread, localePrefix)}
+                    href={spreadHref(resumeSpread, route)}
                     aria-label={`Riprendi la lettura da ${resumeSpread.navLabel}`}
                   >
                     <span className="vo-bookmark-tail" aria-hidden="true" />
@@ -632,7 +646,7 @@ export function ValentinaOrciuoliBookSite({
         {opened || showsBackCover || appendix ? (
           <div className="vo-book-controls">
               {appendix ? (
-                <VoBookLink href={spreadHref(resumeSpread, localePrefix)}>
+                <VoBookLink href={spreadHref(resumeSpread, route)}>
                   Torna alla lettura
                 </VoBookLink>
               ) : showsBackCover ? (
@@ -696,7 +710,7 @@ export function ValentinaOrciuoliBookSite({
           {voAppendix.map((entry) => (
             <VoBookLink
               key={entry.id}
-              href={appendixHref(entry, localePrefix)}
+              href={appendixHref(entry, route)}
               aria-current={appendix?.id === entry.id ? "page" : undefined}
             >
               {entry.navLabel}

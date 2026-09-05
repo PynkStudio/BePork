@@ -8,7 +8,6 @@ import { getTenantLocaleConfig } from "@/lib/tenant-locales";
 import { governanceBlogArticles, governanceServices } from "@/components/tenants/pynkstudio/ai-governance-data";
 import { pynkSolutions } from "@/components/tenants/pynkstudio/pynk-solutions";
 import { voAppendix, voBackCover, voSpreads } from "@/components/tenants/valentina-orciuoli/book/book-map";
-import { valentinaBasePath } from "@/components/tenants/valentina-orciuoli/content";
 import { getBlogPosts } from "@/lib/blog/data";
 import { blogPostPath } from "@/lib/blog/slug";
 
@@ -47,9 +46,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         ]
       : tenant.id === "valentina-orciuoli"
         ? [
-            ...voSpreads.map((spread) => spread.path.slice(valentinaBasePath.length) || ""),
-            voBackCover.path.slice(valentinaBasePath.length),
-            ...voAppendix.map((entry) => entry.path.slice(valentinaBasePath.length)),
+            // I path del libro sono già relativi al sito: qui manca solo la lingua.
+            ...voSpreads.map((spread) => spread.path),
+            voBackCover.path,
+            ...voAppendix.map((entry) => entry.path),
           ]
         : [
             "",

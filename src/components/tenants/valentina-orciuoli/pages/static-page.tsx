@@ -1,7 +1,8 @@
 "use client";
 
 /* eslint-disable @next/next/no-img-element */
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, BookOpen, Instagram, Mail, Music2 } from "lucide-react";
 import { getTenantGestioneExternalHref } from "@/lib/gestione-routing";
@@ -16,14 +17,18 @@ import {
   tiktokHref,
   valentinaEmail,
   valentinaLinks,
-  valentinaBasePath,
   valentinaCreativeWorks,
   type ValentinaCreativeWork,
   type ValentinaPageKind,
 } from "@/components/tenants/valentina-orciuoli/content";
+import { voHref, voLocalizeInternalHref, voRoute } from "@/components/tenants/valentina-orciuoli/routes";
 
 export function ValentinaOrciuoliStaticPage({ page }: { page: ValentinaPageKind }) {
   const gestioneHref = getTenantGestioneExternalHref("valentina-orciuoli");
+  // Preview e dominio custom servono le stesse pagine con prefissi diversi:
+  // gli href interni si ricostruiscono sull'indirizzo da cui si sta leggendo.
+  const pathname = usePathname() ?? "";
+  const route = useMemo(() => voRoute(pathname), [pathname]);
   const [linktreeItems, setLinktreeItems] = useState<TenantLinktreeItem[]>(
     () => valentinaLinks.map((item) => ({
       label: item.label,
@@ -31,6 +36,12 @@ export function ValentinaOrciuoliStaticPage({ page }: { page: ValentinaPageKind 
       description: item.desc,
       kind: item.kind,
     })),
+  );
+  // Le voci salvate in gestione possono portare il prefisso della preview: si
+  // normalizzano qui, altrimenti sul dominio custom uscirebbero dal sito.
+  const localizedLinktreeItems = useMemo(
+    () => linktreeItems.map((item) => ({ ...item, href: voLocalizeInternalHref(item.href, route) })),
+    [linktreeItems, route],
   );
   const [creativeWorks, setCreativeWorks] = useState<ValentinaCreativeWork[]>(valentinaCreativeWorks);
   const [blogPosts, setBlogPosts] = useState<TenantBlogPost[]>([]);
@@ -162,7 +173,7 @@ export function ValentinaOrciuoliStaticPage({ page }: { page: ValentinaPageKind 
                 <p>Ogni dettaglio e lo specchio della societa, ogni pagina mette alla prova le certezze.</p>
               </article>
             </div>
-            <Link className="vo-text-link" href={`${valentinaBasePath}/libri`}>
+            <Link className="vo-text-link" href={voHref("/libri", route)}>
               Scopri i libri <ArrowRight size={15} />
             </Link>
           </div>
@@ -242,7 +253,7 @@ export function ValentinaOrciuoliStaticPage({ page }: { page: ValentinaPageKind 
             <span className="vo-dragon-mark">Link ufficiali</span>
             <h1>Valentina Orciuoli</h1>
             <p>Libri, social, contatti ed eventi dell&apos;autrice.</p>
-            <TenantLinktreeView items={linktreeItems} className="vo-linktree-list" />
+            <TenantLinktreeView items={localizedLinktreeItems} className="vo-linktree-list" />
           </div>
         </section>
       )}

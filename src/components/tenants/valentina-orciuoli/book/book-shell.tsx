@@ -10,6 +10,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
   type RefObject,
@@ -25,7 +26,6 @@ import {
   isBackCoverPathname,
   isBookPathname,
   leafFaces,
-  localePrefixFromPathname,
   spreadHref,
   spreadIndexByPathname,
   voSpreadCount,
@@ -34,6 +34,7 @@ import {
   type VoFaceSide,
   type VoSpread,
 } from "@/components/tenants/valentina-orciuoli/book/book-map";
+import { voRoute } from "@/components/tenants/valentina-orciuoli/routes";
 
 /**
  * Quanto si solleva il foglio quando il puntatore è proprio sul taglio.
@@ -57,6 +58,16 @@ const DRAG_COMMIT_THRESHOLD = 0.3;
 const FLICK_VELOCITY = 0.85;
 /** Pixel di traverso prima di decidere che il tocco è una sfogliata e non uno scorrimento. */
 const SWIPE_SLOP = 12;
+/**
+ * Oltre questi pixel il puntatore ha *trascinato*, non cliccato.
+ *
+ * Il taglio è insieme una presa e un pulsante, e il browser fa scoccare il clic
+ * anche quando il puntatore è finito a mezza pagina di distanza: la cattura
+ * riporta il rilascio sul bottone da cui il gesto era partito. Il trascinamento
+ * girava la sua pagina, il clic ne chiedeva un'altra, e il libro avanzava di due
+ * — con l'URL fermo alla prima, perché la seconda era una richiesta in coda.
+ */
+const CLICK_SLOP = 4;
 /**
  * `deltaY` non è in pixel dappertutto: `deltaMode` 1 conta righe (Firefox con una
  * rotella vera manda ~3) e 2 conta pagine. Senza normalizzare, su quei browser
@@ -318,7 +329,9 @@ export function VoBookShell({
     if (!open) return;
     inputLockRef.current = performance.now() + OPEN_GRACE_MS;
   }, [open]);
-  const localePrefix = localePrefixFromPathname(pathname);
+  // Prefisso host + lingua dell'URL corrente: gli href pubblicati devono
+  // restare sull'indirizzo da cui si sta leggendo (preview o dominio custom).
+  const route = useMemo(() => voRoute(pathname), [pathname]);
 
   // Se il volume era già aperto si riparte da dove eravamo, non dalla pagina
   // d'arrivo: è la differenza fra le due che l'effetto sul pathname trasforma in
@@ -430,10 +443,14 @@ export function VoBookShell({
      * spinto fin lì lo ha già deciso, la carta deve solo arrivarci.
      */
     target: number;
+    /** Il gesto ha davvero trascinato: il clic che segue è la coda della presa. */
+    moved: boolean;
     pointerId: number;
   } | null>(null);
   /** La scatola del libro, letta una volta per passaggio del puntatore e non per evento. */
   const stageRectRef = useRef<DOMRect | null>(null);
+  /** Il clic che il browser fa scoccare a fine trascinamento, da lasciar cadere. */
+  const swallowClickRef = useRef(false);
 
   // Tre fogli animabili al massimo: i motion value sono fissi, cambia chi li usa.
   const p0 = useMotionValue(0);
@@ -448,14 +465,26 @@ export function VoBookShell({
   // sinistra compare solo quando la copertina ha passato la verticale.
   const blockShift = useTransform(coverProgress, [0, 0.55], [compact ? "0%" : "-25%", "0%"]);
   const volumeTurn = useTransform(turn, [0, 1], [0, 180]);
-  // La pagina sinistra si scopre *sotto* la copertina che scende. Oltre la
-  // verticale il cartoncino sta davanti alla metà sinistra — ruotando attorno al
-  // dorso il suo bordo libero arcua verso l'osservatore — quindi la pagina può
-  // esserci già: viene svelata dal piatto che si posa, che è come si apre un
-  // libro vero. Prima compariva negli ultimi centesimi della corsa, e per tutta
-  // l'apertura dietro la copertina non c'era niente: si vedeva il volume aprirsi
-  // sul vuoto invece che sulla prima pagina.
-  const leftPageOpacity = useTransform(coverProgress, [0.55, 0.82], [0, 1]);
+  /**
+   * La prima pagina **è il dietro della copertina**: non compare, scende con lei.
+   *
+   * Prima era un foglio a sé che si accendeva in dissolvenza sotto il piatto in
+   * volo, e si vedeva per quello che era — una pagina che si materializza. Il
+   * problema non era *quando* la dissolvenza cominciava: era che ci fosse una
+   * dissolvenza. Un libro che si apre non fa comparire niente, scopre.
+   *
+   * Ora la pagina condivide il cardine del piatto e ci ruota insieme, sfalsata di
+   * 180°: sono le due facce dello stesso movimento. A volume chiuso guarda dalla
+   * parte opposta e `backface-visibility` la toglie di mezzo senza bisogno di
+   * opacità; passata la verticale si gira verso di noi e si posa esattamente dove
+   * deve stare, perché parte e arriva alla posizione della pagina.
+   */
+  const leftPageTurn = useTransform(coverProgress, (p) => 180 - p * 180);
+  /**
+   * Il taglio del blocco pagine invece è decorazione, non carta: quello può
+   * accendersi quando il volume è ormai aperto.
+   */
+  const edgeOpacity = useTransform(coverProgress, [0.86, 0.99], [0, 1]);
 
   /**
    * Le facciate già costruite, per posizione. Un gesto rimonta lo shell almeno
@@ -574,13 +603,13 @@ export function VoBookShell({
     (targetSpread: number) => {
       // In compatto due posizioni consecutive appartengono allo stesso spread:
       // l'URL cambia solo quando cambia la sezione.
-      const href = spreadHref(voSpreads[targetSpread], localePrefix);
+      const href = spreadHref(voSpreads[targetSpread], route);
       if (href === pathname) return;
       // Cronologia, non router: vedi `book-navigation`. Un `router.push` qui
       // rimontava il libro intero sull'ultimo fotogramma del giro.
       voPushUrl(href);
     },
-    [localePrefix, pathname],
+    [route, pathname],
   );
 
   const commit = useCallback(
@@ -939,6 +968,7 @@ export function VoBookShell({
         span: Math.max(travelSpan ?? (compact ? rect.width : rect.width * 0.5) ?? 1, 1),
         base: p0.get(),
         target: p0.get(),
+        moved: false,
         pointerId,
       };
       // La carta fruscia quando si stacca, non quando la si lascia andare.
@@ -961,6 +991,7 @@ export function VoBookShell({
       const travelled = (drag.startX - clientX) / drag.span;
       const target = Math.min(1, Math.max(0, drag.base + travelled));
       drag.target = target;
+      if (Math.abs(clientX - drag.startX) > CLICK_SLOP) drag.moved = true;
       stopHintAnim();
       if (smooth) hintAnimRef.current = animate(p0, target, wheelFollow);
       else p0.set(target);
@@ -978,6 +1009,9 @@ export function VoBookShell({
       const held = gestureRef.current;
       if (!drag || !held) return;
       dragRef.current = null;
+      // La rotella non fa scoccare clic: solo un puntatore vero può lasciarne
+      // uno in canna dopo aver girato la sua pagina.
+      if (drag.moved && drag.pointerId !== WHEEL_POINTER_ID) swallowClickRef.current = true;
       // Il bersaglio del gesto, non il punto in cui la carta è arrivata. Otto
       // scatti di rotella nello stesso fotogramma portano il bersaglio a fondo
       // corsa mentre la molla è ancora ferma sul dorso: leggendo il foglio, il
@@ -1207,6 +1241,9 @@ export function VoBookShell({
 
   const onHotspotPointerDown = useCallback(
     (event: ReactPointerEvent<HTMLButtonElement>, dir: 1 | -1) => {
+      // Ogni clic nasce da una pressione: azzerare qui è la garanzia che la
+      // guardia valga per il gesto in corso e non ne avveleni uno successivo.
+      swallowClickRef.current = false;
       if (event.pointerType === "touch") return;
       if (!beginDrag(dir, event.clientX, event.pointerId)) return;
       capture(event.currentTarget, event.pointerId);
@@ -1230,6 +1267,21 @@ export function VoBookShell({
       endDrag(event.currentTarget.matches(":hover"));
     },
     [endDrag],
+  );
+
+  /** Il taglio come pulsante: vale solo se il gesto non era un trascinamento. */
+  const onHotspotClick = useCallback(
+    (event: ReactMouseEvent<HTMLButtonElement>, dir: 1 | -1) => {
+      // `detail` a zero è l'attivazione da tastiera: non ha un puntatore dietro,
+      // quindi non può essere la coda di una presa e va sempre onorata — anche
+      // se una guardia fosse rimasta armata da un rilascio finito fuori pagina.
+      if (event.detail > 0 && swallowClickRef.current) {
+        swallowClickRef.current = false;
+        return;
+      }
+      step(dir);
+    },
+    [step],
   );
 
   // Il gesto "run" riparte da capo: i motion value non usati vanno riportati a zero.
@@ -1258,18 +1310,20 @@ export function VoBookShell({
         <motion.div
           className="vo-book-edge vo-book-edge-left"
           aria-hidden="true"
-          style={{ ...({ "--vo-edge": spread } as CSSProperties), opacity: leftPageOpacity }}
+          style={{ ...({ "--vo-edge": spread } as CSSProperties), opacity: edgeOpacity }}
         />
         <motion.div
           className="vo-book-edge vo-book-edge-right"
           aria-hidden="true"
           style={{
             ...({ "--vo-edge": voSpreadCount - 1 - spread } as CSSProperties),
-            opacity: leftPageOpacity,
+            opacity: edgeOpacity,
           }}
         />
 
-        <motion.div className="vo-page vo-page-left" style={{ opacity: leftPageOpacity }}>
+        {/* Due pixel davanti al risguardo: complanari si contenderebbero il
+            posto, e il piatto è comunque molto più spesso di così. */}
+        <motion.div className="vo-page vo-page-left" style={{ rotateY: leftPageTurn, z: 2 }}>
           {pageSheet(staticLeft, "left")}
         </motion.div>
         <div className="vo-page vo-page-right">{pageSheet(staticRight, "right")}</div>
@@ -1342,7 +1396,7 @@ export function VoBookShell({
           onPointerMove={onHotspotPointerMove}
           onPointerUp={onHotspotPointerUp}
           onPointerCancel={onHotspotPointerUp}
-          onClick={() => step(1)}
+          onClick={(event) => onHotspotClick(event, 1)}
           disabled={!open || pos === appendixPos || (!canGoForward && !onPastLastPage)}
           aria-label={canGoForward ? "Pagina successiva" : "Chi sono, sul retro del volume"}
         />
@@ -1355,7 +1409,7 @@ export function VoBookShell({
           onPointerMove={onHotspotPointerMove}
           onPointerUp={onHotspotPointerUp}
           onPointerCancel={onHotspotPointerUp}
-          onClick={() => step(-1)}
+          onClick={(event) => onHotspotClick(event, -1)}
           disabled={!open || (!canGoBack && !onBeforeFirstPage)}
           aria-label="Pagina precedente"
         />

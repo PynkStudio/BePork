@@ -12,7 +12,7 @@ import { resolveTenantFeatures } from "@/lib/tenant-modules";
 import { findTenantByPreviewSlug } from "@/lib/tenant-registry";
 
 /** Tenant che montano una shell completa propria (navbar/footer dentro le pagine). */
-const OWN_SHELL_TENANTS = new Set(["pynkstudio"]);
+const OWN_SHELL_TENANTS = new Set(["pynkstudio", "valentina-orciuoli"]);
 
 const EXCLUDED_MODES = new Set([
   "marketing",

@@ -82,6 +82,19 @@
       ],
       "port": 3131,
       "url": "http://demo.weuseorpheo.localhost:3131"
+    },
+    {
+      "name": "valentina-domain",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--",
+        "-p",
+        "3141"
+      ],
+      "port": 3141,
+      "url": "http://valentinaorciuoli.localhost:3141"
     }
   ]
 }

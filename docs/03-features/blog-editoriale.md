@@ -68,7 +68,7 @@ Il confronto che ha originato il progetto è con la piattaforma editoriale di BI
 1. ~~**La data di pubblicazione futura non rinvia nulla.**~~ `getTenantBlogPosts` filtrava solo `status = 'published'`: la RLS applicava `published_at <= now()`, ma il client service-role la bypassa, quindi un post "programmato" era online subito. **Corretto in F0.**
 2. ~~**Il salvataggio è distruttivo.**~~ Il `PUT` cancellava tutti i post del tenant non presenti nel payload. **Corretto in F0**: si cancella solo ciò che il client elenca in `deletedPostIds`.
 3. ~~Moderazione commenti: una `UPDATE` per commento in loop.~~ **Corretto in F0**: una `UPDATE` per stato.
-4. ~~I post tenant non compaiono in `src/app/sitemap.ts` e non hanno una route sul dominio custom.~~ **Corretto in F3**: route pubbliche + sitemap scrivono già per entrambi i modi. Resta aperto solo l'aggancio del dominio custom **del resto del sito** (il libro), fuori scope di F3 — vedi [[adr-0005-valentina-blog-fuori-dal-libro]] §Conseguenze.
+4. ~~I post tenant non compaiono in `src/app/sitemap.ts` e non hanno una route sul dominio custom.~~ **Corretto in F3**: route pubbliche + sitemap scrivono già per entrambi i modi. ~~Resta aperto solo l'aggancio del dominio custom **del resto del sito** (il libro).~~ **Chiuso il 2026-09-04** da [[adr-0007-valentina-dominio-custom]]: `valentina-orciuoli` ha `domains` popolato e il sito completo risponde sul dominio. Sul dominio il taccuino apre dentro il libro (coerenza con [[adr-0006-valentina-taccuino-nel-libro]]), non sulle pagine editoriali autonome.
 
 ---
 
@@ -342,7 +342,7 @@ In sintesi: endpoint `/api/mcp/[tenantId]`, token per tenant emesso dal pannello
 ## 15. Bacheca di avanzamento
 
 Stati e regole di aggiornamento: § 0. Stime in giornate-uomo, indicative.
-**Ultimo aggiornamento:** 2026-09-01 — renderer, route indice/articolo (preview + dominio custom), canonical/hreflang e sitemap in test; verificati in preview locale.
+**Ultimo aggiornamento:** 2026-09-04 — `valentina-orciuoli` ha il dominio custom (`valentinaorciuoli.it`) e il sito completo risponde lì ([[adr-0007-valentina-dominio-custom]]): route del blog, canonical/hreflang e sitemap provate anche contro un host di dominio custom, non più solo in preview. Restano 🔵 in attesa del DNS puntato.
 
 | Fase | Uscita | ~gg | Stato |
 |---|---|---|---|
@@ -403,12 +403,12 @@ Stati e regole di aggiornamento: § 0. Stime in giornate-uomo, indicative.
 | Lavoro | Stato | Note |
 |---|---|---|
 | Renderer documento Tiptap server-side | 🔵 in test | `src/components/modules/blog/render-doc.tsx` (`BlogDocRenderer`). Copre i nodi prodotti dalla migrazione blocchi→documento (paragrafo, heading, quotePull, mediaFigure, gallery, videoEmbed) più liste/tabelle/callout/FAQ/CTA/ricetta, non ancora prodotti da alcun editor. **Non provati**: nessun editor scrive ancora `menuItemCard`/`productGrid`/`galleryRef`/`newsletterInline` (out of scope, richiedono dati di altri moduli) |
-| Route indice + articolo, preview e dominio custom | 🔵 in test | `src/app/[previewSlug]/blog/page.tsx`, `.../blog/[postSlug]/page.tsx`, `src/app/blog/page.tsx`, `src/app/blog/[postSlug]/page.tsx`. Gate su `tenant.features.blog` (oggi solo `valentina-orciuoli`), non più sull'id. Verificate in preview locale: indice con 3 articoli reali, apertura articolo, redirect su slug cambiato onorato in lettura. **Non provate**: le route sul dominio custom (nessun tenant ha ancora un dominio proprio — vedi [[adr-0005-valentina-blog-fuori-dal-libro]] §Conseguenze) |
+| Route indice + articolo, preview e dominio custom | 🔵 in test | `src/app/[previewSlug]/blog/page.tsx`, `.../blog/[postSlug]/page.tsx`, `src/app/blog/page.tsx`, `src/app/blog/[postSlug]/page.tsx`. Gate su `tenant.features.blog` (oggi solo `valentina-orciuoli`), non più sull'id. Verificate in preview locale: indice con 3 articoli reali, apertura articolo, redirect su slug cambiato onorato in lettura. **Dominio custom provato in locale** (2026-09-04, host `valentinaorciuoli.localhost`): `/it/blog` e `/it/blog/<slug>` rispondono 200 con canonical sull'host reale — vedi [[adr-0007-valentina-dominio-custom]]. Resta 🔵 perché il DNS del dominio pubblico non è ancora puntato: **tocca all'utente** |
 | Route tag, autore | ⬜ da iniziare | Rimandate: nessun tenant ha ancora tag/autori sufficienti a giustificarle |
 | Testatina/piede dedicati, non quelli del libro | ✅ completata | `src/components/tenants/valentina-orciuoli/blog/vo-blog-header.tsx`, `vo-blog-footer.tsx`. Verificato in browser |
 | Sommario, tempo di lettura, correlati, condivisione | ✅ completata | Nella pagina articolo (`blog-article-page.tsx`): TOC da `blogDocHeadings`, minuti da `blogReadingMinutes`, 3 correlati, link X/WhatsApp/email. Verificato in browser |
 | Canonical, `hreflang` + `x-default`, `noindex` in preview | ✅ completata | Verificato in browser: canonical e `alternate hreflang` corretti su indice e articolo, `robots: noindex,nofollow` in preview |
-| Post nella sitemap con slug per lingua | 🔵 in test | `src/app/sitemap.ts`. Scritta, non ancora vista contro un dominio reale (nessun tenant col blog ha ancora `domains` popolato) |
+| Post nella sitemap con slug per lingua | 🔵 in test | `src/app/sitemap.ts`. Vista contro un host di dominio custom in locale (2026-09-04): 11 pagine del libro + 3 articoli, tutte con l'origine dell'host. Resta 🔵 finché non la si legge sul dominio pubblico, che dipende dal DNS — **tocca all'utente** |
 | JSON-LD `BlogPosting` / `Recipe` / `FAQPage` / breadcrumb | ⬜ da iniziare | |
 | Feed RSS / Atom / JSON per lingua | ⬜ da iniziare | |
 | `/llms.txt` per tenant | ⬜ da iniziare | |

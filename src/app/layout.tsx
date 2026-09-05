@@ -760,7 +760,14 @@ export default async function RootLayout({
                     <>
                       <SiteChrome />
                       <main>
-                        <PageTransitionShell>{children}</PageTransitionShell>
+                        {/* Sul dominio custom il sito-libro di valentina non ha
+                            prefisso da riconoscere: la superficie continua è la
+                            radice, e senza questo il volume rimonterebbe a ogni giro. */}
+                        <PageTransitionShell
+                          continuousRoot={mode === "tenant" && tenant.id === "valentina-orciuoli"}
+                        >
+                          {children}
+                        </PageTransitionShell>
                       </main>
                       <SiteFooterGate />
                     </>

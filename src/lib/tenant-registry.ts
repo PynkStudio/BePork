@@ -626,7 +626,10 @@ export const TENANTS: TenantProfile[] = [
     name: "Valentina Orciuoli",
     label: "Lead · Valentina Orciuoli",
     vertical: "creative",
-    domains: [],
+    // L'alias .localhost serve a provare il sito sul dominio custom in locale:
+    // è l'unico modo di esercitare la riscrittura del middleware, che sull'host
+    // di sviluppo nudo non scatta.
+    domains: ["valentinaorciuoli.it", "www.valentinaorciuoli.it", "valentinaorciuoli.localhost"],
     previewSlug: "valentina-orciuoli",
     enabled: true,
     status: "trattativa",

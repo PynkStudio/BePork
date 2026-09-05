@@ -227,7 +227,9 @@ export function PlatformTenantsPage({
   const persistBackendLive = (tenantId: string, backendLive: boolean) =>
     patchDemoControl(tenantId, { backendLive });
 
-  if (mode !== "platform-admin") {
+  // Console centrale: admin.menuary.it e i portali prodotto su admin.pynkstudio.eu.
+  // Fuori da questi host la pagina non deve comparire nell'area gestione del tenant.
+  if (mode !== "platform-admin" && mode !== "admin-pynkstudio") {
     return (
       <div className="mx-auto max-w-2xl rounded-3xl bg-white p-8 ring-1 ring-pork-ink/10">
         <p className="impact-title text-xs text-pork-red">Accesso limitato</p>

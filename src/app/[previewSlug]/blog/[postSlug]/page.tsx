@@ -5,8 +5,7 @@ import { TenantProvider } from "@/components/core/tenant-provider";
 import { ValentinaOrciuoliBookSite } from "@/components/tenants/valentina-orciuoli/book/book-site";
 import { spreadIndexById } from "@/components/tenants/valentina-orciuoli/book/book-map";
 import { voNotesFromPosts } from "@/components/tenants/valentina-orciuoli/book/notes";
-import { getPlatformModeFromHost } from "@/lib/platform";
-import { resolveTenantFromPreviewSlug } from "@/lib/tenant-runtime";
+import { resolvePreviewSurface, resolveTenantFromPreviewSlug } from "@/lib/tenant-runtime";
 import { tenantThemeCssVars } from "@/lib/tenant-theme";
 import { getTenantLocaleConfig } from "@/lib/tenant-locales";
 import { getBlogPosts, getPublishedBlogPost } from "@/lib/blog/data";
@@ -30,21 +29,31 @@ export async function generateMetadata({
   params: Promise<{ previewSlug: string; postSlug: string }>;
 }): Promise<Metadata> {
   const { previewSlug, postSlug } = await params;
+  const surface = resolvePreviewSurface((await headers()).get("host"), previewSlug);
+  if (surface.kind === "denied") return { robots: { index: false, follow: false } };
   const found = await loadArticle(previewSlug, postSlug);
   if (!found) return { robots: { index: false, follow: false } };
   const { locale, post } = found;
   const translation = post.translations[locale];
   if (!translation) return { robots: { index: false, follow: false } };
 
-  const origin = "https://demo.weuseorpheo.com";
+  const isPublicSite = surface.kind === "tenant-domain";
+  const origin = isPublicSite ? surface.origin : "https://demo.weuseorpheo.com";
   const ogImage = post.coverImageUrl ?? firstBlogDocImage(translation.content) ?? undefined;
-  const alternates = blogPostLanguageAlternates({ post, origin, defaultLocale: locale, previewSlug });
+  const alternates = blogPostLanguageAlternates({
+    post,
+    origin,
+    defaultLocale: locale,
+    previewSlug: isPublicSite ? undefined : previewSlug,
+  });
 
   return {
     metadataBase: new URL(origin),
     title: { absolute: translation.seoTitle ?? `${translation.title} — Valentina Orciuoli` },
     description: translation.seoDescription ?? translation.excerpt ?? undefined,
-    robots: { index: false, follow: false, nocache: true },
+    robots: isPublicSite
+      ? { index: !translation.noindex, follow: true }
+      : { index: false, follow: false, nocache: true },
     openGraph: {
       type: "article",
       title: translation.title,
@@ -64,11 +73,10 @@ export default async function PreviewBlogArticleRoute({
 }) {
   const requestHeaders = await headers();
   const host = requestHeaders.get("host");
-  const mode = getPlatformModeFromHost(host);
-  const isLocalPreviewDev = host?.includes("localhost") || host?.includes("127.0.0.1");
-  if (mode !== "preview" && mode !== "preview-bizery" && mode !== "preview-orpheo" && !isLocalPreviewDev) notFound();
-
   const { previewSlug, postSlug } = await params;
+  const surface = resolvePreviewSurface(host, previewSlug);
+  if (surface.kind === "denied") notFound();
+
   const found = await loadArticle(previewSlug, postSlug);
   if (!found) notFound();
   const { tenant, locale, post, redirectedFrom } = found;
@@ -76,7 +84,14 @@ export default async function PreviewBlogArticleRoute({
   if (!translation) notFound();
 
   if (redirectedFrom) {
-    redirect(blogPostPath(locale, translation.slug, previewSlug));
+    // Sul dominio del tenant l'URL pubblico non porta il preview slug.
+    redirect(
+      blogPostPath(
+        locale,
+        translation.slug,
+        surface.kind === "tenant-domain" ? undefined : previewSlug,
+      ),
+    );
   }
 
   const currentLocale = requestHeaders.get(LOCALE_HEADER) ?? locale;

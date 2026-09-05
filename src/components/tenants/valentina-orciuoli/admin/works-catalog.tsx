@@ -4,12 +4,26 @@
 import { useEffect, useState, type ChangeEvent } from "react";
 import { Eye, GripVertical, Plus, Save, Trash2, UploadCloud } from "lucide-react";
 import {
-  valentinaBasePath,
   valentinaCreativeWorks,
   type ValentinaCreativeWork,
 } from "@/components/tenants/valentina-orciuoli/content";
+import { findTenantById } from "@/lib/tenant-registry";
+import { getTenantLocaleConfig } from "@/lib/tenant-locales";
 
 const tenantId = "valentina-orciuoli";
+
+/**
+ * L'anteprima si apre sul sito pubblico, non su un path relativo: questo editor
+ * vive su admin.pynkstudio.eu, dove `/libri` non è la pagina del tenant.
+ */
+function previewLibriHref(): string {
+  const tenant = findTenantById(tenantId);
+  const locale = getTenantLocaleConfig(tenantId)?.defaultLocale;
+  const path = `${locale ? `/${locale}` : ""}/libri`;
+  const domain = tenant?.domains.find((item) => !item.startsWith("www."));
+  if (domain) return `https://${domain}${path}`;
+  return `https://demo.weuseorpheo.com/${tenant?.previewSlug ?? tenantId}${path}`;
+}
 
 function emptyWork(): ValentinaCreativeWork {
   const id = crypto.randomUUID();
@@ -117,7 +131,7 @@ export function ValentinaWorksCatalogAdmin() {
           </p>
         </div>
         <div className="vo-admin-works-actions">
-          <a className="ga-btn ga-btn-ghost" href={`${valentinaBasePath}/libri`} target="_blank" rel="noopener noreferrer">
+          <a className="ga-btn ga-btn-ghost" href={previewLibriHref()} target="_blank" rel="noopener noreferrer">
             <Eye size={15} /> Anteprima
           </a>
           <button className="ga-btn ga-btn-primary" type="button" onClick={save} disabled={pending || Boolean(uploading)}>

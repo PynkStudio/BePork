@@ -1,5 +1,3 @@
-export const valentinaBasePath = "/valentina-orciuoli";
-
 /** Pagine statiche proprie del tenant, servite da [previewSlug]/[bookId] — usato anche dal middleware
  * per evitare che questi segmenti vengano dirottati sulle route globali (es. /contatti, /blog food/PynkStudio). */
 export const valentinaStaticPageKinds = ["libri", "autrice", "eventi", "contatti", "link", "blog"] as const;
@@ -10,7 +8,8 @@ export const amazonStoreHref = "https://www.amazon.it/stores/Valentina-Orciuoli/
 export const trilogyHref = "https://www.amazon.it/stores/author/B0F1TXYZ27/allbooks";
 export const furyHref = "https://www.amazon.it/Fury-Emotion-Dragons-Trilogy-Vol-ebook/dp/B0GKWCS774";
 export const externalLinktreeHref = "https://linktr.ee/valentina.orciuoli";
-export const linktreeHref = `${valentinaBasePath}/link`;
+/** Path interni relativi: il prefisso dipende dall'host e lo mette `voHref()`. */
+export const linktreeHref = "/link";
 export const instagramHref = "https://www.instagram.com/di.vale_in.peggio/";
 export const tiktokHref = "https://www.tiktok.com/@valentina.orciuoli";
 export const valentinaEmail = "valentina.orciuoli@weuseorpheo.com";
@@ -81,7 +80,7 @@ export const valentinaLinks = [
   {
     label: "Sito",
     desc: "Home ufficiale di Valentina Orciuoli.",
-    href: valentinaBasePath,
+    href: "",
     kind: "site",
   },
   {
@@ -99,19 +98,19 @@ export const valentinaLinks = [
   {
     label: "Contatti",
     desc: "Form, email e canali ufficiali.",
-    href: `${valentinaBasePath}/contatti`,
+    href: "/contatti",
     kind: "contact",
   },
   {
     label: "Libri",
     desc: "Catalogo libri e pagine d'acquisto.",
-    href: `${valentinaBasePath}/libri`,
+    href: "/libri",
     kind: "books",
   },
   {
     label: "Eventi",
     desc: "Presentazioni, firmacopie e nuove date.",
-    href: `${valentinaBasePath}/eventi`,
+    href: "/eventi",
     kind: "events",
   },
 ];

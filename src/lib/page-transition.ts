@@ -15,17 +15,25 @@
  */
 const CONTINUOUS_SURFACES: readonly string[] = ["/valentina-orciuoli"];
 
+const CONTINUOUS_ROOT_KEY = "continuous-root";
+
 function surfaceFor(pathname: string) {
   return CONTINUOUS_SURFACES.find(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
 }
 
-export function pageTransitionKey(pathname: string) {
+/**
+ * `continuousRoot` è per i tenant la cui superficie continua *è* tutto il sito:
+ * sul dominio custom il sito-libro non ha prefisso da riconoscere, il suo
+ * indirizzo è la radice. Chi monta la shell sa da che host sta servendo.
+ */
+export function pageTransitionKey(pathname: string, continuousRoot = false) {
+  if (continuousRoot) return CONTINUOUS_ROOT_KEY;
   return surfaceFor(pathname) ?? pathname;
 }
 
 /** true quando la superficie gestisce da sé la transizione fra le sue route. */
-export function isContinuousSurface(pathname: string) {
-  return surfaceFor(pathname) !== undefined;
+export function isContinuousSurface(pathname: string, continuousRoot = false) {
+  return continuousRoot || surfaceFor(pathname) !== undefined;
 }

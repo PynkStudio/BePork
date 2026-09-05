@@ -3,7 +3,6 @@ import type { TenantLinktreeItem } from "@/components/modules/linktree/linktree-
 import {
   instagramHref,
   tiktokHref,
-  valentinaBasePath,
 } from "@/components/tenants/valentina-orciuoli/content";
 
 type LinktreeRow = {
@@ -30,11 +29,16 @@ type LinktreeTableClient = {
   };
 };
 
+/**
+ * Gli href interni sono relativi al sito, senza prefisso: il sito vive sotto
+ * `/valentina-orciuoli` in preview e alla radice sul dominio custom, e la vista
+ * li riporta alla forma dell'host corrente (`voLocalizeInternalHref`).
+ */
 export const valentinaDefaultLinktreeItems: TenantLinktreeItem[] = [
   {
     label: "Sito",
     description: "Home ufficiale di Valentina Orciuoli.",
-    href: valentinaBasePath,
+    href: "/",
     kind: "site",
   },
   {
@@ -52,19 +56,19 @@ export const valentinaDefaultLinktreeItems: TenantLinktreeItem[] = [
   {
     label: "Contatti",
     description: "Form, email e canali ufficiali.",
-    href: `${valentinaBasePath}/contatti`,
+    href: "/contatti",
     kind: "contact",
   },
   {
     label: "Libri",
     description: "Catalogo libri e pagine d'acquisto.",
-    href: `${valentinaBasePath}/libri`,
+    href: "/libri",
     kind: "books",
   },
   {
     label: "Eventi",
     description: "Presentazioni, firmacopie e nuove date.",
-    href: `${valentinaBasePath}/eventi`,
+    href: "/eventi",
     kind: "events",
   },
 ];

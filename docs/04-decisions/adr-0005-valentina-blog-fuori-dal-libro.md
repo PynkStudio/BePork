@@ -50,13 +50,16 @@ Il blog di `valentina-orciuoli` (F3 di [[blog-editoriale]]) era ancora, fino a q
 
 **Isolamento.** Tutto il nuovo codice tenant-specifico vive sotto `src/components/tenants/valentina-orciuoli/` (cartella `blog/` nuova) e nel blocco di coda di `valentina-orciuoli.css`. L'unica aggiunta a un modulo condiviso è `render-doc.tsx`, additiva e retrocompatibile.
 
-**Il dominio custom del sito-libro resta da costruire.** Questo intervento *non* aggiunge `valentinaorciuoli.it` a `domains` in `tenant-registry.ts`: il libro (`ValentinaOrciuoliBookSite`) genera ancora i propri href con `valentinaBasePath` fisso (`/valentina-orciuoli/...`), quindi funziona solo dentro l'albero `[previewSlug]`. Le nuove route del blog sono state scritte fin da subito **agnostiche rispetto al dominio** (stessi componenti, gate su `resolveTenantFromHost` per il ramo custom), quindi non richiedono altro lavoro quando arriverà il turno del resto del sito — ma quel lavoro (portare l'intero libro su dominio custom, non solo il blog) resta un progetto a sé, fuori da questo ADR.
+**Il dominio custom del sito-libro resta da costruire.** *(Costruito il 2026-09-04: vedi
+[[adr-0007-valentina-dominio-custom]]. Quanto segue descrive lo stato al momento di questo
+ADR.)* Questo intervento *non* aggiunge `valentinaorciuoli.it` a `domains` in `tenant-registry.ts`: il libro (`ValentinaOrciuoliBookSite`) genera ancora i propri href con `valentinaBasePath` fisso (`/valentina-orciuoli/...`), quindi funziona solo dentro l'albero `[previewSlug]`. Le nuove route del blog sono state scritte fin da subito **agnostiche rispetto al dominio** (stessi componenti, gate su `resolveTenantFromHost` per il ramo custom), quindi non richiedono altro lavoro quando arriverà il turno del resto del sito — ma quel lavoro (portare l'intero libro su dominio custom, non solo il blog) resta un progetto a sé, fuori da questo ADR.
 
 **Bacheca.** [[blog-editoriale]] §15, F3: renderer, route (indice+articolo), canonical/hreflang, sitemap passano a 🔵 in test (verificati in preview locale, non ancora sul campo con dominio reale). JSON-LD, feed, `/llms.txt`, redirect 301 UI, cache restano ⬜.
 
 ## Riferimenti
 
 - [[adr-0002-valentina-book-shell]] — supersede la sezione sulla scrivania/blog; il resto (cerimonia, sfogliare, appendice legale) resta valido
+- [[adr-0007-valentina-dominio-custom]] — porta il libro sul dominio custom e chiude la conseguenza lasciata aperta qui
 - [[blog-editoriale]] — bacheca di avanzamento, §15
 - [[tenant-e-verticali]]
 - `src/components/tenants/valentina-orciuoli/blog/` — testatina, piede, indice, articolo

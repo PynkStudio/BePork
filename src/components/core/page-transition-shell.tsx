@@ -10,13 +10,16 @@ import { isContinuousSurface, pageTransitionKey } from "@/lib/page-transition";
  *  Le superfici continue (vedi `pageTransitionKey`) sono l'eccezione: condividono
  *  una chiave sola fra tutte le loro route, quindi non rimontano e gestiscono da
  *  sé il passaggio da una pagina all'altra. */
-export function PageTransitionShell({ children }: PropsWithChildren) {
+export function PageTransitionShell({
+  children,
+  continuousRoot = false,
+}: PropsWithChildren<{ continuousRoot?: boolean }>) {
   const pathname = usePathname() ?? "";
-  const continuous = isContinuousSurface(pathname);
+  const continuous = isContinuousSurface(pathname, continuousRoot);
 
   return (
     <div
-      key={pageTransitionKey(pathname)}
+      key={pageTransitionKey(pathname, continuousRoot)}
       className={
         continuous
           ? "min-w-0 overflow-x-clip"

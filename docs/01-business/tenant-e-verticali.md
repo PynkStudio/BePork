@@ -33,11 +33,22 @@ Estratti da `TENANTS[]` in `src/lib/tenant-registry.ts` (campi `id`, `name`, `ve
   `src/components/tenants/valentina-orciuoli/book/book-map.ts`. Vedi
   [[adr-0002-valentina-book-shell]]. `/autrice` non è una pagina ma la **quarta di
   copertina**: il volume si chiude e si rigira per mostrarla. La pagina `/link` (linktree)
-  resta fuori dal libro. **Il blog non è (più) una pagina del libro**: vive a
-  `/it/blog/**`, sullo stesso dominio del sito ma con testatina e impaginazione proprie
-  (`src/components/tenants/valentina-orciuoli/blog/`) — vedi
-  [[adr-0005-valentina-blog-fuori-dal-libro]]. "Blog" in nav è un link che esce dal
-  volume, non una pagina che si sfoglia.
+  resta fuori dal libro. **Il taccuino è una doppia pagina del volume**: "Blog" in nav
+  apre `/it/blog` dentro il libro, e il singolo appunto (`/it/blog/<slug>`) si legge sulla
+  scrivania, con una panoramica di camera invece che con una navigazione — vedi
+  [[adr-0006-valentina-taccuino-nel-libro]], che ha ribaltato la §5 di
+  [[adr-0005-valentina-blog-fuori-dal-libro]]. Le pagine editoriali autonome nate con la
+  0005 (`src/components/tenants/valentina-orciuoli/blog/`) restano nelle route globali
+  `src/app/blog/**`, gated sul feature flag `blog` e non sull'id: sono il punto d'ingresso
+  già pronto per il prossimo tenant che accende il blog senza avere un libro attorno.
+  **Dominio custom**: `valentinaorciuoli.it` (+ `www.`, più l'alias
+  `valentinaorciuoli.localhost` per le prove in locale). Il sito completo — libro, taccuino,
+  linktree, note legali — è operativo sul dominio: il middleware riscrive `/it/<pagina>`
+  dentro l'albero `[previewSlug]` lasciando l'URL nudo nella barra, e il prefisso degli href
+  si legge dal pathname (`voRoute`) invece che da una costante. Le stesse route servono due
+  superfici con SEO opposta — preview `noindex`, dominio indicizzabile — e a distinguerle è
+  `resolvePreviewSurface()`. Vedi [[adr-0007-valentina-dominio-custom]].
+  **Resta da fare l'utente**: puntare il DNS su Vercel e aggiungere il dominio al progetto.
 
 - **`casabramanti`** — maison di moda demo del verticale services, usata per mostrare
   il modulo `shop` e l'integrazione **Slabbby** su un catalogo reale (otto capi in
