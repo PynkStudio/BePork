@@ -106,6 +106,7 @@ export function VoDesk({
               style={{ ...style, zIndex: others.length - order }}
               onClick={() => onOpen(note.slug)}
             >
+              <div className="vo-page-grain" aria-hidden="true" />
               <span className="vo-desk-scrap-date">{formatDate(note.publishedAt)}</span>
               <span className="vo-desk-scrap-title">{note.title}</span>
             </button>
@@ -115,61 +116,66 @@ export function VoDesk({
 
       {current ? (
         <article className="vo-sheet">
-          <header className="vo-sheet-head">
-            {formatDate(current.publishedAt) ? (
-              <time dateTime={current.publishedAt ?? undefined}>
-                {formatDate(current.publishedAt)}
-              </time>
-            ) : (
-              <span />
-            )}
-            {current.readingMinutes ? <span>{current.readingMinutes} min di lettura</span> : null}
-          </header>
+          {/* La grana sta fuori dallo scorrimento, come sulle pagine del libro:
+              altrimenti un foglio lungo la lascerebbe indietro a metà lettura. */}
+          <div className="vo-page-grain" aria-hidden="true" />
+          <div className="vo-sheet-scroll">
+            <header className="vo-sheet-head">
+              {formatDate(current.publishedAt) ? (
+                <time dateTime={current.publishedAt ?? undefined}>
+                  {formatDate(current.publishedAt)}
+                </time>
+              ) : (
+                <span />
+              )}
+              {current.readingMinutes ? <span>{current.readingMinutes} min di lettura</span> : null}
+            </header>
 
-          <h1>{current.title}</h1>
-          {current.excerpt ? <p className="vo-sheet-lead">{current.excerpt}</p> : null}
-          <span className="vo-sheet-rule" aria-hidden="true" />
+            <h1>{current.title}</h1>
+            {current.excerpt ? <p className="vo-sheet-lead">{current.excerpt}</p> : null}
+            <span className="vo-sheet-rule" aria-hidden="true" />
 
-          <div className="vo-sheet-body">
-            {current.content ? (
-              <BlogDocRenderer doc={current.content} />
-            ) : (
-              <p>Sto prendendo il foglio&hellip;</p>
-            )}
+            <div className="vo-sheet-body">
+              {current.content ? (
+                <BlogDocRenderer doc={current.content} />
+              ) : (
+                <p>Sto prendendo il foglio&hellip;</p>
+              )}
+            </div>
+
+            {/* Da un foglio si passa al successivo restando sul tavolo. */}
+            {previous || next ? (
+              <nav className="vo-sheet-steps" aria-label="Altri appunti">
+                {previous ? (
+                  <button type="button" onClick={() => onOpen(previous.slug)}>
+                    <ArrowLeft size={14} />
+                    <span>
+                      <small>Più recente</small>
+                      {previous.title}
+                    </span>
+                  </button>
+                ) : (
+                  <span />
+                )}
+                {next ? (
+                  <button type="button" className="vo-sheet-step-next" onClick={() => onOpen(next.slug)}>
+                    <span>
+                      <small>Più indietro nel tempo</small>
+                      {next.title}
+                    </span>
+                    <ArrowRight size={14} />
+                  </button>
+                ) : (
+                  <span />
+                )}
+              </nav>
+            ) : null}
+
+            <footer className="vo-sheet-foot">
+              <span aria-hidden="true">龍</span>
+              <span>Valentina Orciuoli</span>
+            </footer>
           </div>
-
-          {/* Da un foglio si passa al successivo restando sul tavolo. */}
-          {previous || next ? (
-            <nav className="vo-sheet-steps" aria-label="Altri appunti">
-              {previous ? (
-                <button type="button" onClick={() => onOpen(previous.slug)}>
-                  <ArrowLeft size={14} />
-                  <span>
-                    <small>Più recente</small>
-                    {previous.title}
-                  </span>
-                </button>
-              ) : (
-                <span />
-              )}
-              {next ? (
-                <button type="button" className="vo-sheet-step-next" onClick={() => onOpen(next.slug)}>
-                  <span>
-                    <small>Più indietro nel tempo</small>
-                    {next.title}
-                  </span>
-                  <ArrowRight size={14} />
-                </button>
-              ) : (
-                <span />
-              )}
-            </nav>
-          ) : null}
-
-          <footer className="vo-sheet-foot">
-            <span aria-hidden="true">龍</span>
-            <span>Valentina Orciuoli</span>
-          </footer>
         </article>
       ) : (
         <div className="vo-desk-empty">

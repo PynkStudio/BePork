@@ -7,7 +7,9 @@ import {
   Building2,
   ClipboardList,
   CreditCard,
+  Cpu,
   FileText,
+  Globe,
   LifeBuoy,
   Mail,
   MessageCircle,
@@ -74,6 +76,16 @@ const SECURITY_NAV: PortalNavItem[] = [
   { href: "/admin-pynkstudio/security/config",   label: "Configurazione",  icon: Settings },
 ];
 
+// Piattaforma esterna (proprio backend FastAPI, non un verticale Menuary) —
+// accesso platform-admin via bridge, riservato a superadmin/admin (vedi
+// middleware.ts). Randa compare qui come uno dei tenant, non ha una voce a sé.
+const PERX_NAV: PortalNavItem[] = [
+  { href: "/admin-pynkstudio/perx/tenant",         label: "Tenant",           icon: Building2 },
+  { href: "/admin-pynkstudio/perx/utenti",         label: "Utenti",           icon: Users },
+  { href: "/admin-pynkstudio/perx/errori",         label: "Errori operativi", icon: ServerCrash },
+  { href: "/admin-pynkstudio/perx/domain-routes",  label: "Domain routes",    icon: Globe },
+];
+
 const PORTAL_SHELLS: Record<
   string,
   { label: string; icon: React.ElementType; nav: PortalNavItem[] }
@@ -82,6 +94,7 @@ const PORTAL_SHELLS: Record<
   bizery:   { label: "Bizery",   icon: Briefcase,       nav: BIZERY_NAV },
   orpheo:   { label: "Orpheo",   icon: Music,           nav: ORPHEO_NAV },
   security: { label: "Security", icon: Shield,          nav: SECURITY_NAV },
+  perx:     { label: "PerX",     icon: Cpu,             nav: PERX_NAV },
 };
 
 export function PynkAdminLayoutSwitch({ children }: { children: React.ReactNode }) {

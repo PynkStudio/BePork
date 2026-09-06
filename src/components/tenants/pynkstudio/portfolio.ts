@@ -129,6 +129,17 @@ export const pynkPortfolioItems: PynkPortfolioItem[] = [
     href: "https://testflight.apple.com/join/Q5uuDAGe",
     cardImage: "/pynkstudio/tocca-a-te-icon.png",
   },
+  {
+    id: "are-you-stupid",
+    title: "Are You Stupid?",
+    kind: "mobile",
+    descriptionPlain:
+      "Hyper-casual per iOS e Android: un'istruzione stupidamente semplice ogni round, e la sfida è non fallirla per un dettaglio stupido. Offline, a una mano, per un run in ascensore.",
+    descriptionNerd:
+      "Flutter, core motore e generatore di sfide in puro Dart, 39 template, difficoltà adattiva, monetizzazione AdMob dietro un'astrazione AdProvider, persistenza locale via shared_preferences: zero backend, zero account.",
+    stack: ["Flutter", "Dart", "iOS", "Android"],
+    href: "/lavori/are-you-stupid",
+  },
 ];
 
 const HOME_PREVIEW_COUNT = 3;

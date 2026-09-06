@@ -95,6 +95,19 @@
       ],
       "port": 3141,
       "url": "http://valentinaorciuoli.localhost:3141"
+    },
+    {
+      "name": "pynkstudio-preview",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--",
+        "-p",
+        "3151"
+      ],
+      "port": 3151,
+      "url": "http://pynkstudio.localhost:3151"
     }
   ]
 }

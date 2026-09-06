@@ -14,6 +14,23 @@ import {
 import { normalizeContractData, type ContractData } from "@/lib/contracts/menuary-contract";
 import { voidEnvelope } from "@/lib/contracts/documenso";
 import { cancelSubscription } from "@/lib/platform/subscription-service";
+import { ensureDomainVerificationStarted } from "@/lib/platform/domain-verification-service";
+
+function triggerDomainVerificationIfNeeded(
+  contract: { id: string; contract_data: ContractData },
+  requestedBy: string,
+) {
+  const { seoAttivo, dominio, tenantSlug } = contract.contract_data.servizio;
+  if (!seoAttivo || !dominio) return;
+  ensureDomainVerificationStarted({
+    contractId: contract.id,
+    tenantSlug: tenantSlug || null,
+    domain: dominio,
+    requestedBy,
+  }).catch((err) => {
+    console.error("[contracts] domain_verification_failed", err instanceof Error ? err.message : String(err));
+  });
+}
 
 export const dynamic = "force-dynamic";
 
@@ -66,7 +83,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  if (!await requireSiteAdmin()) {
+  const admin = await requireSiteAdmin();
+  if (!admin) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   const body = await req.json().catch(() => null);
@@ -83,11 +101,13 @@ export async function POST(req: NextRequest) {
     package_slug: body.packageSlug ?? null,
   });
   await syncLeadFromContractData(body.leadId ?? null, data);
+  triggerDomainVerificationIfNeeded(contract, admin.id);
   return NextResponse.json({ contract }, { status: 201 });
 }
 
 export async function PATCH(req: NextRequest) {
-  if (!await requireSiteAdmin()) {
+  const admin = await requireSiteAdmin();
+  if (!admin) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   const body = await req.json().catch(() => null);
@@ -111,6 +131,7 @@ export async function PATCH(req: NextRequest) {
     leadIdForSync,
     contractDataForLeadSync ?? contract.contract_data,
   );
+  if (contractDataForLeadSync) triggerDomainVerificationIfNeeded(contract, admin.id);
   return NextResponse.json({ contract });
 }
 

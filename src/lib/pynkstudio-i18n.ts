@@ -535,6 +535,7 @@ const it = {
     desktop: "Desktop",
     openSite: "Apri sito",
     testflight: "Prova su TestFlight",
+    viewProject: "Scheda del progetto",
     noLink: "Scheda senza link esterno.",
   },
 } as const;

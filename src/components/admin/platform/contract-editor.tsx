@@ -839,6 +839,16 @@ export function ContractEditor({ contractId, basePath = "/admin/contratti" }: Pr
             setData((d) => ({ ...d, servizio: { ...d.servizio, dominio: e.target.value } }))
           }
         />
+        <label>
+          <input
+            type="checkbox"
+            checked={data.servizio.seoAttivo ?? false}
+            onChange={(e) =>
+              setData((d) => ({ ...d, servizio: { ...d.servizio, seoAttivo: e.target.checked } }))
+            }
+          />
+          {" "}Attiva SEO (verifica dominio su Google Search Console)
+        </label>
 
         <h3>Condizioni economiche</h3>
         <label>Ciclo di fatturazione</label>

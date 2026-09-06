@@ -31,6 +31,13 @@ Ha due livelli:
 1. **Hub aziendale** (`/admin-pynkstudio`) — strumenti trasversali e **vista aggregata** su tutti i prodotti: posta, agenda, CRM PynkStudio (clienti dell'agenzia), patrimoniale, utenti interni.
 2. **Portali prodotto** (`/admin-pynkstudio/{menuary,bizery,orpheo}`) — ognuno vede **solo i dati del proprio prodotto**.
 
+Oltre ai due livelli sopra (entrambi sul database di questa repo), lo stesso host ospita anche
+**portali-bridge** verso piattaforme esterne con un proprio backend: **Security**
+(`/admin-pynkstudio/security`, aziende di sicurezza) e **PerX** (`/admin-pynkstudio/perx`, accesso
+platform-admin sul backend FastAPI di PerX — Studio Randa vi compare come uno dei tenant). Non
+sono "prodotti" nel senso di `product-portals.ts`: sono un client + gate d'accesso verso l'API
+admin di un altro sistema. Dettagli → `docs/security-integration.md`, `docs/perx-integration.md`.
+
 Sullo stesso host convivono anche i pannelli `gestione` dei tenant: `admin.pynkstudio.eu/[slug]` viene riscritto su `/gestione/[slug]` dal middleware (migrazione da `gestione.menuary.it`).
 
 ---
@@ -77,7 +84,9 @@ Filtri applicati per sezione:
 | Patrimoniale | `/patrimoniale` | |
 | Utenti interni | `/utenti` | `siteadmin` — dato aziendale, spostato qui dal portale Menuary |
 | Profilo | `/profilo` | firma email con anteprima per tutti e quattro i brand |
+| Impostazioni | `/impostazioni` | connessioni a livello di piattaforma (oggi: Google per Search Console/verifica dominio). Dettagli in [[openseo-search-console]] |
 | Security | `/security/*` | portale a sé (aziende di sicurezza) |
+| PerX | `/perx/*` | portale a sé, bridge platform-admin su PerX (backend FastAPI separato) — tenant (incl. Studio Randa), utenti, errori operativi (solo backend, vedi limiti in `docs/perx-integration.md`), domain routes. Gated a `superadmin`/`admin`, non a tutti i ruoli siteadmin |
 
 ### Portali prodotto
 
@@ -183,11 +192,34 @@ Il suo pensionamento è una voce a sé della bacheca, non ancora affrontata.
 | 5.1 | Prop `initialBrand` in `@pynkstudio/mailapp` | ⬜ da iniziare | Richiede una release del pacchetto esterno (repo `PynkStudio/pynkstudio-mailapp`), fuori da questa repo. La 0.5.0 ha aggiunto `brands` (l'elenco), **non** un brand iniziale del filtro |
 | 5.2 | Sostituire la vista sola lettura con il client completo | ⬜ da iniziare | Dipende da 5.1 |
 
+### F6 — Portale PerX (piattaforma esterna, bridge platform-admin)
+
+Dettagli su decisione e motivazione → `Documentation/06-Decisioni-e-Intenzioni-Future.md` nel repo
+PerX (voce 2026-09-06). Guida env/endpoint → `docs/perx-integration.md`.
+
+| # | Lavoro | Stato | Note |
+|---|---|---|---|
+| 6.1 | Client server-only `src/lib/perx/client.ts` | 🔵 in test | Mai `NEXT_PUBLIC_`, mai importato da `"use client"` — a differenza del client Security |
+| 6.2 | Pagine `/admin-pynkstudio/perx/*` | 🔵 in test | Dashboard, tenant (lista+dettaglio), utenti, errori operativi (con azione "segna risolto"), domain-routes — tutte Server Component |
+| 6.3 | Nav + shell portale | 🔵 in test | `PERX_NAV`/`PORTAL_SHELLS.perx` in `pynk-admin-layout-switch.tsx` |
+| 6.4 | Gate ristretto superadmin/admin | 🔵 in test | `src/middleware.ts`, sezione `perx` — non tutti i ruoli siteadmin come Security |
+| 6.5 | Bridge lato backend PerX (`X-PerX-Admin-Key`) | 🔵 in test | Repo separata (`xcode/PerX FS APP`): `require_platform_admin_or_api_key` in `backend/app/core/security.py`, applicata a `routes_admin.py`/`routes_admin_errors.py` |
+| 6.6 | Error log backend-only (`platform_error_log`) | 🔵 in test | Repo PerX: migrazione `038_platform_error_log`, `app/main.py` exception handler, `routes_admin_errors.py`. Copertura solo backend cloud, non web app/app native/Hub — intenzione futura dichiarata, non pianificata |
+
+> **Cosa manca per portare F6 a ✅:** impostare `PLATFORM_ADMIN_API_KEY` su Render (servizio
+> `perx-api`) e `PERX_ADMIN_API_URL`/`PERX_ADMIN_API_KEY` sul progetto Vercel di BePork, applicare
+> la migration `038_platform_error_log` in produzione, poi aprire `admin.pynkstudio.eu/perx` con
+> una sessione `superadmin` e verificare che tenant (incluso Studio Randa), utenti ed errori si
+> vedano — e che un ruolo diverso da `superadmin`/`admin` non veda la sezione. Tocca all'utente:
+> serve accesso ai due dashboard di deploy e una sessione autenticata di produzione.
+
 ---
 
 ## 7. Collegamenti
 
 - [[moduli-piattaforma]] — moduli e feature flag
 - [[tenant-e-verticali]] — anagrafica tenant e verticali
+- [[openseo-search-console]] — pagina Impostazioni e task verifica dominio Google, montati in questo pannello
 - `GESTIONE_IMPLEMENTATION_PLAN.md` — migrazione del pannello gestione tenant sullo stesso host
 - `docs/security-integration.md` — portale Security
+- `docs/perx-integration.md` — portale PerX (bridge platform-admin, tenant Studio Randa incluso)

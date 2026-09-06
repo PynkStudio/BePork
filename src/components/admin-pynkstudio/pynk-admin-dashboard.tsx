@@ -21,6 +21,7 @@ import {
 import { useEffect, useState } from "react";
 import { PRODUCT_PORTAL_LIST, type ProductPortalSlug } from "@/lib/platform/product-portals";
 import type { LeadVertical, PlatformLead } from "@/lib/platform-crm-types";
+import { PynkDomainVerificationAlerts } from "./pynk-domain-verification-alerts";
 
 type KpiData = {
   leadsAttention: number;
@@ -197,6 +198,8 @@ export function PynkAdminDashboard() {
           ))}
         </div>
       </section>
+
+      <PynkDomainVerificationAlerts />
 
       <section>
         <h2 className="mb-4 text-sm font-semibold uppercase tracking-[0.12em] text-[var(--pa-muted)]">

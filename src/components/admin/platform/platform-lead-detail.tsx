@@ -91,6 +91,8 @@ type LeadProfileDraft = {
   province: string;
   postal_code: string;
   country: string;
+  official_domain: string;
+  official_domain_active: boolean;
 };
 
 const TABS: { value: Tab; label: string; icon: React.ElementType }[] = [
@@ -322,6 +324,8 @@ export function PlatformLeadDetail({
       contact_email: draft.contact_email || null,
       contact_phone: draft.contact_phone || null,
       country: draft.country,
+      official_domain: draft.official_domain || null,
+      official_domain_active: draft.official_domain_active,
       ...(usesLocations
         ? {
             address: draft.address || null,
@@ -353,6 +357,8 @@ export function PlatformLeadDetail({
       province: usesLocations ? draft.province || null : null,
       postal_code: usesLocations ? draft.postal_code || null : null,
       country: draft.country,
+      official_domain: draft.official_domain || null,
+      official_domain_active: draft.official_domain_active,
       updated_at: now,
       locations: !usesLocations
         ? []
@@ -1278,6 +1284,8 @@ function TabAnagrafica({
     province: lead.province ?? lead.locations.find((location) => location.is_primary)?.province ?? "",
     postal_code: lead.postal_code ?? lead.locations.find((location) => location.is_primary)?.postal_code ?? "",
     country: normalizeMarketCode(lead.country) ?? "IT",
+    official_domain: lead.official_domain ?? "",
+    official_domain_active: lead.official_domain_active,
   }));
   const phoneHref = lead.contact_phone ? `tel:${lead.contact_phone.replace(/\s/g, "")}` : null;
   const whatsappHref = lead.contact_phone ? `https://wa.me/${lead.contact_phone.replace(/[^\d]/g, "")}` : null;
@@ -1297,6 +1305,8 @@ function TabAnagrafica({
       province: lead.province ?? primary?.province ?? "",
       postal_code: lead.postal_code ?? primary?.postal_code ?? "",
       country: normalizeMarketCode(lead.country) ?? "IT",
+      official_domain: lead.official_domain ?? "",
+      official_domain_active: lead.official_domain_active,
     });
   }, [editingProfile, lead]);
 
@@ -1386,6 +1396,22 @@ function TabAnagrafica({
               <option value="FR">Francia</option>
               <option value="ES">Spagna</option>
             </select>
+          </label>
+          <EditField
+            label="Dominio ufficiale"
+            value={draft.official_domain}
+            onChange={(value) => setDraftField("official_domain", value)}
+          />
+          <label className="flex items-end gap-2 pb-2.5">
+            <input
+              type="checkbox"
+              checked={draft.official_domain_active}
+              onChange={(event) => setDraftField("official_domain_active", event.target.checked)}
+              className="h-4 w-4 rounded border-pork-ink/20 text-pork-red focus:ring-pork-red/25"
+            />
+            <span className="text-xs font-bold uppercase tracking-wide text-pork-ink/50">
+              Dominio attivo (reindirizza il traffico)
+            </span>
           </label>
         </div>
       ) : (

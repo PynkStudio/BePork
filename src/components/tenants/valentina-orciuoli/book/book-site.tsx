@@ -74,8 +74,8 @@ const PAN_TRANSITION = { duration: 1.05, ease: [0.5, 0.02, 0.16, 1] } as const;
 /**
  * Dove si posa il volume quando si guarda dall'altra parte del tavolo.
  *
- * Non esce di scena: resta in alto a destra, tagliato dal bordo alto, così di
- * lui si vede il bordo inferiore con l'angolo destro — l'orecchio. È l'appiglio
+ * Non esce di scena: resta in alto a sinistra, tagliato dal bordo alto, così di
+ * lui si vede il bordo inferiore con l'angolo sinistro — l'orecchio. È l'appiglio
  * per tornare indietro, e soprattutto è ciò che dice che il libro *è ancora lì*:
  * non si è cambiata pagina, si è girata la testa.
  *
@@ -83,11 +83,11 @@ const PAN_TRANSITION = { duration: 1.05, ease: [0.5, 0.02, 0.16, 1] } as const;
  * si trova a occhio, e cambiarlo dev'essere una riga sola.
  */
 const BOOK_PARKED = {
-  scale: 0.3,
-  x: "30%",
-  y: "-42%",
-  rotateY: -26,
-  rotateZ: 6,
+  scale: 0.22,
+  x: "-42%",
+  y: "-50%",
+  rotateY: 26,
+  rotateZ: -6,
 } as const;
 const COVER_OPEN_AT = 0.95;
 const CLOSE_TRANSITION = { duration: 0.75, ease: [0.5, 0.05, 0.2, 1] } as const;
@@ -544,6 +544,11 @@ export function ValentinaOrciuoliBookSite({
     animate(coverProgress, 0, CEREMONY_OPEN_TRANSITION);
   }, [coverProgress]);
 
+  /** Lascia la scrivania e riporta lo sguardo sul volume, dove l'ha lasciato. */
+  const goBackToBook = useCallback(() => {
+    voPushUrl(hrefFor("blog"));
+  }, [hrefFor]);
+
   return (
     <main
       className="vo-site vo-book-site"
@@ -581,10 +586,11 @@ export function ValentinaOrciuoliBookSite({
         className="vo-book-viewport"
         ref={stageRef}
         data-ceremony={closed || undefined}
-        onClick={closed ? openBook : undefined}
-        // `inert` mentre si legge un appunto: il volume è ancora in scena, ma
-        // fuori fuoco — non deve rubare tocchi né tabulazioni.
-        inert={onDesk || undefined}
+        // Sulla scrivania il volume torna un oggetto cliccabile: è l'orecchio
+        // di carta nell'angolo, non un bottone a parte, quello che riporta lo
+        // sguardo su di lui — com'è un libro vero sul tavolo.
+        data-desk={onDesk || undefined}
+        onClick={closed ? openBook : onDesk ? goBackToBook : undefined}
         style={{
           transformPerspective: 1500,
           opacity: bookFade,
@@ -595,7 +601,10 @@ export function ValentinaOrciuoliBookSite({
           y: bookY,
         }}
       >
-        <div className="vo-volume">
+        {/* `inert` mentre si legge un appunto: le pagine e i comandi restano
+            fuori fuoco e non rubano tocchi né tabulazioni. Sta sul volume e sui
+            comandi, non sul contenitore — quel clic è ora del contenitore. */}
+        <div className="vo-volume" inert={onDesk || undefined}>
             <VoBookShell
               initialSpread={initialSpread}
               renderFace={renderFace}
@@ -637,14 +646,19 @@ export function ValentinaOrciuoliBookSite({
         </div>
 
         {closed ? (
-          <button type="button" className="vo-cover-prompt" onClick={openBook}>
+          <button
+            type="button"
+            className="vo-cover-prompt"
+            inert={onDesk || undefined}
+            onClick={openBook}
+          >
             Scorri o tocca per aprire il libro
             <span aria-hidden="true" />
           </button>
         ) : null}
 
         {opened || showsBackCover || appendix ? (
-          <div className="vo-book-controls">
+          <div className="vo-book-controls" inert={onDesk || undefined}>
               {appendix ? (
                 <VoBookLink href={spreadHref(resumeSpread, route)}>
                   Torna alla lettura
@@ -690,15 +704,11 @@ export function ValentinaOrciuoliBookSite({
         <VoDesk notes={posts} current={article} onOpen={openArticle} />
       </motion.div>
 
-      {/* L'appiglio per tornare indietro. È un pulsante vero, con un'etichetta
-          leggibile da chi non vede l'angolo di carta in alto a destra: la scena
-          del volume è `inert` mentre si legge, quindi non può cliccarsi da sé. */}
+      {/* L'appiglio per tornare indietro, in parole. Il libro nell'angolo si
+          può cliccare direttamente, ma resta un pulsante vero e raggiungibile
+          da tastiera per chi non lo vede o non punta un mouse. */}
       {onDesk ? (
-        <button
-          type="button"
-          className="vo-desk-back-to-book"
-          onClick={() => voPushUrl(hrefFor("blog"))}
-        >
+        <button type="button" className="vo-desk-back-to-book" onClick={goBackToBook}>
           Torna al libro
         </button>
       ) : null}

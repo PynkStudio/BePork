@@ -4640,13 +4640,31 @@
     will-change: transform, opacity;
   }
 
-  /* L'orecchio del volume, in alto a destra: il modo di tornare indietro.
-     È il pulsante a essere cliccabile, non la scena — quella resta `inert`
-     mentre si legge, o si potrebbero girare le pagine dietro la scrivania. */
+  /* Senza impilamento esplicito vince l'ordine del markup: il piano della
+     scrivania, che ha un fondo pieno, dipingeva sopra l'orecchio di libro
+     parcheggiato e lo cancellava — la panoramica sembrava un taglio di scena
+     invece di una testa che gira. Il volume sta sempre sopra. */
+  .vo-world > .vo-book-viewport {
+    z-index: 2;
+  }
+
+  .vo-world > .vo-desk-scene {
+    z-index: 1;
+  }
+
+  /* Sulla scrivania il volume torna un oggetto che si può prendere in mano:
+     il cursore lo dice prima ancora che ci si clicchi sopra. */
+  .vo-book-viewport[data-desk] {
+    cursor: pointer;
+  }
+
+  /* L'orecchio del volume, in alto a sinistra: il modo di tornare indietro.
+     Il libro stesso è cliccabile (vedi `data-desk` sopra); questo pulsante
+     resta come appiglio in parole, raggiungibile anche da tastiera. */
   .vo-desk-back-to-book {
     position: absolute;
     top: clamp(0.6rem, 2.2vh, 1.4rem);
-    right: clamp(0.6rem, 2vw, 1.4rem);
+    left: clamp(0.6rem, 2vw, 1.4rem);
     z-index: 30;
     padding: 0.45rem 1rem;
     border: 1px solid var(--vo-line);
@@ -4722,26 +4740,45 @@
     overflow: hidden;
   }
 
-  /* Il piano: legno scuro sotto una luce radente da lampada. */
+  /* Il piano: legno vissuto sotto una luce calda che viene da un lato, come una
+     lampada da tavolo lasciata accesa — non un fondo uniforme, ma qualcosa su
+     cui si scrive da anni. */
   .vo-desk-surface {
     position: absolute;
     inset: 0;
     background:
-      radial-gradient(120% 80% at 32% 8%, rgba(216, 173, 90, 0.16), transparent 58%),
-      radial-gradient(90% 70% at 70% 100%, rgba(70, 40, 22, 0.5), transparent 72%),
-      linear-gradient(168deg, #2a1a10 0%, #1a1009 46%, #241608 100%);
+      radial-gradient(58% 48% at 20% 16%, rgba(230, 186, 108, 0.24), transparent 64%),
+      radial-gradient(90% 72% at 76% 106%, rgba(16, 9, 5, 0.68), transparent 70%),
+      linear-gradient(162deg, #33200f 0%, #1c1109 42%, #140b05 76%, #20140a 100%);
   }
 
+  /* La venatura: rumore vero stirato in orizzontale, non un reticolo di righe
+     regolari — è quello che rende il legno legno e non plastica listata. Un
+     `feTurbulence` rasterizzato una volta come data-URI, come sulla carta. */
+  .vo-desk-surface::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.009 0.11' numOctaves='5' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='320' height='320' filter='url(%23w)'/%3E%3C/svg%3E");
+    background-size: 360px 360px;
+    mix-blend-mode: overlay;
+    opacity: 0.5;
+  }
+
+  /* Sopra la venatura: i giunti fra le assi e la vignetta che chiude gli
+     angoli — quella che dice "fotografato", non "disegnato". */
   .vo-desk-surface::after {
     content: "";
     position: absolute;
     inset: 0;
-    background-image: repeating-linear-gradient(
-      92deg,
-      rgba(0, 0, 0, 0.16) 0 2px,
-      transparent 2px 9px
-    );
-    opacity: 0.5;
+    background-image:
+      repeating-linear-gradient(
+        91deg,
+        rgba(0, 0, 0, 0.24) 0 2px,
+        transparent 2px 15px
+      ),
+      radial-gradient(120% 85% at 50% 42%, transparent 46%, rgba(0, 0, 0, 0.5) 100%);
+    opacity: 0.62;
   }
 
   /* ── Il mucchio: gli altri appunti che sbucano da sotto ───────────────────── */
@@ -4758,8 +4795,15 @@
     width: clamp(150px, 22%, 260px);
     padding: 0.8rem 0.9rem 1.6rem;
     border: 0;
+    overflow: hidden;
     background: linear-gradient(170deg, #efe6cf 0%, #e2d6ba 100%);
-    box-shadow: 0 14px 30px -16px rgba(0, 0, 0, 0.85);
+    /* La prima ombra stacca il foglio dal piano; le altre due — un filo di
+       carta sotto e uno più sotto ancora — dicono che non è un foglio solo, è
+       una cima di mucchio. */
+    box-shadow:
+      0 14px 30px -16px rgba(0, 0, 0, 0.85),
+      0 1px 0 1px #d8caa3,
+      0 3px 0 2px rgba(0, 0, 0, 0.18);
     font-family: Georgia, "Times New Roman", serif;
     text-align: left;
     cursor: pointer;
@@ -4793,13 +4837,12 @@
   .vo-sheet {
     position: relative;
     z-index: 3;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
     width: min(100%, 40rem);
     max-height: 100%;
-    /* La carta è lunga e scorre: non è una finestra sul testo, è un foglio che
-       continua oltre il bordo. Senza barra, come ovunque nel sito. */
-    overflow-y: auto;
-    scrollbar-width: none;
-    padding: clamp(1.4rem, 3.5vw, 2.6rem) clamp(1.2rem, 3.2vw, 2.4rem) clamp(1.6rem, 4vw, 2.6rem);
+    overflow: hidden;
     background: linear-gradient(172deg, #f4ecd8 0%, #ebe1c8 55%, #e3d8bb 100%);
     color: var(--vo-book-ink);
     font-family: Georgia, "Times New Roman", serif;
@@ -4809,7 +4852,19 @@
     transform: rotate(-0.4deg);
   }
 
-  .vo-sheet::-webkit-scrollbar {
+  /* La carta è lunga e scorre: non è una finestra sul testo, è un foglio che
+     continua oltre il bordo. Senza barra, come ovunque nel sito. Sta *sotto*
+     la grana invece di esserne la cornice, altrimenti la texture se ne
+     andrebbe con lo scorrimento e a metà foglio la carta tornerebbe piatta. */
+  .vo-sheet-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: none;
+    padding: clamp(1.4rem, 3.5vw, 2.6rem) clamp(1.2rem, 3.2vw, 2.4rem) clamp(1.6rem, 4vw, 2.6rem);
+  }
+
+  .vo-sheet-scroll::-webkit-scrollbar {
     display: none;
   }
 
@@ -4952,6 +5007,12 @@
 
   .vo-book-site[data-compact] .vo-sheet {
     width: 100%;
+  }
+
+  /* Sotto la soglia il pulsante "Torna al libro" e l'orecchio del volume
+     cadono proprio dove inizia il foglio: la data in testata ci finiva sotto. */
+  .vo-book-site[data-compact] .vo-sheet-scroll {
+    padding-top: 3.4rem;
   }
 }
 

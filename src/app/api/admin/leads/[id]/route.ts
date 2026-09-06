@@ -12,6 +12,15 @@ function normalizeNullableText(value: unknown): string | null {
   return typeof value === "string" ? normalizeText(value) : null;
 }
 
+function normalizeDomain(value: unknown): string | null {
+  const text = normalizeNullableText(value);
+  if (!text) return null;
+  return text
+    .toLowerCase()
+    .replace(/^https?:\/\//, "")
+    .replace(/\/+$/, "");
+}
+
 async function requireCrmPermission(permission: Parameters<typeof hasAdminPermission>[1]) {
   const supabase = await createSupabaseServerClient();
   const {
@@ -125,6 +134,8 @@ export async function PATCH(
     update.status = body.status;
   }
   if ("notes" in body) update.notes = body.notes ?? null;
+  if ("official_domain" in body) update.official_domain = normalizeDomain(body.official_domain);
+  if ("official_domain_active" in body) update.official_domain_active = Boolean(body.official_domain_active);
 
   // ─── Proposta commerciale (alimenta demo, contratto, abbonamento) ──────────────
   let touchesProposal = false;

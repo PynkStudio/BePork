@@ -27,6 +27,7 @@ Documenti già popolati a partire dai file della repo:
 - [[moduli-piattaforma]] — `docs/03-features/`
 - [[blog-editoriale]] — `docs/03-features/` (progetto a fasi: blog multilingua, rich text, MCP per tenant). Contiene la **bacheca di avanzamento** con lo stato di ogni lavoro: consultala e aggiornala a ogni intervento sul modulo blog.
 - [[pannello-pynkstudio]] — `docs/03-features/` (progetto a fasi: pannello admin.pynkstudio.eu, hub aziendale + portali prodotto). Contiene la **bacheca di avanzamento**: consultala e aggiornala a ogni intervento su `src/app/admin-pynkstudio/` o `src/components/admin/platform/`.
+- [[openseo-search-console]] — `docs/03-features/` (progetto a fasi: verifica dominio su Google Search Console dal check "Attiva SEO" nel contratto, fondamenta per il collegamento a OpenSEO self-hosted, e pianificazione Google Ads/altri provider Ads con ownership PynkStudio/cliente — vedi [[adr-0008-ownership-proprieta-seo-ads]]). Contiene la **bacheca di avanzamento**: consultala e aggiornala a ogni intervento su `src/lib/google/`, `src/lib/platform/domain-verification-service.ts` o `admin-pynkstudio/impostazioni`.
 - [[integrazioni-attive]] — `docs/06-integrations/`
 - [[endpoint-ia]] — `docs/07-prompts/`
 - [[cron-e-processi]] — `docs/08-processes/`
@@ -37,7 +38,7 @@ Documenti già popolati a partire dai file della repo:
 
 Non compilate perché **non deducibili con certezza** dalla repo (nessun contenuto inventato):
 
-- `04-decisions/` — [[adr-0001-route-module-gating]] (redirect alla home per route di modulo non attivo), [[adr-0002-valentina-book-shell]] (il sito `valentina-orciuoli` reso come libro sfogliabile, parzialmente sostituita da 0005), [[adr-0003-blog-contenuto-tiptap-multilingua]] e [[adr-0004-mcp-tenant-blog]] (in stato *proposta*), [[adr-0005-valentina-blog-fuori-dal-libro]] (il blog vive fuori dal libro, sullo stesso dominio). Usa [[adr-template]] per i futuri.
+- `04-decisions/` — [[adr-0001-route-module-gating]] (redirect alla home per route di modulo non attivo), [[adr-0002-valentina-book-shell]] (il sito `valentina-orciuoli` reso come libro sfogliabile, parzialmente sostituita da 0005), [[adr-0003-blog-contenuto-tiptap-multilingua]] e [[adr-0004-mcp-tenant-blog]] (in stato *proposta*), [[adr-0005-valentina-blog-fuori-dal-libro]] (il blog vive fuori dal libro, sullo stesso dominio), [[adr-0008-ownership-proprieta-seo-ads]] (in stato *proposta*: ownership PynkStudio/cliente per SEO e Ads, multi-piattaforma). Usa [[adr-template]] per i futuri.
 - `05-roadmap/` — nessuna roadmap certa nel codice (non inventata). L'unico piano a fasi scritto è quello di [[blog-editoriale]].
 - `09-meetings/` — nessun verbale presente. Usa [[meeting-template]].
 
@@ -64,6 +65,7 @@ Non compilate perché **non deducibili con certezza** dalla repo (nessun contenu
   e i limiti verificati del widget Slabbby.
 - [[blog-editoriale]] — progetto blog multilingua (bacheca di avanzamento).
 - [[pannello-pynkstudio]] — hub aziendale e portali prodotto (bacheca di avanzamento).
+- [[openseo-search-console]] — verifica dominio Google Search Console + fondamenta OpenSEO (bacheca di avanzamento).
 
 ## Knowledge Base per l'assistente AI
 

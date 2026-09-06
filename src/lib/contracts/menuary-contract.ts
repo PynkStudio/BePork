@@ -77,6 +77,8 @@ export type ContractData = {
   servizio: {
     tenantSlug: string;
     dominio: string;
+    /** Quando true, al salvataggio del contratto avvia la verifica del dominio su Google Search Console. */
+    seoAttivo?: boolean;
     pianoNome: string;
     moduliInclusi: string[];
     /**
@@ -159,6 +161,7 @@ export function freshContractData(brand: ContractBrand): ContractData {
     servizio: {
       tenantSlug: "",
       dominio: "",
+      seoAttivo: false,
       pianoNome: "Operatività",
       moduliInclusi: [
         "Sito pubblico tenant sulla piattaforma",
@@ -201,6 +204,7 @@ export function normalizeContractData(data: ContractData): ContractData {
     },
     servizio: {
       ...data.servizio,
+      seoAttivo: data.servizio?.seoAttivo ?? false,
       moduliIa: {
         telefono: data.servizio?.moduliIa?.telefono ?? false,
         whatsapp: data.servizio?.moduliIa?.whatsapp ?? false,

@@ -23,3 +23,4 @@ Quando cambia un'etichetta, una route o un pulsante nel codice (es. in `src/i18n
 - [[gestione-ordini]] — schermata Ordini (esempio completo).
 - [[posta-admin-gestione]] — schermata Posta per admin piattaforma e tenant.
 - [[gestione-stampanti-comande]] — schermata Stampanti comande (in Cassa).
+- [[pynkstudio-impostazioni]] — Impostazioni (connessione Google) e task dashboard "Verifica dominio Google".

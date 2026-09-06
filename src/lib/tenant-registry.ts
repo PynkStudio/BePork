@@ -708,6 +708,8 @@ export const TENANTS: TenantProfile[] = [
       "www.pynkstudio.com",
       "pynkstudio.eu",
       "www.pynkstudio.eu",
+      // Alias per provare il sito sul dominio custom in locale (vedi valentina-orciuoli).
+      "pynkstudio.localhost",
     ],
     previewSlug: "pynkstudio",
     enabled: true,

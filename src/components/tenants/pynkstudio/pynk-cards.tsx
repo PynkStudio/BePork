@@ -1,11 +1,16 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { motion } from "framer-motion";
-import { ExternalLink, Gamepad2, Globe, Layers, Monitor, Smartphone, Wrench } from "lucide-react";
+import { ArrowRight, ExternalLink, Gamepad2, Globe, Layers, Monitor, Smartphone, Wrench } from "lucide-react";
 import type { PynkPortfolioItem, PynkPortfolioKind } from "./portfolio";
 import { usePynkNerd } from "./pynk-shell";
 import { usePynkCopy } from "@/lib/pynkstudio-i18n";
+
+// Le voci con href esterno aprono in una nuova scheda; quelle con path interno
+// (scheda progetto senza sito pubblico ancora online) restano nell'app via next/link.
+const MotionLink = motion(Link);
 
 export function PynkStackChips({ items, className = "" }: { items: readonly string[]; className?: string }) {
   return (
@@ -40,7 +45,12 @@ export function PynkPortfolioCard({ item, index = 0 }: { item: PynkPortfolioItem
   const { nerd } = usePynkNerd();
   const copy = usePynkCopy();
   const KindIcon = kindIcon(item.kind);
-  const cta = item.href?.includes("testflight.apple.com") ? copy.portfolioLabels.testflight : copy.portfolioLabels.openSite;
+  const isInternal = item.href?.startsWith("/") ?? false;
+  const cta = isInternal
+    ? copy.portfolioLabels.viewProject
+    : item.href?.includes("testflight.apple.com")
+      ? copy.portfolioLabels.testflight
+      : copy.portfolioLabels.openSite;
 
   const content = (
     <>
@@ -67,6 +77,18 @@ export function PynkPortfolioCard({ item, index = 0 }: { item: PynkPortfolioItem
     transition: { duration: 0.45, delay: index * 0.06, ease: [0.22, 1, 0.36, 1] as const },
     whileHover: { y: -4 },
   };
+
+  if (item.href && isInternal) {
+    return (
+      <MotionLink href={item.href} {...motionProps} className="pynk-card pynk-card-link">
+        {content}
+        <span className="pynk-card-cta">
+          {cta}
+          <ArrowRight className="pynk-icon-xs" />
+        </span>
+      </MotionLink>
+    );
+  }
 
   if (item.href) {
     return (

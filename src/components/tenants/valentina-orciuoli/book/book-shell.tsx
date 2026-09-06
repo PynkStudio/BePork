@@ -85,7 +85,21 @@ const WHEEL_IDLE_MS = 110;
  * d'inerzia di un trackpad arriva quando il foglio si è già posato: senza questa
  * pausa aprirebbe da sola il giro successivo, e un colpo solo ne girerebbe tre.
  */
-const WHEEL_RELOAD_MS = 170;
+/**
+ * Quanto **silenzio** serve prima che la rotella possa aprire un giro nuovo.
+ *
+ * Non è un tempo fisso dopo il giro precedente: quello era il difetto. Un flick
+ * di trackpad produce sette-ottocento pixel di scorrimento, il giro si compie ai
+ * primi trecento, e gli altri quattrocento continuano ad arrivare per quasi un
+ * secondo — ben oltre qualunque attesa fissa. Ognuno di quegli eventi apriva un
+ * gesto nuovo che, trovando un foglio ancora in volo, finiva **in coda** come
+ * pagina successiva: una scorsa sola girava due o tre pagine.
+ *
+ * Finché gli eventi arrivano il blocco si sposta in avanti. Un gesto nuovo
+ * comincia solo dopo che la mano si è davvero fermata, che è l'unico modo di
+ * distinguere una seconda intenzione dalla coda della prima.
+ */
+const WHEEL_QUIET_MS = 160;
 /** La rotella non è un puntatore, ma prende in prestito lo stesso trascinamento. */
 const WHEEL_POINTER_ID = -1;
 /**
@@ -1085,12 +1099,25 @@ export function VoBookShell({
 
       let wheel = wheelRef.current;
       if (!wheel) {
-        if (performance.now() < wheelLockRef.current) return;
-        if (performance.now() < inputLockRef.current) return;
+        const now = performance.now();
+        // La coda del gesto precedente sposta il blocco invece di aprirne uno nuovo.
+        if (now < wheelLockRef.current) {
+          wheelLockRef.current = now + WHEEL_QUIET_MS;
+          return;
+        }
+        if (now < inputLockRef.current) return;
         const direction: 1 | -1 = push > 0 ? 1 : -1;
-        // Ai capi del volume non c'è foglio da prendere, e con un foglio già in
-        // volo questo giro non è disponibile: in entrambi i casi decide `step`,
-        // che sa chiudere il libro, girarlo sulla quarta o mettersi in coda.
+        // Qui il silenzio c'è già stato, quindi questa *è* una seconda
+        // intenzione: se il foglio precedente è ancora in volo si mette in coda,
+        // esattamente come farebbe una freccia premuta due volte. Il blocco si
+        // rialza subito, così la scia di *questa* scorsa non ne accodi un'altra.
+        if (gestureRef.current?.mode === "run") {
+          wheelLockRef.current = now + WHEEL_QUIET_MS;
+          step(direction);
+          return;
+        }
+        // Qui invece un foglio da prendere non c'è proprio: siamo a un capo del
+        // volume, e `step` sa chiudere il libro o girarlo sulla quarta.
         if (!beginDrag(direction, 0, WHEEL_POINTER_ID, WHEEL_SPAN)) {
           step(direction);
           return;
@@ -1104,7 +1131,7 @@ export function VoBookShell({
       // A un capo della corsa la decisione è presa: aspettare il silenzio
       // terrebbe il foglio incollato al bordo per un decimo di secondo.
       if (reached <= 0 || reached >= 1) {
-        wheelLockRef.current = performance.now() + WHEEL_RELOAD_MS;
+        wheelLockRef.current = performance.now() + WHEEL_QUIET_MS;
         endWheel();
         return;
       }

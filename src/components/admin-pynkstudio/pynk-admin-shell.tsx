@@ -10,6 +10,7 @@ import {
   LogOut,
   Mail,
   Menu as MenuIcon,
+  Settings2,
   Shield,
   UserCircle,
   X,
@@ -153,6 +154,15 @@ export function PynkAdminShell({ children }: { children: React.ReactNode }) {
             );
           })}
         </nav>
+        <Link
+          href="/admin-pynkstudio/impostazioni"
+          onClick={() => setOpen(false)}
+          className="pynk-admin-nav-link mx-3"
+          data-active={isPynkNavActive(pathname, "/admin-pynkstudio/impostazioni")}
+        >
+          <Settings2 size={18} />
+          Impostazioni
+        </Link>
         <Link
           href="/admin-pynkstudio/profilo"
           onClick={() => setOpen(false)}

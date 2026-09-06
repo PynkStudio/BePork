@@ -292,6 +292,7 @@ const ADMIN_PYNKSTUDIO_PATHS = [
   "/menuary",
   "/orpheo",
   "/patrimoniale",
+  "/perx",
   "/profilo",
   "/security",
   "/utenti",
@@ -906,6 +907,13 @@ export async function middleware(request: NextRequest) {
       }
       if (!role) {
         return NextResponse.redirect(new URL("/admin-pynkstudio/login", request.url));
+      }
+      // PerX è un bridge ad accesso platform-admin su un'altra piattaforma:
+      // riservato a superadmin/admin, non a tutti i ruoli siteadmin (a
+      // differenza degli altri portali prodotto).
+      const pynkSection = effectivePath.replace(/^\/admin-pynkstudio\/?/, "").split("/")[0] ?? "";
+      if (pynkSection === "perx" && role !== "superadmin" && role !== "admin") {
+        return NextResponse.redirect(new URL("/admin-pynkstudio", request.url));
       }
       return response;
     }

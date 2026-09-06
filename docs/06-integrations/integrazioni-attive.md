@@ -16,6 +16,9 @@ Per documentare in dettaglio una singola integrazione usa [[integration-template
 | **HubRise** | Sincronizzazione POS | `integrations/hubrise/*`, `webhooks/hubrise`, `HUBRISE_OAUTH_*`, `HUBRISE_WEBHOOK_SECRET` |
 | **Google Business Profile** | Recensioni, sedi, orari, reserve | `gestione/google/*`, `google-reserve/[tenantId]`, `auth/google-business/callback`, `GOOGLE_MY_BUSINESS_*` |
 | **Google Places** | Dati luoghi | `GOOGLE_PLACES_API_KEY` |
+| **Google Search Console (Site Verification)** | Verifica dominio custom di un contratto (check "Attiva SEO"), a livello di piattaforma (non per tenant) | `src/lib/google/platform-oauth.ts`, `src/lib/google/site-verification.ts`, `auth/google-platform/callback`, `admin/google-connection/*`, `GOOGLE_PLATFORM_CLIENT_ID`, `GOOGLE_PLATFORM_CLIENT_SECRET`, `GOOGLE_PLATFORM_REDIRECT_URI`. Dettagli in [[openseo-search-console]] |
+| **OpenSEO** | Metriche SEO (keyword, rank tracking, audit) | Pianificato, non ancora deployato — istanza self-hosted separata da questa repo (`github.com/every-app/open-seo`). Dettagli e stato in [[openseo-search-console]] |
+| **Google Ads** | Gestione campagne/budget per tenant | Pianificato, nessun codice ancora — mancano token sviluppatore e account MCC (da richiedere). Dettagli, prerequisiti e ownership in [[openseo-search-console]] e [[adr-0008-ownership-proprieta-seo-ads]] |
 | **Documenso** | Firma contratti | `webhooks/documenso`, `DOCUMENSO_*` (cloud + self-hosted, per-vertical) |
 | **Resend** | Email transazionali | `email/send`, `webhooks/email/inbound`, `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET` |
 | **@pynkstudio/mailapp** | Pacchetto posta (UI + query + rotte Next) | dipendenza tarball GitHub `PynkStudio/pynkstudio-mailapp`, `src/lib/mailapp-runtime.ts`, `src/lib/mailapp-brands.ts`. Nessuna env propria: usa quelle di Resend |
@@ -27,6 +30,7 @@ Per documentare in dettaglio una singola integrazione usa [[integration-template
 | **MapLibre** | Mappe | dipendenza `maplibre-gl`, `tenant/[tenantId]/map` |
 | **Vercel Analytics** | Analytics | dipendenza `@vercel/analytics` |
 | **Slabbby** | Wishlist cross-negozio (widget di terze parti) | `src/components/core/slabbby-script-gate.tsx`, `src/components/modules/shop/slabbby-wishlist-btn.tsx`, feature flag `slabbby`. Nessuna env: lo script è pubblico (`https://slabbby.com/widget.js`). Dettagli e limiti in [[moduli-piattaforma]] |
+| **PerX** (bridge platform-admin) | Portale `admin.pynkstudio.eu/perx` verso il backend FastAPI di PerX (repo separata) | `src/lib/perx/client.ts`, `admin-pynkstudio/perx/*`, `PERX_ADMIN_API_URL`, `PERX_ADMIN_API_KEY` (server-only, mai `NEXT_PUBLIC_`). Dettagli in `docs/perx-integration.md` |
 
 ## Canali WhatsApp
 
