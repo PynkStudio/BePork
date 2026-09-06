@@ -499,10 +499,11 @@ function tenantLocaleRedirect(
   tenantId: string,
   locale: string,
   pathname: string,
+  status: number = 302,
 ) {
   const url = request.nextUrl.clone();
   url.pathname = pathname;
-  const response = NextResponse.redirect(url, 302);
+  const response = NextResponse.redirect(url, status);
   response.cookies.set(tenantLocaleCookieName(tenantId), locale, {
     path: "/",
     maxAge: 60 * 60 * 24 * 365,
@@ -625,11 +626,18 @@ function handleCustomTenantLocale(
   const routeLocale = matchTenantLocale(parts[0], config.locales);
   if (!routeLocale) {
     const locale = detectTenantLocaleFromRequest(request, tenantId, config);
+    // Il path nudo sul dominio custom è un alias della forma canonica
+    // /{defaultLocale}/… (URL indicizzabili con prefisso lingua). Per la lingua
+    // predefinita il consolidamento è permanente (301), così Google cessa di
+    // trattare la radice come un redirect temporaneo; per le lingue alternative
+    // il salto resta un 302 guidato dalla preferenza d'utente.
+    const status = locale === config.defaultLocale ? 301 : 302;
     return tenantLocaleRedirect(
       request,
       tenantId,
       locale,
       `/${locale}${pathname === "/" ? "" : pathname}`,
+      status,
     );
   }
   const rest = parts.slice(1).join("/");
