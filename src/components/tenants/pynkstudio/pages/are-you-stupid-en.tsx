@@ -8,40 +8,40 @@ import { PynkJsonLd } from "../pynk-json-ld";
 import { breadcrumbSchema, faqSchema, organizationSchema } from "../pynk-seo";
 import { useTenantLocalizedHref } from "@/lib/use-tenant-localized-href";
 
-// Beta pubblica iOS — sostituire/aggiungere il link Google Play quando aperta la chiusa/aperta beta Android.
+// Public iOS beta — add/replace the Google Play link once that beta opens.
 const TESTFLIGHT_URL = "https://testflight.apple.com/join/G8kQkCdt";
 
 const pillars = [
-  { title: "Sotto le 8 parole", body: "Ogni istruzione sta in una riga, in maiuscolo. Se serve rileggerla, il gioco ha già sbagliato." },
-  { title: "Zero tempi morti", body: "Flash verde 240 ms se hai fatto bene, rosso 850 ms se hai sbagliato. Nessun caricamento, nessun cambio schermata." },
-  { title: "Offline al 100%", body: "Nessun account, nessun backend, nessuna connessione richiesta per giocare. Funziona anche in modalità aereo." },
-  { title: "Una mano, un pollice", body: "Solo tap e hold. Niente swipe, niente multi-touch, niente precisione chirurgica." },
+  { title: "Under 8 words", body: "Every instruction fits on one line, in caps. If you need to reread it, the game already lost." },
+  { title: "Zero downtime", body: "Green flash 240 ms if you got it right, red flash 850 ms if you didn't. No loading, no screen change." },
+  { title: "100% offline", body: "No account, no backend, no connection required to play. Works in airplane mode too." },
+  { title: "One hand, one thumb", body: "Just tap and hold. No swipes, no multi-touch, no surgical precision." },
 ];
 
 const faq = [
   {
-    q: "Posso già provarlo?",
-    a: "Sì, è in beta pubblica su TestFlight per iOS. Il lancio su App Store e Google Play arriva più avanti.",
+    q: "Can I try it already?",
+    a: "Yes, it's in public beta on TestFlight for iOS. The App Store and Google Play launch comes later.",
   },
   {
-    q: "Are You Stupid? raccoglie dati personali?",
-    a: "No. Il gioco non ha account, non ha backend e non usa strumenti di analisi. L'unico trattamento dati è quello del nostro partner pubblicitario, Google AdMob, descritto per intero nella privacy policy.",
+    q: "Does Are You Stupid? collect personal data?",
+    a: "No. The game has no account, no backend, and no analytics tools. The only data processing is done by our advertising partner, Google AdMob, described in full in the privacy policy.",
   },
   {
-    q: "Serve una connessione a internet per giocare?",
-    a: "No. Il ciclo di gioco (istruzioni, punteggio, impostazioni) è completamente offline. Solo gli annunci pubblicitari facoltativi richiedono una connessione, e non sono mai obbligatori per continuare a giocare.",
+    q: "Do I need an internet connection to play?",
+    a: "No. The core game loop (instructions, score, settings) is fully offline. Only the optional ads need a connection, and they're never required to keep playing.",
   },
   {
-    q: "È adatto ai bambini?",
-    a: "No. Il gioco usa un linguaggio scorretto e un umorismo greve come parte del tono comico: non è pensato per un pubblico infantile e non rientra nella categoria Kids di Apple né nel programma Play Families di Google.",
+    q: "Is it suitable for kids?",
+    a: "No. The game uses crude language and rude humor as part of its comedic tone: it isn't aimed at a young audience, and it isn't listed in Apple's Kids Category or Google Play's Families program.",
   },
   {
-    q: "Come faccio a contattarvi per supporto o domande sui dati?",
-    a: "Scrivi a info@pynkstudio.eu oppure usa il modulo contatti del sito: rispondiamo da lì per qualsiasi richiesta legata al gioco.",
+    q: "How do I contact you for support or a question about my data?",
+    a: "Email info@pynkstudio.eu, or use the contact form on our site (in Italian) — either way we answer every request about the game from there.",
   },
 ];
 
-function AreYouStupidInner() {
+function AreYouStupidEnInner() {
   const href = useTenantLocalizedHref();
 
   const jsonLd = [
@@ -53,15 +53,16 @@ function AreYouStupidInner() {
       applicationCategory: "GameApplication",
       operatingSystem: "iOS, Android",
       description:
-        "Hyper-casual a una mano: un'istruzione stupidamente semplice ogni round, e la sfida è non fallirla per un dettaglio stupido. Offline, senza account.",
+        "A one-handed hyper-casual game: every round is a stupidly simple instruction, and the challenge is not failing it over something dumb. Offline, no account.",
       author: { "@type": "Organization", name: "PYNK STUDIO" },
       publisher: { "@type": "Organization", name: "PYNK STUDIO" },
       offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
+      inLanguage: "en",
     },
     breadcrumbSchema([
       { name: "Home", path: "/" },
       { name: "Lavori", path: "/lavori" },
-      { name: "Are You Stupid?", path: "/lavori/are-you-stupid" },
+      { name: "Are You Stupid? (English)", path: "/lavori/are-you-stupid/en" },
     ]),
     faqSchema(faq),
   ];
@@ -73,7 +74,7 @@ function AreYouStupidInner() {
       <section className="pynk-hero pynk-hero-sub">
         <div className="pynk-glow pynk-glow-tr" aria-hidden />
         <div className="pynk-container pynk-hero-content">
-          <p className="pynk-eyebrow pynk-eyebrow-chip">Mobile game · iOS &amp; Android · In beta su TestFlight</p>
+          <p className="pynk-eyebrow pynk-eyebrow-chip">Mobile game · iOS &amp; Android · Public beta on TestFlight</p>
           <motion.h1 initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="pynk-hero-title">
             ARE YOU <span className="pynk-accent">STUPID?</span>
           </motion.h1>
@@ -83,17 +84,17 @@ function AreYouStupidInner() {
             transition={{ delay: 0.12 }}
             className="pynk-hero-subtitle"
           >
-            Un hyper-casual a una mano: ogni round è un&apos;istruzione stupidamente semplice, sotto le 8 parole. Perdi per un dettaglio
-            stupido — ed è proprio lì la battuta.
+            A one-handed hyper-casual game: every round is a stupidly simple instruction, under 8 words. You lose over something
+            dumb — and that&apos;s exactly the joke.
           </motion.p>
           <p className="pynk-note pynk-mt-24">
-            Dal gioco: <em>&laquo;One job. Don&apos;t fuck it up.&raquo;</em> — linguaggio scorretto usato di proposito, vedi{" "}
-            <a href="#contenuto-eta">Contenuto ed età</a> qui sotto.
+            In-game: <em>&laquo;One job. Don&apos;t fuck it up.&raquo;</em> — crude language used on purpose, see{" "}
+            <a href="#content-age">Content &amp; age</a> below.
           </p>
-          <p className="pynk-note pynk-mt-12">In beta pubblica su TestFlight (iOS) — App Store e Google Play in arrivo.</p>
+          <p className="pynk-note pynk-mt-12">Public beta on TestFlight (iOS) — App Store and Google Play coming soon.</p>
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }} className="pynk-hero-ctas pynk-mt-24">
             <a href={TESTFLIGHT_URL} target="_blank" rel="noopener noreferrer" className="pynk-btn pynk-btn-primary pynk-btn-lg">
-              Prova su TestFlight
+              Try it on TestFlight
               <ExternalLink className="pynk-icon-xs" />
             </a>
             <Link href={href("/lavori/are-you-stupid/privacy")} className="pynk-btn pynk-btn-outline pynk-btn-lg">
@@ -102,20 +103,20 @@ function AreYouStupidInner() {
             </Link>
           </motion.div>
           <p className="pynk-note pynk-mt-24">
-            <Link href={href("/lavori/are-you-stupid/en")}>Read this page in English →</Link>
+            <Link href={href("/lavori/are-you-stupid")}>Leggi questa pagina in italiano →</Link>
           </p>
         </div>
       </section>
 
-      <section className="pynk-section" aria-labelledby="il-gioco-in-breve">
+      <section className="pynk-section" aria-labelledby="the-game-in-short">
         <div className="pynk-container">
           <div className="pynk-section-head">
-            <h2 id="il-gioco-in-breve" className="pynk-section-title">
-              Il gioco in breve
+            <h2 id="the-game-in-short" className="pynk-section-title">
+              The game in short
             </h2>
             <p className="pynk-section-lead">
-              Il giocatore riceve un&apos;istruzione stupidamente semplice e fallisce su qualcosa di stupido. La reazione che cerchiamo
-              non è &laquo;questo gioco fa schifo&raquo;, è &laquo;so cosa ho sbagliato, riprovo&raquo;.
+              The player gets a stupidly simple instruction and fails at something stupid. The reaction we&apos;re after isn&apos;t
+              &laquo;this game sucks&raquo;, it&apos;s &laquo;I know what I did wrong, let me try again&raquo;.
             </p>
           </div>
           <div className="pynk-grid-2">
@@ -129,69 +130,69 @@ function AreYouStupidInner() {
         </div>
       </section>
 
-      <section className="pynk-section pynk-section-alt" aria-labelledby="anteprima">
+      <section className="pynk-section pynk-section-alt" aria-labelledby="preview">
         <div className="pynk-container pynk-center-col">
-          <h2 id="anteprima" className="pynk-section-title">
-            Anteprima
+          <h2 id="preview" className="pynk-section-title">
+            Preview
           </h2>
           <div className="pynk-panel">
             <Sparkles className="pynk-icon-sm" />
             <p className="pynk-panel-desc">
-              Icona, screenshot e video di gameplay arrivano non appena sono pronte le grafiche finali. Questa scheda intanto ospita
-              già tutto il necessario per il controllo di pubblicazione: descrizione, privacy policy e contatti di supporto.
+              Icon, screenshots and gameplay video are coming as soon as the final artwork is ready. In the meantime, this page
+              already has everything needed for store review: description, privacy policy and support contact.
             </p>
           </div>
         </div>
       </section>
 
-      <section className="pynk-section" id="contenuto-eta" aria-labelledby="contenuto-eta-title">
+      <section className="pynk-section" id="content-age" aria-labelledby="content-age-title">
         <div className="pynk-container pynk-ai-split">
           <div>
-            <p className="pynk-eyebrow">Trasparenza</p>
-            <h2 id="contenuto-eta-title" className="pynk-section-title pynk-section-title-left">
-              Contenuto ed età
+            <p className="pynk-eyebrow">Transparency</p>
+            <h2 id="content-age-title" className="pynk-section-title pynk-section-title-left">
+              Content &amp; age
             </h2>
             <p className="pynk-panel-desc">
-              Il gioco usa un linguaggio scorretto e un umorismo greve (parolacce, sfottò) come parte del tono comico. Non è pensato
-              per un pubblico infantile: non rientra nella categoria Kids di Apple né nel programma Play Families di Google. La
-              fascia d&apos;età definitiva viene assegnata dal questionario di ciascuno store al momento della pubblicazione.
+              The game uses crude language and rude humor (swearing, roasts) as part of its comedic tone. It isn&apos;t aimed at
+              children: it isn&apos;t listed in Apple&apos;s Kids Category or Google Play&apos;s Families program. The final age
+              rating is assigned by each store&apos;s own questionnaire at publishing time.
             </p>
           </div>
           <div className="pynk-panel">
-            <h3 className="pynk-panel-title">Dati e privacy, in breve</h3>
+            <h3 className="pynk-panel-title">Data &amp; privacy, in short</h3>
             <ul className="pynk-check-list pynk-mt-24">
               <li>
                 <Check className="pynk-icon-sm pynk-check" />
-                <span>Nessun account, nessuna registrazione.</span>
+                <span>No account, no sign-up.</span>
               </li>
               <li>
                 <Check className="pynk-icon-sm pynk-check" />
-                <span>Nessun backend nostro e nessuno strumento di analisi.</span>
+                <span>No backend of our own, and no analytics tools.</span>
               </li>
               <li>
                 <Check className="pynk-icon-sm pynk-check" />
-                <span>Punteggio e impostazioni restano sul dispositivo.</span>
+                <span>Your score and settings stay on your device.</span>
               </li>
               <li>
                 <Check className="pynk-icon-sm pynk-check" />
-                <span>Gli unici dati che escono dal telefono sono quelli del nostro partner pubblicitario, Google AdMob.</span>
+                <span>The only data that leaves your phone is what our advertising partner, Google AdMob, collects.</span>
               </li>
             </ul>
             <Link href={href("/lavori/are-you-stupid/privacy")} className="pynk-btn pynk-btn-outline pynk-mt-24">
-              Leggi l&apos;informativa completa
+              Read the full policy
               <ArrowRight className="pynk-icon-xs" />
             </Link>
           </div>
         </div>
       </section>
 
-      <section className="pynk-section pynk-section-alt" aria-labelledby="supporto">
+      <section className="pynk-section pynk-section-alt" aria-labelledby="support">
         <div className="pynk-container pynk-center-col">
-          <h2 id="supporto" className="pynk-section-title">
-            Supporto
+          <h2 id="support" className="pynk-section-title">
+            Support
           </h2>
           <p className="pynk-section-lead">
-            Per domande, segnalazioni o richieste sui tuoi dati, scrivici. Rispondiamo da qui a tutte le richieste legate al gioco.
+            Questions, bug reports, or requests about your data — get in touch. We answer everything about the game from here.
           </p>
           <div className="pynk-hero-ctas pynk-mt-24">
             <a href="mailto:info@pynkstudio.eu" className="pynk-btn pynk-btn-primary pynk-btn-lg">
@@ -199,16 +200,16 @@ function AreYouStupidInner() {
               info@pynkstudio.eu
             </a>
             <Link href={href("/contattaci")} className="pynk-btn pynk-btn-outline pynk-btn-lg">
-              Modulo di contatto
+              Contact form
             </Link>
           </div>
         </div>
       </section>
 
-      <section className="pynk-section" aria-labelledby="faq-are-you-stupid">
+      <section className="pynk-section" aria-labelledby="faq-are-you-stupid-en">
         <div className="pynk-container">
-          <h2 id="faq-are-you-stupid" className="pynk-section-title">
-            Domande frequenti
+          <h2 id="faq-are-you-stupid-en" className="pynk-section-title">
+            Frequently asked questions
           </h2>
           <div className="pynk-ai-faq-list">
             {faq.map((item) => (
@@ -223,10 +224,13 @@ function AreYouStupidInner() {
 
       <section className="pynk-section pynk-section-alt">
         <div className="pynk-container pynk-center-col">
-          <h2 className="pynk-section-title">Altri lavori</h2>
-          <p className="pynk-section-lead">Dal gestionale al sito vetrina, dal coordinamento sul territorio al gioco per telefono.</p>
+          <h2 className="pynk-section-title">More by PYNK STUDIO</h2>
+          <p className="pynk-section-lead">
+            From back-office software to storefront sites, from field coordination to a game for your phone — see the full
+            portfolio (in Italian).
+          </p>
           <Link href={href("/lavori")} className="pynk-btn pynk-btn-outline pynk-btn-lg pynk-mt-24">
-            Torna a Lavori
+            Back to Lavori
           </Link>
         </div>
       </section>
@@ -234,10 +238,10 @@ function AreYouStupidInner() {
   );
 }
 
-export function PynkAreYouStupidPage() {
+export function PynkAreYouStupidEnPage() {
   return (
     <PynkShell>
-      <AreYouStupidInner />
+      <AreYouStupidEnInner />
     </PynkShell>
   );
 }
